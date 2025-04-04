@@ -17,8 +17,15 @@ public class LobbyUI : MonoBehaviour
         if (playerEntryPrefab == null) Debug.LogError("LobbyUI: playerEntryPrefab is NOT assigned!");
         if (quitButton == null) Debug.LogError("LobbyUI: quitButton is NOT assigned!");
 
-        roomCodeText.text = "Room Code: " + NetworkManagerLobby.instance.roomCode;
         quitButton.onClick.AddListener(QuitLobby);
+
+        // Removed the old line that showed the room code immediately
+        // roomCodeText.text = "Room Code: " + NetworkManagerLobby.instance.roomCode;
+    }
+
+    public void SetRoomCode(string code)
+    {
+        roomCodeText.text = "Room Code: " + code;
     }
 
     public void UpdatePlayerList(List<string> playerDetails)
@@ -41,12 +48,11 @@ public class LobbyUI : MonoBehaviour
         foreach (var details in playerDetails)
         {
             GameObject entry = Instantiate(playerEntryPrefab, playerListContainer);
-            
-            // Fix: Ensure it gets the correct text component
+
             TMP_Text textComponent = entry.GetComponent<TMP_Text>();
             if (textComponent == null)
             {
-                textComponent = entry.GetComponentInChildren<TMP_Text>(); // Try finding it inside
+                textComponent = entry.GetComponentInChildren<TMP_Text>();
                 if (textComponent == null)
                 {
                     Debug.LogError("LobbyUI: playerEntryPrefab does NOT have a TMP_Text component!");

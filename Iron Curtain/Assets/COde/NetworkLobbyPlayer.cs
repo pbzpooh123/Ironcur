@@ -9,11 +9,10 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     [SyncVar] public string country;
 
     private LobbyUI lobbyUI;
-    
-    
+
     private void Start()
     {
-        Invoke(nameof(FindLobbyUI), 0.5f); // Delayed call to avoid null issues
+        Invoke(nameof(FindLobbyUI), 0.5f); // Delayed to ensure LobbyUI is in scene
     }
 
     void FindLobbyUI()
@@ -28,9 +27,13 @@ public class NetworkLobbyPlayer : NetworkBehaviour
 
         if (isLocalPlayer)
         {
-            CmdSetPlayerInfo(PlayerPrefs.GetString("PlayerName"),
+            CmdSetPlayerInfo(
+                PlayerPrefs.GetString("PlayerName"),
                 PlayerPrefs.GetString("Business"),
-                PlayerPrefs.GetString("Country"));
+                PlayerPrefs.GetString("Country")
+            );
+
+            CmdRequestRoomCode(); // Ask server for room code
         }
     }
 
@@ -40,9 +43,43 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         playerName = newName;
         business = newBusiness;
         country = newCountry;
+
         NetworkManagerLobby.instance.UpdateLobbyUI();
     }
-    [Command] // Runs on the server
+
+    [Command]
+    void CmdRequestRoomCode()
+    {
+        TargetReceiveRoomCode(connectionToClient, NetworkManagerLobby.instance.roomCode);
+    }
+
+    [TargetRpc]
+    void TargetReceiveRoomCode(NetworkConnection target, string code)
+    {
+        LobbyUI ui = FindObjectOfType<LobbyUI>();
+        if (ui != null)
+        {
+            ui.SetRoomCode(code);
+        }
+    }
+
+    [ClientRpc]
+    public void RpcUpdatePlayerList(List<string> playerDetails)
+    {
+        if (lobbyUI == null)
+        {
+            lobbyUI = FindObjectOfType<LobbyUI>();
+            if (lobbyUI == null)
+            {
+                Debug.LogError("NetworkLobbyPlayer: LobbyUI is still missing! Cannot update player list.");
+                return;
+            }
+        }
+
+        lobbyUI.UpdatePlayerList(playerDetails);
+    }
+
+    [Command]
     public void CmdJoinRoom(string enteredCode)
     {
         if (NetworkManagerLobby.instance.roomCode == enteredCode)
@@ -56,29 +93,14 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         }
     }
 
-    [ClientRpc] // Sends a message to the client
+    [ClientRpc]
     void RpcShowWaitingPanel()
     {
-        FindObjectOfType<MainMenuUI>().lobbyPanel.SetActive(true);
-        FindObjectOfType<MainMenuUI>().mainMenuPanel.SetActive(false);
-    }
-
-
-    [ClientRpc]
-    public void RpcUpdatePlayerList(List<string> playerDetails)
-    {
-        if (lobbyUI == null)
+        MainMenuUI ui = FindObjectOfType<MainMenuUI>();
+        if (ui != null)
         {
-            lobbyUI = FindObjectOfType<LobbyUI>(); // Try finding it again
-            if (lobbyUI == null)
-            {
-                Debug.LogError("NetworkLobbyPlayer: LobbyUI is still missing! Cannot update player list.");
-                return;
-            }
+            ui.lobbyPanel.SetActive(true);
+            ui.mainMenuPanel.SetActive(false);
         }
-
-        lobbyUI.UpdatePlayerList(playerDetails);
     }
-   
-
 }

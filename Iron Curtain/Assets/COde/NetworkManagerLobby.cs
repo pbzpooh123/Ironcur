@@ -13,7 +13,12 @@ public class NetworkManagerLobby : NetworkManager
     {
         base.Awake();
         instance = this;
-        roomCode = GenerateRoomCode(); // Generate room code on host
+    }
+    
+    public override void OnStartHost()
+    {
+        base.OnStartHost();
+        roomCode = GenerateRoomCode(); // only generated on host
     }
     
     public void UpdateLobbyUI()
