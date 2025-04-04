@@ -7,6 +7,8 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     [SyncVar] public string playerName;
     [SyncVar] public string business;
     [SyncVar] public string country;
+    [SyncVar(hook = nameof(OnReadyStatusChanged))]
+    public bool isReady;
 
     private LobbyUI lobbyUI;
 
@@ -103,4 +105,19 @@ public class NetworkLobbyPlayer : NetworkBehaviour
             ui.mainMenuPanel.SetActive(false);
         }
     }
+    
+    [Command]
+    public void CmdToggleReady()
+    {
+        isReady = !isReady;
+        NetworkManagerLobby.instance.UpdateLobbyUI();
+    }
+
+    void OnReadyStatusChanged(bool oldVal, bool newVal)
+    {
+        // Trigger a UI update whenever someone's ready state changes
+        if (lobbyUI == null) lobbyUI = FindObjectOfType<LobbyUI>();
+        lobbyUI?.UpdatePlayerList(NetworkManagerLobby.instance.GetPlayerList());
+    }
+
 }
