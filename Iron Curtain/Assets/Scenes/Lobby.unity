@@ -5843,6 +5843,8 @@ MonoBehaviour:
   playerListContainer: {fileID: 1460042218}
   playerEntryPrefab: {fileID: 3407994036059407988, guid: 9701cd6de76e78b4e9639635536def57, type: 3}
   quitButton: {fileID: 341472755}
+  readyButton: {fileID: 361315707}
+  startGameButton: {fileID: 198961054}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
