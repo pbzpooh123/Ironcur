@@ -2,7 +2,6 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using Mirror;
 
 public class LobbyUI : MonoBehaviour
 {
@@ -10,9 +9,6 @@ public class LobbyUI : MonoBehaviour
     public Transform playerListContainer;
     public GameObject playerEntryPrefab;
     public Button quitButton;
-    public Button readyButton;
-    public Button startGameButton;
-
 
     private void Start()
     {
@@ -22,10 +18,6 @@ public class LobbyUI : MonoBehaviour
         if (quitButton == null) Debug.LogError("LobbyUI: quitButton is NOT assigned!");
 
         quitButton.onClick.AddListener(QuitLobby);
-        readyButton.onClick.AddListener(OnReadyClicked);
-        startGameButton.onClick.AddListener(OnStartClicked);
-        startGameButton.interactable = false; // Only interactable if host AND all ready
-
 
         // Removed the old line that showed the room code immediately
         // roomCodeText.text = "Room Code: " + NetworkManagerLobby.instance.roomCode;
@@ -70,30 +62,7 @@ public class LobbyUI : MonoBehaviour
 
             textComponent.text = details;
         }
-        
-        if (NetworkServer.active) // Host only
-        {
-            startGameButton.interactable = NetworkManagerLobby.instance.AllPlayersReady();
-        }
-
     }
-    
-    void OnReadyClicked()
-    {
-        var localPlayer = NetworkClient.connection.identity.GetComponent<NetworkLobbyPlayer>();
-        localPlayer.CmdToggleReady();
-    }
-
-    void OnStartClicked()
-    {
-        if (NetworkServer.active && NetworkManagerLobby.instance.AllPlayersReady())
-        {
-            Debug.Log("All players ready. Starting game...");
-            // Load your game scene
-            NetworkManagerLobby.instance.ServerChangeScene("MainGameScene"); // Replace with your scene name
-        }
-    }
-
 
     void QuitLobby()
     {

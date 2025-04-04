@@ -33,7 +33,6 @@ public class NetworkManagerLobby : NetworkManager
                 if (player != null)
                 {
                     playerDetails.Add($"{player.playerName} - {player.business} ({player.country})");
-                    player.RpcUpdatePlayerList(GetPlayerList());
                 }
             }
         }
@@ -46,12 +45,9 @@ public class NetworkManagerLobby : NetworkManager
                 if (player != null)
                 {
                     player.RpcUpdatePlayerList(playerDetails);
-                    player.RpcUpdatePlayerList(GetPlayerList());
                 }
             }
         }
-        
-        
     }
     
 
@@ -65,36 +61,6 @@ public class NetworkManagerLobby : NetworkManager
         
     }
     
-    public bool AllPlayersReady()
-    {
-        foreach (var conn in NetworkServer.connections.Values)
-        {
-            if (conn.identity != null)
-            {
-                var player = conn.identity.GetComponent<NetworkLobbyPlayer>();
-                if (player != null && !player.isReady)
-                    return false;
-            }
-        }
-        return true;
-    }
-
-    public List<string> GetPlayerList()
-    {
-        List<string> result = new List<string>();
-        foreach (var conn in NetworkServer.connections.Values)
-        {
-            if (conn.identity != null)
-            {
-                var player = conn.identity.GetComponent<NetworkLobbyPlayer>();
-                if (player != null)
-                    result.Add($"{player.playerName} - {player.business} ({player.country})" +
-                               (player.isReady ? " ✅" : " ❌"));
-            }
-        }
-        return result;
-    }
-
 
    
 }
