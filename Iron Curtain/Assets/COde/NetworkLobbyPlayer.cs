@@ -1,20 +1,22 @@
-using Mirror;
+using FishNet.Object;
+using FishNet.Connection;
+using FishNet.Object.Synchronizing;
 using UnityEngine;
 using System.Collections.Generic;
 
 public class NetworkLobbyPlayer : NetworkBehaviour
 {
-    [SyncVar] public string playerName;
-    [SyncVar] public string business;
-    [SyncVar] public string country;
-    [SyncVar(hook = nameof(OnReadyStatusChanged))]
+     public string playerName;
+     public string business;
+     public string country;
     public bool isReady;
 
     private LobbyUI lobbyUI;
 
-    private void Start()
+    public override void OnStartClient()
     {
-        Invoke(nameof(FindLobbyUI), 0.5f); // Delayed to ensure LobbyUI is in scene
+        base.OnStartClient();
+        Invoke(nameof(FindLobbyUI), 0.5f);
     }
 
     void FindLobbyUI()
@@ -27,36 +29,36 @@ public class NetworkLobbyPlayer : NetworkBehaviour
             return;
         }
 
-        if (isLocalPlayer)
+        if (IsOwner)
         {
-            CmdSetPlayerInfo(
+            SetPlayerInfo(
                 PlayerPrefs.GetString("PlayerName"),
                 PlayerPrefs.GetString("Business"),
                 PlayerPrefs.GetString("Country")
             );
 
-            CmdRequestRoomCode(); // Ask server for room code
+            RequestRoomCode();
         }
     }
 
-    [Command]
-    void CmdSetPlayerInfo(string newName, string newBusiness, string newCountry)
+    [ServerRpc]
+    public void SetPlayerInfo(string newName, string newBusiness, string newCountry)
     {
         playerName = newName;
         business = newBusiness;
         country = newCountry;
 
-        NetworkManagerLobby.instance.UpdateLobbyUI();
+        NetworkManagerLobby.Instance.UpdateLobbyUI();
     }
 
-    [Command]
-    void CmdRequestRoomCode()
+    [ServerRpc]
+    public void RequestRoomCode()
     {
-        TargetReceiveRoomCode(connectionToClient, NetworkManagerLobby.instance.roomCode);
+        TargetReceiveRoomCode(Owner, NetworkManagerLobby.Instance.roomCode);
     }
 
     [TargetRpc]
-    void TargetReceiveRoomCode(NetworkConnection target, string code)
+    public void TargetReceiveRoomCode(NetworkConnection conn, string code)
     {
         LobbyUI ui = FindObjectOfType<LobbyUI>();
         if (ui != null)
@@ -65,8 +67,9 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
-    public void RpcUpdatePlayerList(List<string> playerDetails)
+    [ObserversRpc]
+    public void UpdatedPlayerList(List<string> playerDetails)
+
     {
         if (lobbyUI == null)
         {
@@ -81,13 +84,12 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         lobbyUI.UpdatePlayerList(playerDetails);
     }
 
-    [Command]
-    public void CmdJoinRoom(string enteredCode)
+    [ServerRpc]
+    public void JoinRoom(string enteredCode)
     {
-        if (NetworkManagerLobby.instance.roomCode == enteredCode)
+        if (NetworkManagerLobby.Instance.roomCode == enteredCode)
         {
-            Debug.Log("Player joined successfully.");
-            RpcShowWaitingPanel();
+            TargetShowWaitingPanel(Owner);
         }
         else
         {
@@ -95,8 +97,8 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         }
     }
 
-    [ClientRpc]
-    void RpcShowWaitingPanel()
+    [TargetRpc]
+    public void TargetShowWaitingPanel(NetworkConnection conn)
     {
         MainMenuUI ui = FindObjectOfType<MainMenuUI>();
         if (ui != null)
@@ -105,19 +107,17 @@ public class NetworkLobbyPlayer : NetworkBehaviour
             ui.mainMenuPanel.SetActive(false);
         }
     }
-    
-    [Command]
-    public void CmdToggleReady()
+
+    [ServerRpc]
+    public void ToggleReady()
     {
         isReady = !isReady;
-        NetworkManagerLobby.instance.UpdateLobbyUI();
+        NetworkManagerLobby.Instance.UpdateLobbyUI();
     }
 
-    void OnReadyStatusChanged(bool oldVal, bool newVal)
+    private void OnReadyStatusChanged(bool oldVal, bool newVal, bool asServer)
     {
-        // Trigger a UI update whenever someone's ready state changes
         if (lobbyUI == null) lobbyUI = FindObjectOfType<LobbyUI>();
-        lobbyUI?.UpdatePlayerList(NetworkManagerLobby.instance.GetPlayerList());
+        lobbyUI?.UpdatePlayerList(NetworkManagerLobby.Instance.GetPlayerList());
     }
-
 }

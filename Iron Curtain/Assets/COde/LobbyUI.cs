@@ -2,7 +2,9 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using Mirror;
+using FishNet;
+using FishNet.Managing.Server;
+using FishNet.Managing.Client;
 
 public class LobbyUI : MonoBehaviour
 {
@@ -12,7 +14,6 @@ public class LobbyUI : MonoBehaviour
     public Button quitButton;
     public Button readyButton;
     public Button startGameButton;
-
 
     private void Start()
     {
@@ -24,11 +25,7 @@ public class LobbyUI : MonoBehaviour
         quitButton.onClick.AddListener(QuitLobby);
         readyButton.onClick.AddListener(OnReadyClicked);
         startGameButton.onClick.AddListener(OnStartClicked);
-        startGameButton.interactable = false; // Only interactable if host AND all ready
-
-
-        // Removed the old line that showed the room code immediately
-        // roomCodeText.text = "Room Code: " + NetworkManagerLobby.instance.roomCode;
+        startGameButton.interactable = false;
     }
 
     public void SetRoomCode(string code)
@@ -38,15 +35,9 @@ public class LobbyUI : MonoBehaviour
 
     public void UpdatePlayerList(List<string> playerDetails)
     {
-        if (playerListContainer == null)
+        if (playerListContainer == null || playerEntryPrefab == null)
         {
-            Debug.LogError("LobbyUI: playerListContainer is NULL when updating player list!");
-            return;
-        }
-
-        if (playerEntryPrefab == null)
-        {
-            Debug.LogError("LobbyUI: playerEntryPrefab is NULL when updating player list!");
+            Debug.LogError("LobbyUI: playerListContainer or playerEntryPrefab is NULL when updating player list!");
             return;
         }
 
@@ -59,45 +50,59 @@ public class LobbyUI : MonoBehaviour
 
             TMP_Text textComponent = entry.GetComponent<TMP_Text>();
             if (textComponent == null)
-            {
                 textComponent = entry.GetComponentInChildren<TMP_Text>();
-                if (textComponent == null)
-                {
-                    Debug.LogError("LobbyUI: playerEntryPrefab does NOT have a TMP_Text component!");
-                    continue;
-                }
+
+            if (textComponent == null)
+            {
+                Debug.LogError("LobbyUI: playerEntryPrefab does NOT have a TMP_Text component!");
+                continue;
             }
 
             textComponent.text = details;
         }
-        
-        if (NetworkServer.active) // Host only
+
+        // Only the host (server) can start the game
+        if (InstanceFinder.IsServer)
         {
-            startGameButton.interactable = NetworkManagerLobby.instance.AllPlayersReady();
+            startGameButton.interactable = NetworkManagerLobby.Instance.AllPlayersReady();
+        }
+    }
+
+    private void OnReadyClicked()
+    {
+        foreach (var obj in InstanceFinder.ClientManager.Objects.Spawned.Values)
+        {
+            if (obj.IsOwner && obj.TryGetComponent(out NetworkLobbyPlayer player))
+            {
+                player.ToggleReady();
+                return;
+            }
         }
 
-    }
-    
-    void OnReadyClicked()
-    {
-        var localPlayer = NetworkClient.connection.identity.GetComponent<NetworkLobbyPlayer>();
-        localPlayer.CmdToggleReady();
+        Debug.LogError("ReadyClicked: Local player not found!");
     }
 
-    void OnStartClicked()
+    private void OnStartClicked()
     {
-        if (NetworkServer.active && NetworkManagerLobby.instance.AllPlayersReady())
+        if (InstanceFinder.IsServer && NetworkManagerLobby.Instance.AllPlayersReady())
         {
             Debug.Log("All players ready. Starting game...");
-            // Load your game scene
-            NetworkManagerLobby.instance.ServerChangeScene("MainGameScene"); // Replace with your scene name
+            
         }
     }
 
-
-    void QuitLobby()
+    private void QuitLobby()
     {
-        NetworkManagerLobby.instance.StopHost();
-        Application.Quit();
+        if (InstanceFinder.IsServer)
+        {
+            InstanceFinder.ServerManager.StopConnection(true); // Stop server & all clients
+        }
+
+        if (InstanceFinder.IsClient)
+        {
+            InstanceFinder.ClientManager.StopConnection(); // Stop client
+        }
+
+        Application.Quit(); // Optional: remove this in-editor
     }
 }

@@ -1,6 +1,8 @@
 using UnityEngine;
 using TMPro;
-using Mirror;
+using FishNet;
+using FishNet.Managing;
+using FishNet.Transporting;
 
 public class MainMenuUI : MonoBehaviour
 {
@@ -12,10 +14,10 @@ public class MainMenuUI : MonoBehaviour
     public GameObject mainMenuPanel;
     public GameObject lobbyPanel;
     public NetworkManagerLobby networkManager;
-    
 
     private void Start()
     {
+        // Load saved player name (if any)
         if (PlayerPrefs.HasKey("PlayerName"))
             nameInput.text = PlayerPrefs.GetString("PlayerName");
     }
@@ -23,7 +25,12 @@ public class MainMenuUI : MonoBehaviour
     public void HostGame()
     {
         SavePlayerInfo();
-        networkManager.StartHost();
+
+        // Start both server and client for hosting
+        InstanceFinder.ServerManager.StartConnection();
+        InstanceFinder.ClientManager.StartConnection();
+
+        // Switch UI panels
         mainMenuPanel.SetActive(false);
         lobbyPanel.SetActive(true);
     }
@@ -31,25 +38,29 @@ public class MainMenuUI : MonoBehaviour
     public void JoinGame()
     {
         SavePlayerInfo();
-        networkManager.StartClient();
-        Invoke(nameof(RequestJoinRoom), 1.5f); // Delay to allow client to connect
+
+        // Start only the client connection
+        InstanceFinder.ClientManager.StartConnection();
+
+        // Delay room join request to give client time to connect and spawn
+        Invoke(nameof(RequestJoinRoom), 1.5f);
     }
 
-    void RequestJoinRoom()
+    private void RequestJoinRoom()
     {
-        NetworkLobbyPlayer localPlayer = NetworkClient.localPlayer?.GetComponent<NetworkLobbyPlayer>();
-        if (localPlayer != null)
+        foreach (var obj in InstanceFinder.ClientManager.Objects.Spawned.Values)
         {
-            localPlayer.CmdJoinRoom(roomCodeInput.text.ToUpper());
+            if (obj.IsOwner && obj.TryGetComponent(out NetworkLobbyPlayer player))
+            {
+                player.JoinRoom(roomCodeInput.text.ToUpper());
+                return;
+            }
         }
-        else
-        {
-            Debug.LogError("Local player not found! Ensure the client has connected.");
-        }
+
+        Debug.LogError("Local player not found! Has the player spawned yet?");
     }
 
-
-    void SavePlayerInfo()
+    private void SavePlayerInfo()
     {
         PlayerPrefs.SetString("PlayerName", nameInput.text);
         PlayerPrefs.SetString("Business", businessDropdown.options[businessDropdown.value].text);

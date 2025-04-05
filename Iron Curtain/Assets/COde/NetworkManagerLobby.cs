@@ -1,59 +1,72 @@
-using Mirror;
+using FishNet;
+using FishNet.Managing;
+using FishNet.Managing.Server;
+using FishNet.Object;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class NetworkManagerLobby : NetworkManager
+public class NetworkManagerLobby : MonoBehaviour
 {
-   
-    private List<string> playerDetails = new List<string>();
-    public static NetworkManagerLobby instance;
-    public  string roomCode;
+    public static NetworkManagerLobby Instance;
 
-    public override void Awake()
+    private NetworkManager networkManager;
+    public string roomCode;
+    private List<string> playerDetails = new List<string>();
+
+    private void Awake()
     {
-        base.Awake();
-        instance = this;
+        Instance = this;
+        networkManager = InstanceFinder.NetworkManager;
     }
-    
-    public override void OnStartHost()
+
+    private void Start()
     {
-        base.OnStartHost();
-        roomCode = GenerateRoomCode(); // only generated on host
+        // Hook to start host or client depending on setup
+        networkManager.ServerManager.OnServerConnectionState += ServerManager_OnServerConnectionState;
     }
-    
+
+    private void OnDestroy()
+    {
+        if (networkManager != null)
+            networkManager.ServerManager.OnServerConnectionState -= ServerManager_OnServerConnectionState;
+    }
+
+    private void ServerManager_OnServerConnectionState(FishNet.Transporting.ServerConnectionStateArgs obj)
+    {
+        if (obj.ConnectionState == FishNet.Transporting.LocalConnectionState.Started)
+        {
+            roomCode = GenerateRoomCode(); // Host only
+        }
+    }
+
     public void UpdateLobbyUI()
     {
         playerDetails.Clear();
 
-        foreach (var conn in NetworkServer.connections.Values)
+        foreach (var conn in networkManager.ServerManager.Clients)
         {
-            if (conn.identity != null)
+            if (conn.Value == null || conn.Value.FirstObject == null)
+                continue;
+
+            NetworkLobbyPlayer player = conn.Value.FirstObject.GetComponent<NetworkLobbyPlayer>();
+            if (player != null)
             {
-                NetworkLobbyPlayer player = conn.identity.GetComponent<NetworkLobbyPlayer>();
-                if (player != null)
-                {
-                    playerDetails.Add($"{player.playerName} - {player.business} ({player.country})");
-                    player.RpcUpdatePlayerList(GetPlayerList());
-                }
+                playerDetails.Add($"{player.playerName} - {player.business} ({player.country})");
             }
         }
 
-        foreach (var conn in NetworkServer.connections.Values)
+        foreach (var conn in networkManager.ServerManager.Clients)
         {
-            if (conn.identity != null)
+            if (conn.Value == null || conn.Value.FirstObject == null)
+                continue;
+
+            NetworkLobbyPlayer player = conn.Value.FirstObject.GetComponent<NetworkLobbyPlayer>();
+            if (player != null)
             {
-                NetworkLobbyPlayer player = conn.identity.GetComponent<NetworkLobbyPlayer>();
-                if (player != null)
-                {
-                    player.RpcUpdatePlayerList(playerDetails);
-                    player.RpcUpdatePlayerList(GetPlayerList());
-                }
+                player.UpdatedPlayerList(GetPlayerList());
             }
         }
-        
-        
     }
-    
 
     private string GenerateRoomCode()
     {
@@ -62,19 +75,18 @@ public class NetworkManagerLobby : NetworkManager
         for (int i = 0; i < 6; i++)
             code += chars[Random.Range(0, chars.Length)];
         return code;
-        
     }
-    
+
     public bool AllPlayersReady()
     {
-        foreach (var conn in NetworkServer.connections.Values)
+        foreach (var conn in networkManager.ServerManager.Clients)
         {
-            if (conn.identity != null)
-            {
-                var player = conn.identity.GetComponent<NetworkLobbyPlayer>();
-                if (player != null && !player.isReady)
-                    return false;
-            }
+            if (conn.Value == null || conn.Value.FirstObject == null)
+                continue;
+
+            var player = conn.Value.FirstObject.GetComponent<NetworkLobbyPlayer>();
+            if (player != null && !player.isReady)
+                return false;
         }
         return true;
     }
@@ -82,19 +94,16 @@ public class NetworkManagerLobby : NetworkManager
     public List<string> GetPlayerList()
     {
         List<string> result = new List<string>();
-        foreach (var conn in NetworkServer.connections.Values)
+        foreach (var conn in networkManager.ServerManager.Clients)
         {
-            if (conn.identity != null)
-            {
-                var player = conn.identity.GetComponent<NetworkLobbyPlayer>();
-                if (player != null)
-                    result.Add($"{player.playerName} - {player.business} ({player.country})" +
-                               (player.isReady ? " ✅" : " ❌"));
-            }
+            if (conn.Value == null || conn.Value.FirstObject == null)
+                continue;
+
+            var player = conn.Value.FirstObject.GetComponent<NetworkLobbyPlayer>();
+            if (player != null)
+                result.Add($"{player.playerName} - {player.business} ({player.country})" +
+                           (player.isReady ? " ✅" : " ❌"));
         }
         return result;
     }
-
-
-   
 }
