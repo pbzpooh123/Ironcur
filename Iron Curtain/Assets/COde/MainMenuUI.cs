@@ -1,8 +1,12 @@
 using UnityEngine;
 using TMPro;
+using Unity.Services.Relay;
+using Unity.Services.Relay.Models;
+using Unity.Networking.Transport.Relay;
 using FishNet;
 using FishNet.Managing;
 using FishNet.Transporting;
+using FishNet.Transporting.UTP;
 
 public class MainMenuUI : MonoBehaviour
 {
@@ -17,33 +21,67 @@ public class MainMenuUI : MonoBehaviour
 
     private void Start()
     {
-        // Load saved player name (if any)
         if (PlayerPrefs.HasKey("PlayerName"))
             nameInput.text = PlayerPrefs.GetString("PlayerName");
     }
 
-    public void HostGame()
+    public async void HostGame()
     {
         SavePlayerInfo();
 
-        // Start both server and client for hosting
-        InstanceFinder.ServerManager.StartConnection();
-        InstanceFinder.ClientManager.StartConnection();
+        try
+        {
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(4);
+            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            Debug.Log("Join Code: " + joinCode);
 
-        // Switch UI panels
-        mainMenuPanel.SetActive(false);
-        lobbyPanel.SetActive(true);
+            // Save the join code if needed (for displaying to players)
+            PlayerPrefs.SetString("LastJoinCode", joinCode);
+
+            // Set relay server data
+            var transport = (FishyUnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
+            transport.SetRelayServerData(new RelayServerData(allocation, "dtls"));
+
+            // Start server and client
+            InstanceFinder.ServerManager.StartConnection();
+            InstanceFinder.ClientManager.StartConnection();
+
+            // Show lobby UI
+            mainMenuPanel.SetActive(false);
+            lobbyPanel.SetActive(true);
+        }
+        catch (RelayServiceException e)
+        {
+            Debug.LogError("Relay Host Failed: " + e.Message);
+        }
     }
 
-    public void JoinGame()
+    public async void JoinGame()
     {
         SavePlayerInfo();
 
-        // Start only the client connection
-        InstanceFinder.ClientManager.StartConnection();
+        string joinCode = roomCodeInput.text.ToUpper();
 
-        // Delay room join request to give client time to connect and spawn
-        Invoke(nameof(RequestJoinRoom), 1.5f);
+        try
+        {
+            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
+
+            var transport = (FishyUnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
+            transport.SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
+
+            InstanceFinder.ClientManager.StartConnection();
+
+            // Show lobby UI
+            mainMenuPanel.SetActive(false);
+            lobbyPanel.SetActive(true);
+
+            // Delay sending the join request until client spawns
+            Invoke(nameof(RequestJoinRoom), 2f);
+        }
+        catch (RelayServiceException e)
+        {
+            Debug.LogError("Relay Join Failed: " + e.Message);
+        }
     }
 
     private void RequestJoinRoom()

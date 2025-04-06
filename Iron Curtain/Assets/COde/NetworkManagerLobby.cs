@@ -85,7 +85,7 @@ public class NetworkManagerLobby : MonoBehaviour
                 continue;
 
             var player = conn.Value.FirstObject.GetComponent<NetworkLobbyPlayer>();
-            if (player != null && !player.isReady)
+            if (player != null && !player.isReady.Value)
                 return false;
         }
         return true;
@@ -101,8 +101,9 @@ public class NetworkManagerLobby : MonoBehaviour
 
             var player = conn.Value.FirstObject.GetComponent<NetworkLobbyPlayer>();
             if (player != null)
-                result.Add($"{player.playerName} - {player.business} ({player.country})" +
-                           (player.isReady ? " ✅" : " ❌"));
+                result.Add($"{player.playerName.Value} - {player.business.Value} ({player.country.Value})" +
+                           (player.isReady.Value ? " ✅" : " ❌"));
+
         }
         return result;
     }

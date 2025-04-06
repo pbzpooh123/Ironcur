@@ -6,11 +6,11 @@ using System.Collections.Generic;
 
 public class NetworkLobbyPlayer : NetworkBehaviour
 {
-     public string playerName;
-     public string business;
-     public string country;
-    public bool isReady;
-
+    public readonly SyncVar<string> playerName = new();
+    public readonly SyncVar<string> business = new();
+    public readonly SyncVar<string> country = new();
+    public readonly SyncVar<bool> isReady = new();
+    
     private LobbyUI lobbyUI;
 
     public override void OnStartClient()
@@ -44,9 +44,10 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     [ServerRpc]
     public void SetPlayerInfo(string newName, string newBusiness, string newCountry)
     {
-        playerName = newName;
-        business = newBusiness;
-        country = newCountry;
+        playerName.Value = newName;
+        business.Value = newBusiness;
+        country.Value = newCountry;
+
 
         NetworkManagerLobby.Instance.UpdateLobbyUI();
     }
@@ -111,7 +112,7 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     [ServerRpc]
     public void ToggleReady()
     {
-        isReady = !isReady;
+        isReady.Value = !isReady.Value;
         NetworkManagerLobby.Instance.UpdateLobbyUI();
     }
 
