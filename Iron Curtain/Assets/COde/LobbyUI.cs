@@ -3,8 +3,6 @@ using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using FishNet;
-using FishNet.Managing.Server;
-using FishNet.Managing.Client;
 
 public class LobbyUI : MonoBehaviour
 {
@@ -30,7 +28,8 @@ public class LobbyUI : MonoBehaviour
 
     public void SetRoomCode(string code)
     {
-        roomCodeText.text = "Room Code: " + code;
+        roomCodeText.text = "Room Code: " + NetworkManagerLobby.Instance.roomCode;
+
     }
 
     public void UpdatePlayerList(List<string> playerDetails)
@@ -87,7 +86,7 @@ public class LobbyUI : MonoBehaviour
         if (InstanceFinder.IsServer && NetworkManagerLobby.Instance.AllPlayersReady())
         {
             Debug.Log("All players ready. Starting game...");
-            
+            // Load the game scene or trigger the next step
         }
     }
 
@@ -103,6 +102,10 @@ public class LobbyUI : MonoBehaviour
             InstanceFinder.ClientManager.StopConnection(); // Stop client
         }
 
-        Application.Quit(); // Optional: remove this in-editor
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
     }
 }

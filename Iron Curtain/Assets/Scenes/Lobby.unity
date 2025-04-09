@@ -3838,6 +3838,7 @@ MonoBehaviour:
   mainMenuPanel: {fileID: 474351973}
   lobbyPanel: {fileID: 1464092817}
   networkManager: {fileID: 578322365}
+  lobbyUI: {fileID: 0}
 --- !u!1 &1420178516
 GameObject:
   m_ObjectHideFlags: 0
@@ -4045,6 +4046,7 @@ GameObject:
   - component: {fileID: 1464092818}
   - component: {fileID: 1464092820}
   - component: {fileID: 1464092819}
+  - component: {fileID: 1464092821}
   m_Layer: 5
   m_Name: Panel
   m_TagString: Untagged
@@ -4115,6 +4117,24 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1464092817}
   m_CullTransparentMesh: 1
+--- !u!114 &1464092821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1464092817}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9ee8646ab44da054fa2f2839ccfab9d8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  roomCodeText: {fileID: 1993546067}
+  playerListContainer: {fileID: 1460042218}
+  playerEntryPrefab: {fileID: 3407994036059407988, guid: 9701cd6de76e78b4e9639635536def57, type: 3}
+  quitButton: {fileID: 341472755}
+  readyButton: {fileID: 361315707}
+  startGameButton: {fileID: 198961054}
 --- !u!1 &1590545163
 GameObject:
   m_ObjectHideFlags: 0
@@ -5795,7 +5815,6 @@ GameObject:
   - component: {fileID: 2073705944}
   - component: {fileID: 2073705943}
   - component: {fileID: 2073705942}
-  - component: {fileID: 2073705946}
   m_Layer: 5
   m_Name: Lobby UI
   m_TagString: Untagged
@@ -5886,24 +5905,6 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
---- !u!114 &2073705946
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2073705941}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9ee8646ab44da054fa2f2839ccfab9d8, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  roomCodeText: {fileID: 1993546067}
-  playerListContainer: {fileID: 1460042218}
-  playerEntryPrefab: {fileID: 3407994036059407988, guid: 9701cd6de76e78b4e9639635536def57, type: 3}
-  quitButton: {fileID: 341472755}
-  readyButton: {fileID: 361315707}
-  startGameButton: {fileID: 198961054}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

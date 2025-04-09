@@ -18,6 +18,7 @@ public class MainMenuUI : MonoBehaviour
     public GameObject mainMenuPanel;
     public GameObject lobbyPanel;
     public NetworkManagerLobby networkManager;
+    public LobbyUI lobbyUI; // 👈 Reference to LobbyUI
 
     private void Start()
     {
@@ -33,22 +34,33 @@ public class MainMenuUI : MonoBehaviour
         {
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(4);
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            NetworkManagerLobby.Instance.roomCode = joinCode; // ✅ Now this is the ONLY room code
             Debug.Log("Join Code: " + joinCode);
 
-            // Save the join code if needed (for displaying to players)
-            PlayerPrefs.SetString("LastJoinCode", joinCode);
+            PlayerPrefs.SetString("LastJoinCode", joinCode); // optional
 
-            // Set relay server data
+            // Relay transport setup
             var transport = (FishyUnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
             transport.SetRelayServerData(new RelayServerData(allocation, "dtls"));
 
-            // Start server and client
+            // Start the network
             InstanceFinder.ServerManager.StartConnection();
             InstanceFinder.ClientManager.StartConnection();
 
-            // Show lobby UI
+            // Activate Lobby
             mainMenuPanel.SetActive(false);
             lobbyPanel.SetActive(true);
+
+            // 👉 Set the code in the Lobby UI right after showing it
+            LobbyUI lobbyUI = lobbyPanel.GetComponent<LobbyUI>();
+            if (lobbyUI != null)
+            {
+                lobbyUI.SetRoomCode(joinCode);
+            }
+            else
+            {
+                Debug.LogError("LobbyUI component not found on lobbyPanel!");
+            }
         }
         catch (RelayServiceException e)
         {
@@ -66,16 +78,18 @@ public class MainMenuUI : MonoBehaviour
         {
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
 
+            // 👉 Set join code in Lobby UI
+            if (lobbyUI != null)
+                lobbyUI.SetRoomCode(joinCode);
+
             var transport = (FishyUnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
             transport.SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
 
             InstanceFinder.ClientManager.StartConnection();
 
-            // Show lobby UI
             mainMenuPanel.SetActive(false);
             lobbyPanel.SetActive(true);
 
-            // Delay sending the join request until client spawns
             Invoke(nameof(RequestJoinRoom), 2f);
         }
         catch (RelayServiceException e)

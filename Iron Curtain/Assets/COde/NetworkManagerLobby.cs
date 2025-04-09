@@ -18,6 +18,8 @@ public class NetworkManagerLobby : MonoBehaviour
         Instance = this;
         networkManager = InstanceFinder.NetworkManager;
     }
+    
+    
 
     private void Start()
     {
@@ -35,7 +37,7 @@ public class NetworkManagerLobby : MonoBehaviour
     {
         if (obj.ConnectionState == FishNet.Transporting.LocalConnectionState.Started)
         {
-            roomCode = GenerateRoomCode(); // Host only
+           
         }
     }
 
