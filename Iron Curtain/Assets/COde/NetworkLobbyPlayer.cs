@@ -10,6 +10,7 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     public readonly SyncVar<string> business = new();
     public readonly SyncVar<string> country = new();
     public readonly SyncVar<bool> isReady = new();
+    public readonly SyncVar<float> profit = new();
     
     private LobbyUI lobbyUI;
 
@@ -121,4 +122,16 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         if (lobbyUI == null) lobbyUI = FindObjectOfType<LobbyUI>();
         lobbyUI?.UpdatePlayerList(NetworkManagerLobby.Instance.GetPlayerList());
     }
+    [TargetRpc]
+    public void TargetUpdateProfit(NetworkConnection conn, float value)
+    {
+        GameUI.Instance?.UpdateProfit(value);
+    }
+
+    [TargetRpc]
+    public void TargetShowEndScreen(NetworkConnection conn, string winnerName)
+    {
+        GameUI.Instance?.ShowWinner(winnerName);
+    }
+
 }
