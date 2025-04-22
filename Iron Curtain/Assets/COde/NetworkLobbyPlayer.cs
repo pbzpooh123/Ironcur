@@ -6,6 +6,10 @@ using System.Collections.Generic;
 
 public class NetworkLobbyPlayer : NetworkBehaviour
 {
+    [SerializeField] private string _playerNameInspector;
+    [SerializeField] private string _businessInspector;
+    [SerializeField] private string _countryInspector;
+    [SerializeField] private float _profitInspector;
     public readonly SyncVar<string> playerName = new();
     public readonly SyncVar<string> business = new();
     public readonly SyncVar<string> country = new();
@@ -13,6 +17,26 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     public readonly SyncVar<float> profit = new();
     
     private LobbyUI lobbyUI;
+    
+    private void OnNameChanged(string oldVal, string newVal, bool asServer)
+    {
+        _playerNameInspector = newVal;
+    }
+
+    private void OnBusinessChanged(string oldVal, string newVal, bool asServer)
+    {
+        _businessInspector = newVal;
+    }
+
+    private void OnCountryChanged(string oldVal, string newVal, bool asServer)
+    {
+        _countryInspector = newVal;
+    }
+
+    private void OnProfitChanged(float oldVal, float newVal, bool asServer)
+    {
+        _profitInspector = newVal;
+    }
 
     public override void OnStartClient()
     {

@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33e2bdf36ce738a4c87e28fffd201976, type: 3}
+  m_Name: 9.Banking & Finance9
+  m_EditorClassIdentifier: 
+  businessName: "\u0E18\u0E19\u0E32\u0E04\u0E32\u0E23\u0E41\u0E25\u0E30\u0E01\u0E32\u0E23\u0E40\u0E07\u0E34\u0E19"
+  description: "\u0E04\u0E27\u0E1A\u0E04\u0E38\u0E21\u0E01\u0E23\u0E30\u0E41\u0E2A\u0E40\u0E07\u0E34\u0E19\u0E43\u0E19\u0E23\u0E30\u0E1A\u0E1A\u0E40\u0E28\u0E23\u0E29\u0E10\u0E01\u0E34\u0E08"
+  pros: 
+  cons: 

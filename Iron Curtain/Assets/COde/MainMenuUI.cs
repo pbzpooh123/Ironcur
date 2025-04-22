@@ -7,6 +7,7 @@ using FishNet;
 using FishNet.Managing;
 using FishNet.Transporting;
 using FishNet.Transporting.UTP;
+using System.Collections.Generic;
 
 public class MainMenuUI : MonoBehaviour
 {
@@ -18,12 +19,19 @@ public class MainMenuUI : MonoBehaviour
     public GameObject mainMenuPanel;
     public GameObject lobbyPanel;
     public NetworkManagerLobby networkManager;
-    public LobbyUI lobbyUI; // 👈 Reference to LobbyUI
+    public LobbyUI lobbyUI;
+
+    [Header("Business Info Preview")]
+    public TMP_Text businessDescriptionText;
+    public List<BusinessInfo> businessInfoList;
 
     private void Start()
     {
         if (PlayerPrefs.HasKey("PlayerName"))
             nameInput.text = PlayerPrefs.GetString("PlayerName");
+
+        businessDropdown.onValueChanged.AddListener(OnBusinessChanged);
+        OnBusinessChanged(businessDropdown.value);
     }
 
     public async void HostGame()
@@ -34,24 +42,20 @@ public class MainMenuUI : MonoBehaviour
         {
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(4);
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-            NetworkManagerLobby.Instance.roomCode = joinCode; // ✅ Now this is the ONLY room code
+            NetworkManagerLobby.Instance.roomCode = joinCode;
             Debug.Log("Join Code: " + joinCode);
 
-            PlayerPrefs.SetString("LastJoinCode", joinCode); // optional
+            PlayerPrefs.SetString("LastJoinCode", joinCode);
 
-            // Relay transport setup
             var transport = (FishyUnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
             transport.SetRelayServerData(new RelayServerData(allocation, "dtls"));
 
-            // Start the network
             InstanceFinder.ServerManager.StartConnection();
             InstanceFinder.ClientManager.StartConnection();
 
-            // Activate Lobby
             mainMenuPanel.SetActive(false);
             lobbyPanel.SetActive(true);
 
-            // 👉 Set the code in the Lobby UI right after showing it
             LobbyUI lobbyUI = lobbyPanel.GetComponent<LobbyUI>();
             if (lobbyUI != null)
             {
@@ -78,7 +82,6 @@ public class MainMenuUI : MonoBehaviour
         {
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
 
-            // 👉 Set join code in Lobby UI
             if (lobbyUI != null)
                 lobbyUI.SetRoomCode(joinCode);
 
@@ -118,5 +121,20 @@ public class MainMenuUI : MonoBehaviour
         PlayerPrefs.SetString("Business", businessDropdown.options[businessDropdown.value].text);
         PlayerPrefs.SetString("Country", countryDropdown.options[countryDropdown.value].text);
         PlayerPrefs.Save();
+    }
+
+    public void OnBusinessChanged(int index)
+    {
+        if (index < 0 || index >= businessInfoList.Count || businessDescriptionText == null)
+        {
+            businessDescriptionText.text = "No info available.";
+            return;
+        }
+
+        BusinessInfo info = businessInfoList[index];
+        businessDescriptionText.text = $"<b>{info.businessName}</b>\n\n" +
+                                       $"<b>Description:</b>\n{info.description}\n\n" +
+                                       $"<color=green><b>Pros:</b></color>\n{info.pros}\n\n" +
+                                       $"<color=red><b>Cons:</b></color>\n{info.cons}";
     }
 }
