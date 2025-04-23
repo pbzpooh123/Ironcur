@@ -134,7 +134,6 @@ public class MainMenuUI : MonoBehaviour
         BusinessInfo info = businessInfoList[index];
         businessDescriptionText.text = $"<b>{info.businessName}</b>\n\n" +
                                        $"<b>Description:</b>\n{info.description}\n\n" +
-                                       $"<color=green><b>Pros:</b></color>\n{info.pros}\n\n" +
-                                       $"<color=red><b>Cons:</b></color>\n{info.cons}";
+                                       $"<color=green><b>Perk:</b></color>\n{info.perk}\n\n";
     }
 }

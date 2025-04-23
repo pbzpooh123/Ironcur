@@ -4,6 +4,8 @@ using UnityEngine;
 using System.Collections.Generic;
 using FishNet;
 using FishNet.Managing.Scened;
+using System.Linq; // Needed for Count()
+
 
 public class GameManager : NetworkBehaviour
 {
@@ -18,6 +20,19 @@ public class GameManager : NetworkBehaviour
     private bool _hasInitialized = false;
 
     private List<NetworkLobbyPlayer> players = new List<NetworkLobbyPlayer>();
+    private List<PlayerInvestment> pendingInvestments = new List<PlayerInvestment>();
+    
+    [Header("Investments")]
+    public List<InvestmentOption> AvailableInvestments; // drag & drop in Inspector
+    public List<DynamicInvestment> CurrentInvestments = new(); // runtime data
+    private List<PlayerInvestment> investmentHistory = new(); // all previous investments
+
+    public bool warActive; // example event toggle
+
+    
+    
+
+
 
     private void Awake()
     {
@@ -88,6 +103,28 @@ public class GameManager : NetworkBehaviour
             p.profit.Value += gain;
             p.TargetUpdateProfit(p.Owner, p.profit.Value);
         }
+        
+        foreach (var inv in pendingInvestments)
+        {
+            float roll = Random.Range(0f, 1f);
+            bool success = roll <= inv.investment.successChance;
+
+            if (success)
+            {
+                inv.player.profit.Value += inv.investment.reward;
+                Debug.Log($"{inv.player.playerName.Value} succeeded in {inv.investment.investmentName}, gained ${inv.investment.reward}");
+            }
+            else
+            {
+                inv.player.profit.Value -= inv.investment.failurePenalty;
+                Debug.Log($"{inv.player.playerName.Value} failed in {inv.investment.investmentName}, lost ${inv.investment.failurePenalty}");
+            }
+
+            inv.player.TargetUpdateProfit(inv.player.Owner, inv.player.profit.Value);
+        }
+
+        pendingInvestments.Clear();
+
 
         currentRound++;
 
@@ -100,6 +137,13 @@ public class GameManager : NetworkBehaviour
             StartRound();
         }
     }
+    
+    public struct PlayerInvestment
+    {
+        public NetworkLobbyPlayer player;
+        public InvestmentOption investment;
+    }
+
 
     void EndGame()
     {
@@ -122,6 +166,71 @@ public class GameManager : NetworkBehaviour
             p.TargetShowEndScreen(p.Owner, winner.playerName.Value);
         }
     }
+    
+    public void ReceiveInvestment(NetworkLobbyPlayer player, string investmentName)
+    {
+        var option = AvailableInvestments.Find(i => i.investmentName == investmentName);
+        if (option == null)
+        {
+            Debug.LogError("Invalid investment: " + investmentName);
+            return;
+        }
+
+        // Remove cost
+        player.profit.Value -= option.cost;
+
+        // Store for round end
+        pendingInvestments.Add(new PlayerInvestment
+        {
+            player = player,
+            investment = option
+        });
+
+        Debug.Log($"{player.playerName.Value} invested in {investmentName}");
+    }
+    
+    public void GenerateDynamicInvestments()
+    {
+        CurrentInvestments.Clear();
+
+        foreach (var baseOption in AvailableInvestments)
+        {
+            float cost = baseOption.cost;
+            float chance = baseOption.successChance;
+
+            int timesBought = investmentHistory.Count(i => i.investment.investmentName == baseOption.investmentName);
+
+            // Example: demand mechanic
+            if (timesBought >= 2)
+            {
+                cost += 200f;
+                chance -= 0.05f;
+            }
+            else if (timesBought == 0)
+            {
+                cost -= 100f;
+                chance += 0.05f;
+            }
+
+            // Example: war boosts weapons
+            if (baseOption.investmentName == "Weapons" && warActive)
+            {
+                cost += 100f;
+                chance += 0.1f;
+            }
+
+            // Add other event effects here...
+
+            CurrentInvestments.Add(new DynamicInvestment
+            {
+                template = baseOption,
+                currentCost = Mathf.Max(0, cost),
+                currentSuccessChance = Mathf.Clamp01(chance)
+            });
+        }
+    }
+
+
 
     [ObserversRpc]
     void RpcUpdateTimer(float timeLeft)

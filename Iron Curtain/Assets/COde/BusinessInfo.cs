@@ -5,6 +5,5 @@ public class BusinessInfo : ScriptableObject
 {
     public string businessName;
     [TextArea(2, 5)] public string description;
-    [TextArea(2, 5)] public string pros;
-    [TextArea(2, 5)] public string cons;
+    [TextArea(2, 5)] public string perk;
 }

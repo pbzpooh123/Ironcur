@@ -11,6 +11,8 @@ public class GameUI : MonoBehaviour
     [Header("UI Elements")]
     public Image backgroundImage;
     public TMP_Text profitText;
+    public TMP_Text bissText;
+    public TMP_Text counText;
     public TMP_Text countdownText;
 
     private NetworkLobbyPlayer localPlayer;
@@ -19,7 +21,30 @@ public class GameUI : MonoBehaviour
     {
         Instance = this;
         countdownText.gameObject.SetActive(false);
+        
+         foreach (var obj in InstanceFinder.ClientManager.Objects.Spawned.Values)
+    {
+        if (obj.IsOwner && obj.TryGetComponent(out NetworkLobbyPlayer player))
+        {
+            localPlayer = player;
+            break;
+        }
     }
+
+    if (localPlayer != null)
+    {
+        UpdateProfit(localPlayer.profit.Value);
+        UpdatePlayerInfo(localPlayer.business.Value, localPlayer.country.Value);
+        UpdateBackground(localPlayer.country.Value, localPlayer.business.Value);
+    }
+    }
+    
+    public void UpdatePlayerInfo(string business, string country)
+    {
+        bissText.text = $"🏢 {business}";
+        counText.text = $"🌍 {country}";
+    }
+
 
     public void UpdateCountdown(float secondsLeft)
     {
