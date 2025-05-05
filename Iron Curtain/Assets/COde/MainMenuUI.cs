@@ -11,41 +11,153 @@ using System.Collections.Generic;
 
 public class MainMenuUI : MonoBehaviour
 {
+    [Header("UI Panels")]
+    public GameObject mainMenuPanel;
+    public GameObject startPanel;
+    public GameObject nameCountryPanel;
+    public GameObject businessPanel;
+    public GameObject hostClientPanel;
+    public GameObject lobbyPanel;
+
+    [Header("Inputs")]
     public TMP_InputField nameInput;
     public TMP_Dropdown businessDropdown;
     public TMP_Dropdown countryDropdown;
     public TMP_InputField roomCodeInput;
 
-    public GameObject mainMenuPanel;
-    public GameObject lobbyPanel;
-    public NetworkManagerLobby networkManager;
-    public LobbyUI lobbyUI;
-
     [Header("Business Info Preview")]
     public TMP_Text businessDescriptionText;
     public List<BusinessInfo> businessInfoList;
 
+    [Header("Networking")]
+    public LobbyUI lobbyUI;
+
     private void Start()
     {
+        // Load last used player name if available
         if (PlayerPrefs.HasKey("PlayerName"))
             nameInput.text = PlayerPrefs.GetString("PlayerName");
 
         businessDropdown.onValueChanged.AddListener(OnBusinessChanged);
         OnBusinessChanged(businessDropdown.value);
+
+        OpenStartPanel(); // Default start panel
     }
+
+    // --- UI Navigation ---
+
+    public void OpenStartPanel()
+    {
+        CloseAllPanels();
+        startPanel.SetActive(true);
+    }
+
+    public void OpenNameCountryPanel()
+    {
+        CloseAllPanels();
+        nameCountryPanel.SetActive(true);
+    }
+
+    public void OpenBusinessPanel()
+    {
+        CloseAllPanels();
+        businessPanel.SetActive(true);
+    }
+
+    public void OpenHostClientPanel()
+    {
+        CloseAllPanels();
+        hostClientPanel.SetActive(true);
+    }
+
+    private void CloseAllPanels()
+    {
+        startPanel.SetActive(false);
+        nameCountryPanel.SetActive(false);
+        businessPanel.SetActive(false);
+        hostClientPanel.SetActive(false);
+        lobbyPanel.SetActive(false);
+    }
+
+    // --- UI Button Handlers ---
+
+    public void OnClickStartGame()
+    {
+        OpenNameCountryPanel();
+    }
+
+    public void OnClickQuitGame()
+    {
+        Application.Quit();
+    }
+
+    public void OnClickNextFromNameCountry()
+    {
+        bool nameValid = !string.IsNullOrWhiteSpace(nameInput.text);
+        bool countrySelected = countryDropdown.value >= 0;
+        bool businessSelected = businessDropdown.value >= 0;
+
+        if (nameValid && countrySelected && businessSelected)
+        {
+            OpenHostClientPanel();
+        }
+        else
+        {
+            Debug.LogWarning("Please enter a name and select a country.");
+        }
+    }
+
+    public void OnClickBackToNameCountry()
+    {
+        OpenNameCountryPanel();
+    }
+
+    public void OnClickConfirmBusiness()
+    {
+        if (businessDropdown.value >= 0)
+        {
+            OpenHostClientPanel();
+        }
+        else
+        {
+            Debug.LogWarning("Please select a business before continuing.");
+        }
+    }
+
+    // --- Business Description ---
+
+    public void OnBusinessChanged(int index)
+    {
+        if (index < 0 || index >= businessInfoList.Count || businessDescriptionText == null)
+        {
+            businessDescriptionText.text = "No info available.";
+            return;
+        }
+
+        BusinessInfo info = businessInfoList[index];
+        businessDescriptionText.text = $"<b>{info.businessName}</b>\n\n" +
+                                       $"<b>Description:</b>\n{info.description}\n\n" +
+                                       $"<color=green><b>Perk:</b></color>\n{info.perk}\n\n";
+    }
+
+    // --- Networking ---
 
     public async void HostGame()
     {
+        Debug.Log("HostGame() called");
+
         SavePlayerInfo();
 
         try
         {
+            Debug.Log("Requesting Relay allocation...");
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(4);
-            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-            NetworkManagerLobby.Instance.roomCode = joinCode;
-            Debug.Log("Join Code: " + joinCode);
+            Debug.Log("Relay allocation successful");
 
-            PlayerPrefs.SetString("LastJoinCode", joinCode);
+            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            Debug.Log("Join Code received: " + joinCode);
+
+            NetworkManagerLobby.Instance.roomCode = joinCode;
 
             var transport = (FishyUnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
             transport.SetRelayServerData(new RelayServerData(allocation, "dtls"));
@@ -56,14 +168,13 @@ public class MainMenuUI : MonoBehaviour
             mainMenuPanel.SetActive(false);
             lobbyPanel.SetActive(true);
 
-            LobbyUI lobbyUI = lobbyPanel.GetComponent<LobbyUI>();
             if (lobbyUI != null)
             {
                 lobbyUI.SetRoomCode(joinCode);
             }
             else
             {
-                Debug.LogError("LobbyUI component not found on lobbyPanel!");
+                Debug.LogError("lobbyUI is null!");
             }
         }
         catch (RelayServiceException e)
@@ -71,6 +182,7 @@ public class MainMenuUI : MonoBehaviour
             Debug.LogError("Relay Host Failed: " + e.Message);
         }
     }
+
 
     public async void JoinGame()
     {
@@ -82,18 +194,18 @@ public class MainMenuUI : MonoBehaviour
         {
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
 
-            if (lobbyUI != null)
-                lobbyUI.SetRoomCode(joinCode);
-
             var transport = (FishyUnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
             transport.SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
 
             InstanceFinder.ClientManager.StartConnection();
 
-            mainMenuPanel.SetActive(false);
             lobbyPanel.SetActive(true);
+            hostClientPanel.SetActive(false);
 
             Invoke(nameof(RequestJoinRoom), 2f);
+
+            if (lobbyUI != null)
+                lobbyUI.SetRoomCode(joinCode);
         }
         catch (RelayServiceException e)
         {
@@ -121,19 +233,5 @@ public class MainMenuUI : MonoBehaviour
         PlayerPrefs.SetString("Business", businessDropdown.options[businessDropdown.value].text);
         PlayerPrefs.SetString("Country", countryDropdown.options[countryDropdown.value].text);
         PlayerPrefs.Save();
-    }
-
-    public void OnBusinessChanged(int index)
-    {
-        if (index < 0 || index >= businessInfoList.Count || businessDescriptionText == null)
-        {
-            businessDescriptionText.text = "No info available.";
-            return;
-        }
-
-        BusinessInfo info = businessInfoList[index];
-        businessDescriptionText.text = $"<b>{info.businessName}</b>\n\n" +
-                                       $"<b>Description:</b>\n{info.description}\n\n" +
-                                       $"<color=green><b>Perk:</b></color>\n{info.perk}\n\n";
     }
 }
