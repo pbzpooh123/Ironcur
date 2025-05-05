@@ -18,6 +18,9 @@ public class MainMenuUI : MonoBehaviour
     public GameObject businessPanel;
     public GameObject hostClientPanel;
     public GameObject lobbyPanel;
+    public GameObject settingsPanel;
+    public GameObject soundPanel;
+    public GameObject languagePanel;
 
     [Header("Inputs")]
     public TMP_InputField nameInput;
@@ -56,6 +59,24 @@ public class MainMenuUI : MonoBehaviour
     {
         CloseAllPanels();
         nameCountryPanel.SetActive(true);
+    }
+    
+    public void OpeSettingsPanel()
+    {
+        CloseAllPanels();
+        settingsPanel.SetActive(true);
+    }
+    
+    public void OpenSoundPanel()
+    {
+        CloseAllPanels();
+        soundPanel.SetActive(true);
+    }
+    
+    public void OpenLanguagePanel()
+    {
+        CloseAllPanels();
+        languagePanel.SetActive(true);
     }
 
     public void OpenBusinessPanel()
