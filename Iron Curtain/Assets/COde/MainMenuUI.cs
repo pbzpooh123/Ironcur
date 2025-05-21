@@ -61,21 +61,27 @@ public class MainMenuUI : MonoBehaviour
         nameCountryPanel.SetActive(true);
     }
     
-    public void OpeSettingsPanel()
+    public void OpenSettingsPanel()
     {
         CloseAllPanels();
         settingsPanel.SetActive(true);
     }
     
+    public void BacktoSettingsPanel()
+    {
+        soundPanel.SetActive(false);
+        languagePanel.SetActive(false);
+    }
+    
     public void OpenSoundPanel()
     {
-        CloseAllPanels();
         soundPanel.SetActive(true);
+        languagePanel.SetActive(false);
     }
     
     public void OpenLanguagePanel()
     {
-        CloseAllPanels();
+        soundPanel.SetActive(false);
         languagePanel.SetActive(true);
     }
 
@@ -98,6 +104,7 @@ public class MainMenuUI : MonoBehaviour
         businessPanel.SetActive(false);
         hostClientPanel.SetActive(false);
         lobbyPanel.SetActive(false);
+        settingsPanel.SetActive(false);
     }
 
     // --- UI Button Handlers ---
