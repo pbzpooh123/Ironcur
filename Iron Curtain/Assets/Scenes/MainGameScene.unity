@@ -1156,6 +1156,54 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.size
+      value: 11
+      objectReference: {fileID: 0}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.data[0]
+      value: 
+      objectReference: {fileID: 1087421309}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.data[1]
+      value: 
+      objectReference: {fileID: 773949530}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.data[2]
+      value: 
+      objectReference: {fileID: 1351379423}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.data[3]
+      value: 
+      objectReference: {fileID: 69229068}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.data[4]
+      value: 
+      objectReference: {fileID: 1699834313}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.data[5]
+      value: 
+      objectReference: {fileID: 1821530175}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.data[6]
+      value: 
+      objectReference: {fileID: 1352702747}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.data[7]
+      value: 
+      objectReference: {fileID: 837427015}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.data[8]
+      value: 
+      objectReference: {fileID: 2063492755}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.data[9]
+      value: 
+      objectReference: {fileID: 401960808}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: boardTiles.Array.data[10]
+      value: 
+      objectReference: {fileID: 1793157449}
+    - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: AvailableInvestments.Array.size
       value: 10
       objectReference: {fileID: 0}

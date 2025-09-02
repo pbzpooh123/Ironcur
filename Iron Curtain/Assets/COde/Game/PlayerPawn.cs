@@ -7,23 +7,42 @@ public class PlayerPawn : NetworkBehaviour
 {
     public float moveSpeed = 4f;
     private int currentTile = 0;
+
     public readonly SyncVar<string> playerName = new();
-    public readonly SyncVar<string> business = new();
-    public readonly SyncVar<string> country = new();
+    public readonly SyncVar<string> business   = new();
+    public readonly SyncVar<string> country    = new();
+
     [SerializeField] private string _playerName;
     [SerializeField] private string _business;
     [SerializeField] private string _country;
-    
+
+    // 🔑 Track whose turn it is (you can manage this in a TurnManager later)
+    public bool isMyTurn = false;
+
+    private void Update()
+    {
+        // ✅ Only let the owner client check input
+        if (!IsOwner) return;
+
+        if (isMyTurn && Input.GetKeyDown(KeyCode.Space))
+        {
+            CmdRollDiceAndMove();
+        }
+    }
+
+    // 🖥️ Client → Server: request to roll
     [ServerRpc]
-    public void RollDiceAndMove()
+    private void CmdRollDiceAndMove()
     {
         int roll = Random.Range(1, 7);
         int targetTile = (currentTile + roll) % GameManager.Instance.TileCount;
         currentTile = targetTile;
 
         RpcMoveToTile(targetTile);
+        Debug.Log($"{playerName.Value} rolled {roll} and moved to tile {targetTile}");
     }
 
+    // 🌐 Server → All clients: play movement
     [ObserversRpc]
     private void RpcMoveToTile(int tileIndex)
     {
