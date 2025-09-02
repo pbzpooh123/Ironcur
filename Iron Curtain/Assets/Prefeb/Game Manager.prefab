@@ -48,9 +48,8 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 2948085464646735908}
   _networkObjectCache: {fileID: 0}
-  currentRound: 1
-  maxRounds: 10
-  turnDuration: 60
+  boardTiles: []
+  pawnPrefab: {fileID: 8782355087910685909, guid: b42c6843c06c3b543aaf1914005072c8, type: 3}
 --- !u!114 &2948085464646735908
 MonoBehaviour:
   m_ObjectHideFlags: 0

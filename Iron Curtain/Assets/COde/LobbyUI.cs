@@ -13,6 +13,7 @@ public class LobbyUI : MonoBehaviour
     public Button quitButton;
     public Button readyButton;
     public Button startGameButton;
+    public GameObject lobbyPanel;
 
     private void Start()
     {
@@ -92,12 +93,16 @@ public class LobbyUI : MonoBehaviour
             {
                 ReplaceScenes = ReplaceOption.All
             };
-
+            
             InstanceFinder.SceneManager.LoadConnectionScenes(loadData);
-
+            CloseAllPanels();
         }
     }
-
+    
+    private void CloseAllPanels()
+    {
+        lobbyPanel.SetActive(false);
+    }
 
 
     private void QuitLobby()

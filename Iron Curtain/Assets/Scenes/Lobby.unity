@@ -2106,7 +2106,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 211a9f6ec51ddc14f908f5acc0cd0423, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _playerPrefab: {fileID: 5675633608016281541, guid: 537df59a89f24674396514f59cba7291, type: 3}
+  _playerPrefab: {fileID: 8113397077836019727, guid: b42c6843c06c3b543aaf1914005072c8, type: 3}
   _addToDefaultScene: 1
   Spawns: []
 --- !u!114 &578322369
@@ -6310,6 +6310,7 @@ MonoBehaviour:
   quitButton: {fileID: 341472755}
   readyButton: {fileID: 361315707}
   startGameButton: {fileID: 198961054}
+  lobbyPanel: {fileID: 1464092817}
 --- !u!1 &1484253554
 GameObject:
   m_ObjectHideFlags: 0

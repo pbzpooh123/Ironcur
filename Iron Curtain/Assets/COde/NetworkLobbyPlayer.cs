@@ -25,12 +25,6 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     {
         lobbyUI = FindObjectOfType<LobbyUI>();
 
-        if (lobbyUI == null)
-        {
-            Debug.LogError("LobbyUI still not found! Check if it exists in the scene.");
-            return;
-        }
-
         if (IsOwner)
         {
             SetPlayerInfo(
@@ -141,11 +135,6 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         GameUI.Instance?.UpdatePlayerInfo(business, country);
     }
 
-    [ServerRpc]
-    public void CmdMakeInvestment(string investmentName)
-    {
-        GameManager.Instance.ReceiveInvestment(this, investmentName);
-    }
-
+ 
     
 }
