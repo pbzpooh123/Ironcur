@@ -95,7 +95,7 @@ public class LobbyUI : MonoBehaviour
             };
             
             InstanceFinder.SceneManager.LoadConnectionScenes(loadData);
-            CloseAllPanels();
+            
         }
     }
     

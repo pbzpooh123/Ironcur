@@ -76,20 +76,28 @@ public class GameManager : NetworkBehaviour
     [Server]
     private void SpawnPawnForPlayer(int connectionId, NetworkLobbyPlayer lobbyPlayer)
     {
+        if (playerPawns.ContainsKey(connectionId))
+        {
+            Debug.LogWarning($"Pawn for {connectionId} already exists, skipping duplicate spawn.");
+            return;
+        }
+
         NetworkConnection conn = InstanceFinder.ServerManager.Clients[connectionId];
         GameObject pawnObj = Instantiate(pawnPrefab, GetTilePosition(0), Quaternion.identity);
 
         PlayerPawn pawn = pawnObj.GetComponent<PlayerPawn>();
 
-        // ✅ ใช้ .Value สำหรับ SyncVar<T>
+        // ✅ Assign SyncVar<T> values from lobby data
         pawn.playerName.Value = lobbyPlayer.playerName.Value;
         pawn.business.Value   = lobbyPlayer.business.Value;
         pawn.country.Value    = lobbyPlayer.country.Value;
 
-        Spawn(pawnObj, conn); // FishNet spawn
+        // ✅ Spawn to owner
+        Spawn(pawnObj, conn);
 
         playerPawns[connectionId] = pawn;
         Debug.Log($"Spawned pawn for {pawn.playerName.Value} at Start Tile.");
     }
+
 
 }

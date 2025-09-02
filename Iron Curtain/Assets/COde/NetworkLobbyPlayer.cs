@@ -20,6 +20,7 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         base.OnStartClient();
         Invoke(nameof(FindLobbyUI), 0.5f);
     }
+    
 
     void FindLobbyUI()
     {
@@ -134,6 +135,8 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     {
         GameUI.Instance?.UpdatePlayerInfo(business, country);
     }
+    
+    
 
  
     

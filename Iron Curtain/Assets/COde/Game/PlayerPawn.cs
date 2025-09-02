@@ -10,6 +10,9 @@ public class PlayerPawn : NetworkBehaviour
     public readonly SyncVar<string> playerName = new();
     public readonly SyncVar<string> business = new();
     public readonly SyncVar<string> country = new();
+    [SerializeField] private string _playerName;
+    [SerializeField] private string _business;
+    [SerializeField] private string _country;
     
     [ServerRpc]
     public void RollDiceAndMove()
