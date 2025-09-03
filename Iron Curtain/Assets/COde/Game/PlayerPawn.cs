@@ -11,12 +11,8 @@ public class PlayerPawn : NetworkBehaviour
     public readonly SyncVar<string> playerName = new();
     public readonly SyncVar<string> business   = new();
     public readonly SyncVar<string> country    = new();
-
-    [SerializeField] private string _playerName;
-    [SerializeField] private string _business;
-    [SerializeField] private string _country;
-
-    // 🔑 Track whose turn it is (you can manage this in a TurnManager later)
+    
+   
     public bool isMyTurn = false;
 
     private void Update()

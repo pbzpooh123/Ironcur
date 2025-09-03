@@ -15,6 +15,7 @@ public class GameManager : NetworkBehaviour
     public Transform[] boardTiles; // ช่องบนกระดาน (วาง empty GameObject ตามลำดับช่อง)
 
     private Dictionary<int, PlayerPawn> playerPawns = new Dictionary<int, PlayerPawn>();
+    private Dictionary<int, int> playerSlots = new Dictionary<int, int>(); // map connectionId → HUD slot
 
     private void Awake()
     {
@@ -72,30 +73,47 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    private int nextSlotIndex = 0;
+
     [Server]
     private void MovePawnToStart(int connectionId, NetworkLobbyPlayer lobbyPlayer)
     {
         if (!InstanceFinder.ServerManager.Clients.TryGetValue(connectionId, out NetworkConnection conn))
             return;
 
-        // If player already has a pawn (their FirstObject), move it
         if (conn.FirstObject != null && conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
         {
-            int startTile = 0; // ✅ starting waypoint index
-            pawn.transform.position = GetTilePosition(startTile);
+            pawn.transform.position = GetTilePosition(0);
 
-            // ✅ Copy lobby data → pawn
             pawn.playerName.Value = lobbyPlayer.playerName.Value;
             pawn.business.Value   = lobbyPlayer.business.Value;
             pawn.country.Value    = lobbyPlayer.country.Value;
 
             playerPawns[connectionId] = pawn;
 
-            Debug.Log($"✅ Moved {pawn.playerName.Value} to Tile {startTile}.");
+            // 🎯 assign slot only once per connection
+            if (!playerSlots.TryGetValue(connectionId, out int assignedSlot))
+            {
+                assignedSlot = nextSlotIndex % 4;
+                playerSlots[connectionId] = assignedSlot;
+                nextSlotIndex++;
+            }
+
+            Debug.Log($"[Server] Assigning HUD slot {assignedSlot} to {pawn.playerName.Value}");
+
+            // send to client
+            TargetSetHUD(conn, assignedSlot, pawn.playerName.Value, pawn.business.Value, pawn.country.Value, 0f);
         }
         else
         {
-            Debug.LogWarning($"❌ No pawn found for connection {connectionId}, can’t move.");
+            Debug.LogWarning($"[Server] No pawn found for connection {connectionId}.");
         }
+    }
+
+    [TargetRpc]
+    private void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, string business, string country, float profit)
+    {
+        Debug.Log($"[Client] HUD TargetRpc → {name} (slot {slotIndex})");
+        GameHUD.Instance?.SetPlayerInfo(slotIndex, name, business, country, profit);
     }
 }
