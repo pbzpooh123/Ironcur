@@ -1,5 +1,6 @@
 using UnityEngine;
 using FishNet.Object;
+using FishNet.Connection;
 using System.Collections;
 using FishNet.Object.Synchronizing;
 
@@ -23,14 +24,14 @@ public class PlayerPawn : NetworkBehaviour
     }
 
     public void OnEndTurnButton()
-    {
+    { 
         if (!IsOwner || !isMyTurn) return;
         CmdEndTurn();
     }
 
     // --- Server side ---
     [ServerRpc]
-    private void CmdRollDiceAndMove()
+    public void CmdRollDiceAndMove()
     {
         int roll = Random.Range(1, 7);
         lastRoll.Value = roll;
@@ -46,10 +47,25 @@ public class PlayerPawn : NetworkBehaviour
     }
 
     [ServerRpc]
-    private void CmdEndTurn()
+    public void CmdEndTurn()
     {
-        isMyTurn = false;
-        TurnManager.Instance.EndTurn();
+        if (IsServer)
+        {
+            TurnManager.Instance.EndTurn();
+        }
+    }
+
+// Called by TurnManager when it’s your turn
+    [TargetRpc]
+    public void TargetStartTurn(NetworkConnection conn)
+    {
+        Debug.Log($"{playerName.Value} it’s your turn!");
+        isMyTurn = true;
+
+        // Enable UI
+        TurnUI ui = FindObjectOfType<TurnUI>();
+        if (ui != null)
+            ui.BindPawn(this);
     }
 
     // --- Client side ---
@@ -71,14 +87,7 @@ public class PlayerPawn : NetworkBehaviour
         }
         transform.position = target;
     }
-
-    [TargetRpc]
-    public void TargetStartTurn(FishNet.Connection.NetworkConnection conn)
-    {
-        isMyTurn = true;
-        UIManager.Instance.EnableTurnUI(true, false); 
-        Debug.Log($"{playerName.Value}'s turn started!");
-    }
+    
 
     [TargetRpc]
     private void TargetEnableEndTurn(FishNet.Connection.NetworkConnection conn, bool enable)

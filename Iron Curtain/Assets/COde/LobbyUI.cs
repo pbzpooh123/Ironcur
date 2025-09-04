@@ -94,7 +94,7 @@ public class LobbyUI : MonoBehaviour
                 ReplaceScenes = ReplaceOption.All
             };
             
-            InstanceFinder.SceneManager.LoadConnectionScenes(loadData);
+            InstanceFinder.SceneManager.LoadGlobalScenes(loadData);
             CloseAllPanels();
         }
     }

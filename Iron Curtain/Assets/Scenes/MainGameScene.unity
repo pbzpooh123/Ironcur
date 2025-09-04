@@ -422,6 +422,7 @@ GameObject:
   - component: {fileID: 1024428422}
   - component: {fileID: 1024428426}
   - component: {fileID: 1024428427}
+  - component: {fileID: 1024428428}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -546,6 +547,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   rollButton: {fileID: 2025619127}
   endTurnButton: {fileID: 1223464905}
+--- !u!114 &1024428428
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1024428421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 842e58e02248e0e4082283356c25ec3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rollDiceButton: {fileID: 2025619128}
+  endTurnButton: {fileID: 1223464906}
 --- !u!1 &1074580494
 GameObject:
   m_ObjectHideFlags: 0
@@ -830,13 +845,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 180536817828784201, guid: b42c6843c06c3b543aaf1914005072c8, type: 3}
-        m_TargetAssemblyTypeName: PlayerPawn, Assembly-CSharp
-        m_MethodName: OnEndTurnButton
+      - m_Target: {fileID: 1024428421}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
@@ -1597,13 +1612,13 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 180536817828784201, guid: b42c6843c06c3b543aaf1914005072c8, type: 3}
-        m_TargetAssemblyTypeName: PlayerPawn, Assembly-CSharp
-        m_MethodName: OnRollDiceButton
+      - m_Target: {fileID: 1024428421}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_ObjectArgumentAssemblyTypeName: 
           m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
