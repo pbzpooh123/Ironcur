@@ -12,10 +12,16 @@ public class GameManager : NetworkBehaviour
     public static GameManager Instance;
 
     [Header("Board Setup")]
-    public Transform[] boardTiles; // ช่องบนกระดาน (วาง empty GameObject ตามลำดับช่อง)
+    public Transform[] boardTiles; 
 
     private Dictionary<int, PlayerPawn> playerPawns = new Dictionary<int, PlayerPawn>();
-    private Dictionary<int, int> playerSlots = new Dictionary<int, int>(); // map connectionId → HUD slot
+    private Dictionary<int, int> playerSlots = new Dictionary<int, int>(); 
+    
+    public List<PlayerPawn> Players => new List<PlayerPawn>(playerPawns.Values);
+
+    
+    
+    
 
     private void Awake()
     {

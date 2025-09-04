@@ -125,10 +125,8 @@ MonoBehaviour:
   _componentIndexCache: 0
   _addedNetworkObject: {fileID: 8113397077836019727}
   _networkObjectCache: {fileID: 8113397077836019727}
-  moveSpeed: 4
-  _playerName: 
-  _business: 
-  _country: 
+  moveSpeed: 200
+  isMyTurn: 0
 --- !u!114 &8113397077836019727
 MonoBehaviour:
   m_ObjectHideFlags: 0
