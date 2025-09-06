@@ -42,7 +42,6 @@ public class PlayerPawn : NetworkBehaviour
         RpcMoveToTile(targetTile);
         Debug.Log($"{playerName.Value} rolled {roll} and moved to tile {targetTile}");
 
-        // ✅ After movement finishes → UI lets them press End Turn
         TargetEnableEndTurn(Owner, true);
     }
 
@@ -55,7 +54,6 @@ public class PlayerPawn : NetworkBehaviour
         }
     }
 
-// Called by TurnManager when it’s your turn
     [TargetRpc]
     public void TargetStartTurn(NetworkConnection conn)
     {
@@ -90,9 +88,11 @@ public class PlayerPawn : NetworkBehaviour
     
 
     [TargetRpc]
-    private void TargetEnableEndTurn(FishNet.Connection.NetworkConnection conn, bool enable)
+    private void TargetEnableEndTurn(NetworkConnection conn, bool enable)
     {
-        if (enable)
-            UIManager.Instance.EnableTurnUI(false, true); 
+        TurnUI ui = FindObjectOfType<TurnUI>();
+        if (ui != null)
+            ui.SetEndTurnInteractable(enable);
     }
+
 }

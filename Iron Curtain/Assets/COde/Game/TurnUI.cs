@@ -41,4 +41,10 @@ public class TurnUI : MonoBehaviour
             endTurnButton.interactable = false;
         }
     }
+    
+    public void SetEndTurnInteractable(bool enable)
+    {
+        endTurnButton.interactable = enable;
+    }
+
 }
