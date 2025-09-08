@@ -1,11 +1,14 @@
 using UnityEngine;
 using UnityEngine.UI;
 using FishNet.Object;
+using TMPro;
 
 public class TurnUI : MonoBehaviour
 {
     public Button rollDiceButton;
     public Button endTurnButton;
+    
+    
 
     private PlayerPawn myPawn;
 

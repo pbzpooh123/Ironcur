@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
+using TMPro;
 
 public class TurnManager : NetworkBehaviour
 {
@@ -10,6 +11,8 @@ public class TurnManager : NetworkBehaviour
     public readonly SyncVar<int> currentPlayerIndex = new();
     public readonly SyncVar<int> turnCount = new();
     public readonly SyncVar<int> roundCount = new();
+
+    public TMP_Text roundtext;
 
     private void Awake()
     {
@@ -28,8 +31,7 @@ public class TurnManager : NetworkBehaviour
 
         var players = GameManager.Instance.Players;
         if (players.Count == 0) return;
-
-        // wrap index safely in case players leave
+        
         if (currentPlayerIndex.Value >= players.Count)
             currentPlayerIndex.Value = 0;
 
@@ -47,7 +49,7 @@ public class TurnManager : NetworkBehaviour
 
         int nextIndex = currentPlayerIndex.Value + 1;
 
-        // if we reach the end of the connected players → new round
+        // ถ้าถึงผู้เล่นคนสุดท้ายที่จอย → new round
         if (nextIndex >= players.Count)
         {
             nextIndex = 0;
@@ -55,15 +57,21 @@ public class TurnManager : NetworkBehaviour
 
             Debug.Log($"[TurnManager] Completed a full cycle of turns. TurnCount={turnCount.Value}");
 
-            if (turnCount.Value % players.Count == 0) // full cycle of current players
+            if (turnCount.Value % players.Count == 0) 
             {
                 roundCount.Value++;
+                roundtext.text = roundCount.Value.ToString();;
                 Debug.Log($"[TurnManager] Round {roundCount.Value} completed!");
             }
         }
 
         currentPlayerIndex.Value = nextIndex;
-
+        
+        if (roundCount.Value % 3 == 0)
+        {
+            Debug.Log("Main Event.");
+            return;
+        }
         if (roundCount.Value >= 15)
         {
             Debug.Log("Game Over! Count money and decide winner.");
