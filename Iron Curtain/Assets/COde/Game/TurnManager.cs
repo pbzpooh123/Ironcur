@@ -67,11 +67,17 @@ public class TurnManager : NetworkBehaviour
 
         currentPlayerIndex.Value = nextIndex;
         
-        if (roundCount.Value % 3 == 0)
+        if (turnCount.Value % players.Count == 0)
         {
-            Debug.Log("Main Event.");
-            return;
+            roundCount.Value++;
+
+            if (roundCount.Value % 3 == 0)
+            {
+                EventManager.Instance.TriggerMainEvent(roundCount.Value);
+                // Game pauses until all ready
+            }
         }
+
         if (roundCount.Value >= 15)
         {
             Debug.Log("Game Over! Count money and decide winner.");

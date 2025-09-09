@@ -84,6 +84,21 @@ public class PlayerPawn : NetworkBehaviour
             yield return null;
         }
         transform.position = target;
+        TileData data = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
+        if (data != null && IsServer)
+        {
+            switch (data.tileType)
+            {
+                case TileType.Event:
+                    EventManager.Instance.TriggerTileEvent(this, data.description);
+                    break;
+
+                case TileType.Investment:
+                    // later → MarketManager.Instance.OpenInvestment(this);
+                    break;
+            }
+        }
+
     }
     
 
