@@ -121,6 +121,19 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         lobbyUI?.UpdatePlayerList(NetworkManagerLobby.Instance.GetPlayerList());
     }
    
-    
+    [TargetRpc]
+    public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, string business, string country, float profit)
+    {
+        Debug.Log($"[Client] TargetSetHUD received → {name} (slot {slotIndex})");
+
+        if (GameHUD.Instance == null)
+        {
+            Debug.LogError("❌ GameHUD not found in MainGame scene!");
+            return;
+        }
+
+        GameHUD.Instance.CreatePlayerPanel(slotIndex, name, business, country, profit);
+    }
+
     
 }

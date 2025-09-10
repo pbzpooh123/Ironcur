@@ -5,49 +5,51 @@ public class GameHUD : MonoBehaviour
 {
     public static GameHUD Instance;
 
-    [Header("Anchors")]
+    [Header("UI Setup")]
+    public GameObject playerPanelPrefab; 
+    
+    [Header("Corner Anchors")]
     public Transform topLeftAnchor;
     public Transform topRightAnchor;
     public Transform bottomLeftAnchor;
     public Transform bottomRightAnchor;
 
-    [Header("Prefab")]
-    public GameObject playerPanelPrefab;
-
-    private PlayerInfoPanel[] slots;
+    private Transform[] anchors;
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-
-        slots = new PlayerInfoPanel[4];
+        Instance = this;
+        anchors = new Transform[4] { topLeftAnchor, topRightAnchor, bottomLeftAnchor, bottomRightAnchor };
     }
 
-    public void SetPlayerInfo(int slotIndex, string name, string business, string country, float profit = 0f)
+    public void CreatePlayerPanel(int slotIndex, string name, string business, string country, float profit)
     {
-        if (slotIndex < 0 || slotIndex >= 4) return;
-
-        if (slots[slotIndex] == null)
+        if (playerPanelPrefab == null)
         {
-            Transform parent = slotIndex switch
-            {
-                0 => topLeftAnchor,
-                1 => topRightAnchor,
-                2 => bottomLeftAnchor,
-                3 => bottomRightAnchor,
-                _ => topLeftAnchor
-            };
-
-            GameObject panelObj = Instantiate(playerPanelPrefab, parent);
-            slots[slotIndex] = panelObj.GetComponent<PlayerInfoPanel>();
+            Debug.LogError("❌ Player Panel Prefab is not assigned!");
+            return;
         }
 
-        slots[slotIndex].SetInfo(name, business, country, profit);
-    }
+        if (slotIndex < 0 || slotIndex >= anchors.Length)
+        {
+            Debug.LogError($"❌ Slot {slotIndex} is invalid!");
+            return;
+        }
 
-    public void UpdateProfit(int slotIndex, float profit)
-    {
-        if (slotIndex < 0 || slotIndex >= 4 || slots[slotIndex] == null) return;
-        slots[slotIndex].UpdateProfit(profit);
+        // Spawn panel at the correct corner
+        GameObject panel = Instantiate(playerPanelPrefab, anchors[slotIndex]);
+        panel.name = $"PlayerPanel_{slotIndex}";
+
+        TMP_Text[] texts = panel.GetComponentsInChildren<TMP_Text>();
+        if (texts.Length >= 4)
+        {
+            texts[0].text = name;
+            texts[1].text = business;
+            texts[2].text = country;
+            texts[3].text = $"Profit: {profit:0}";
+        }
+
+        Debug.Log($"✅ Spawned Player Panel for {name} in slot {slotIndex}");
     }
+    
 }

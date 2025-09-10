@@ -97,7 +97,6 @@ public class GameManager : NetworkBehaviour
 
             playerPawns[connectionId] = pawn;
 
-            // 🎯 assign slot only once per connection
             if (!playerSlots.TryGetValue(connectionId, out int assignedSlot))
             {
                 assignedSlot = nextSlotIndex % 4;
@@ -105,10 +104,16 @@ public class GameManager : NetworkBehaviour
                 nextSlotIndex++;
             }
 
+            lobbyPlayer.TargetSetHUD(
+                lobbyPlayer.Owner,
+                assignedSlot,
+                pawn.playerName.Value,
+                pawn.business.Value,
+                pawn.country.Value,
+                0f
+            );
+            
             Debug.Log($"[Server] Assigning HUD slot {assignedSlot} to {pawn.playerName.Value}");
-
-            // send to client
-            TargetSetHUD(conn, assignedSlot, pawn.playerName.Value, pawn.business.Value, pawn.country.Value, 0f);
         }
         else
         {
@@ -116,10 +121,5 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    [TargetRpc]
-    private void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, string business, string country, float profit)
-    {
-        Debug.Log($"[Client] HUD TargetRpc → {name} (slot {slotIndex})");
-        GameHUD.Instance?.SetPlayerInfo(slotIndex, name, business, country, profit);
-    }
+  
 }
