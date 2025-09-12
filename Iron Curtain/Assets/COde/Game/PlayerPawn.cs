@@ -15,6 +15,14 @@ public class PlayerPawn : NetworkBehaviour
     public readonly SyncVar<int>    lastRoll   = new();
 
     public bool isMyTurn = false;
+    
+    public readonly SyncVar<int> money = new(); // starting money
+
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        money.Value = 500; // starting cash
+    }
 
     // === Called from UI Button ===
     public void OnRollDiceButton()
@@ -36,14 +44,20 @@ public class PlayerPawn : NetworkBehaviour
         int roll = Random.Range(1, 7);
         lastRoll.Value = roll;
 
-        int targetTile = (currentTile + roll) % GameManager.Instance.TileCount;
-        currentTile = targetTile;
-
-        RpcMoveToTile(targetTile);
-        Debug.Log($"{playerName.Value} rolled {roll} and moved to tile {targetTile}");
+        // Don't set currentTile here! Only decide roll
+        RpcMoveSteps(roll);
+        Debug.Log($"{playerName.Value} rolled {roll}");
 
         TargetEnableEndTurn(Owner, true);
     }
+    
+    [ObserversRpc]
+    private void RpcMoveSteps(int steps)
+    {
+        StopAllCoroutines();
+        StartCoroutine(MoveStepByStep(steps));
+    }
+
 
     [ServerRpc]
     public void CmdEndTurn()
@@ -68,39 +82,67 @@ public class PlayerPawn : NetworkBehaviour
 
     // --- Client side ---
     [ObserversRpc]
-    private void RpcMoveToTile(int tileIndex)
+    private void RpcMoveToTile(int targetTile)
     {
         StopAllCoroutines();
-        StartCoroutine(SmoothMove(tileIndex));
+        StartCoroutine(MoveStepByStep(targetTile));
     }
 
-    private IEnumerator SmoothMove(int tileIndex)
+    private IEnumerator MoveStepByStep(int steps)
     {
-        Vector3 target = GameManager.Instance.GetTilePosition(tileIndex);
+        int tileCount = GameManager.Instance.TileCount;
 
-        while (Vector3.Distance(transform.position, target) > 0.05f)
+        for (int i = 1; i <= steps; i++)
         {
-            transform.position = Vector3.MoveTowards(transform.position, target, moveSpeed * Time.deltaTime);
-            yield return null;
-        }
-        transform.position = target;
-        TileData data = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
-        if (data != null && IsServer)
-        {
-            switch (data.tileType)
+            int nextTile = (currentTile + 1) % tileCount;
+            Vector3 targetPos = GameManager.Instance.GetTilePosition(nextTile);
+
+            while (Vector3.Distance(transform.position, targetPos) > 0.05f)
             {
-                case TileType.Event:
-                    EventManager.Instance.TriggerTileEvent(this, data.description);
-                    break;
+                transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
+                yield return null;
+            }
 
-                case TileType.Investment:
-                    // later → MarketManager.Instance.OpenInvestment(this);
-                    break;
+            transform.position = targetPos;
+            currentTile = nextTile; // ✅ update position each step
+
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        // === Trigger tile logic only after finishing movement ===
+        if (IsServer)
+        {
+            TileData data = GameManager.Instance.boardTiles[currentTile].GetComponent<TileData>();
+            if (data != null)
+            {
+                switch (data.tileType)
+                {
+                    case TileType.Event:
+                        EventManager.Instance.TriggerTileEvent(this, data.description);
+                        break;
+
+                    case TileType.Investment:
+                        if (data.owner == null)
+                        {
+                            TargetShowInvestmentUI(Owner, currentTile, data.description, data.companyCost, true);
+                        }
+                        else if (data.owner != this && data.sharesOwned < data.maxShares)
+                        {
+                            int sharePrice = Mathf.RoundToInt(data.companyCost * 0.5f);
+                            TargetShowInvestmentUI(Owner, currentTile, $"{data.owner.playerName.Value}'s company", sharePrice, false);
+                        }
+                        break;
+                }
             }
         }
-
     }
+
     
+    [TargetRpc]
+    private void TargetShowInvestmentUI(NetworkConnection conn, int tileIndex, string companyName,int cost , bool isCompany)
+    {
+        InvestmentUI.Instance.ShowOptions(tileIndex, companyName,cost,isCompany);
+    }
 
     [TargetRpc]
     private void TargetEnableEndTurn(NetworkConnection conn, bool enable)

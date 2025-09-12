@@ -133,7 +133,7 @@ GameObject:
   - component: {fileID: 69229068}
   - component: {fileID: 69229069}
   m_Layer: 0
-  m_Name: Waypoints 1 (3)
+  m_Name: Waypoints 4
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -168,6 +168,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   description: Side Event 1
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &98137011
 GameObject:
   m_ObjectHideFlags: 0
@@ -214,6 +219,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &118527604
 GameObject:
   m_ObjectHideFlags: 0
@@ -225,7 +235,7 @@ GameObject:
   - component: {fileID: 118527605}
   - component: {fileID: 118527606}
   m_Layer: 0
-  m_Name: Waypoints 1 (11)
+  m_Name: Waypoints 11
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -260,6 +270,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &121884037
 GameObject:
   m_ObjectHideFlags: 0
@@ -306,6 +321,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &265888313
 GameObject:
   m_ObjectHideFlags: 0
@@ -352,6 +372,90 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
+--- !u!1 &312578718
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 312578719}
+  - component: {fileID: 312578721}
+  - component: {fileID: 312578720}
+  m_Layer: 5
+  m_Name: Invesment tiles
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!224 &312578719
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 312578718}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.73132, y: 0.73132, z: 0.73132}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2062596618}
+  - {fileID: 847709262}
+  - {fileID: 1338629080}
+  - {fileID: 1892093703}
+  m_Father: {fileID: 1024428425}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &312578720
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 312578718}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 10907, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &312578721
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 312578718}
+  m_CullTransparentMesh: 1
 --- !u!1 &315532495
 GameObject:
   m_ObjectHideFlags: 0
@@ -363,7 +467,7 @@ GameObject:
   - component: {fileID: 315532496}
   - component: {fileID: 315532497}
   m_Layer: 0
-  m_Name: Waypoints 1 (15)
+  m_Name: Waypoints 15
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -398,6 +502,145 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
+--- !u!1 &322430028
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 322430029}
+  - component: {fileID: 322430031}
+  - component: {fileID: 322430030}
+  m_Layer: 5
+  m_Name: Text (TMP)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &322430029
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322430028}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1892093703}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &322430030
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322430028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: Skip
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4281479730
+  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 24
+  m_fontSizeBase: 24
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &322430031
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 322430028}
+  m_CullTransparentMesh: 1
 --- !u!1 &401960807
 GameObject:
   m_ObjectHideFlags: 0
@@ -409,7 +652,7 @@ GameObject:
   - component: {fileID: 401960808}
   - component: {fileID: 401960809}
   m_Layer: 0
-  m_Name: Waypoints 1 (9)
+  m_Name: Waypoints 10
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -444,6 +687,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 0
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &423422742
 GameObject:
   m_ObjectHideFlags: 0
@@ -490,6 +738,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &475119457
 GameObject:
   m_ObjectHideFlags: 0
@@ -536,6 +789,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &528077567
 GameObject:
   m_ObjectHideFlags: 0
@@ -582,6 +840,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &543362440
 GameObject:
   m_ObjectHideFlags: 0
@@ -647,7 +910,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Main Event
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -727,7 +990,7 @@ GameObject:
   - component: {fileID: 618608539}
   - component: {fileID: 618608540}
   m_Layer: 0
-  m_Name: Waypoints 1 (16)
+  m_Name: Waypoints 16
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -762,6 +1025,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &630938556
 GameObject:
   m_ObjectHideFlags: 0
@@ -808,6 +1076,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &634894255
 GameObject:
   m_ObjectHideFlags: 0
@@ -854,6 +1127,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &773949529
 GameObject:
   m_ObjectHideFlags: 0
@@ -865,7 +1143,7 @@ GameObject:
   - component: {fileID: 773949530}
   - component: {fileID: 773949531}
   m_Layer: 0
-  m_Name: Waypoints 1 (1)
+  m_Name: Waypoints 2
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -900,6 +1178,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &774712083
 GameObject:
   m_ObjectHideFlags: 0
@@ -932,7 +1215,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 848, y: -428}
+  m_AnchoredPosition: {x: 888, y: -468}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &786955240
@@ -981,6 +1264,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &816270828
 GameObject:
   m_ObjectHideFlags: 0
@@ -1113,7 +1401,7 @@ GameObject:
   - component: {fileID: 837427015}
   - component: {fileID: 837427016}
   m_Layer: 0
-  m_Name: 'Waypoints 1 (7) '
+  m_Name: Waypoints 8
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -1148,6 +1436,145 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 0
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
+--- !u!1 &847709261
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 847709262}
+  - component: {fileID: 847709263}
+  - component: {fileID: 847709264}
+  m_Layer: 5
+  m_Name: Price
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &847709262
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 847709261}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2.092674, y: 2.092674, z: 2.092674}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 312578719}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 143}
+  m_SizeDelta: {x: 200, y: 50}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &847709263
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 847709261}
+  m_CullTransparentMesh: 1
+--- !u!114 &847709264
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 847709261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4278190080
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 36
+  m_fontSizeBase: 36
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 1
+  m_VerticalAlignment: 256
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &851475949
 GameObject:
   m_ObjectHideFlags: 0
@@ -1194,6 +1621,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &869416078
 GameObject:
   m_ObjectHideFlags: 0
@@ -1240,6 +1672,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &874533102
 GameObject:
   m_ObjectHideFlags: 0
@@ -1286,6 +1723,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &903583031
 GameObject:
   m_ObjectHideFlags: 0
@@ -1332,6 +1774,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &943587552
 GameObject:
   m_ObjectHideFlags: 0
@@ -1435,7 +1882,7 @@ GameObject:
   - component: {fileID: 1018004848}
   - component: {fileID: 1018004849}
   m_Layer: 0
-  m_Name: Waypoints 1 (17)
+  m_Name: Waypoints 17
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -1470,6 +1917,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1024428421
 GameObject:
   m_ObjectHideFlags: 0
@@ -1485,6 +1937,7 @@ GameObject:
   - component: {fileID: 1024428428}
   - component: {fileID: 1024428429}
   - component: {fileID: 1024428430}
+  - component: {fileID: 1024428431}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -1571,6 +2024,7 @@ RectTransform:
   - {fileID: 2025619131}
   - {fileID: 1223464909}
   - {fileID: 1070390113}
+  - {fileID: 312578719}
   - {fileID: 1041645452}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -1625,6 +2079,23 @@ MonoBehaviour:
   topRightAnchor: {fileID: 1837240890}
   bottomLeftAnchor: {fileID: 1930916166}
   bottomRightAnchor: {fileID: 774712084}
+--- !u!114 &1024428431
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1024428421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ffe1fdd3704963f4b8b41aecd7bb54e6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  panel: {fileID: 312578718}
+  titleText: {fileID: 2062596620}
+  costText: {fileID: 847709264}
+  buyButton: {fileID: 1338629083}
+  skipButton: {fileID: 1892093700}
 --- !u!1 &1033973181
 GameObject:
   m_ObjectHideFlags: 0
@@ -1636,7 +2107,7 @@ GameObject:
   - component: {fileID: 1033973182}
   - component: {fileID: 1033973183}
   m_Layer: 0
-  m_Name: Waypoints 1 (13)
+  m_Name: Waypoints 13
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -1671,6 +2142,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1041645451
 GameObject:
   m_ObjectHideFlags: 0
@@ -1939,6 +2415,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 3
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1190801691
 GameObject:
   m_ObjectHideFlags: 0
@@ -2202,6 +2683,183 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
+--- !u!1 &1275964216
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1275964217}
+  - component: {fileID: 1275964218}
+  m_Layer: 0
+  m_Name: Waypoints 10 (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1275964217
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1275964216}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -278, y: -33.345673, z: -93.59735}
+  m_LocalScale: {x: 100, y: 100, z: 100}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1968640749}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1275964218
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1275964216}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tileType: 0
+  description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
+--- !u!1 &1338629079
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1338629080}
+  - component: {fileID: 1338629082}
+  - component: {fileID: 1338629081}
+  - component: {fileID: 1338629083}
+  m_Layer: 5
+  m_Name: Buy
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &1338629080
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1338629079}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2.577, y: 2.577, z: 2.577}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1733418981}
+  m_Father: {fileID: 312578719}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -491, y: -417}
+  m_SizeDelta: {x: 160, y: 30}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1338629081
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1338629079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1338629082
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1338629079}
+  m_CullTransparentMesh: 1
+--- !u!114 &1338629083
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1338629079}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 1338629081}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1351379422
 GameObject:
   m_ObjectHideFlags: 0
@@ -2213,7 +2871,7 @@ GameObject:
   - component: {fileID: 1351379423}
   - component: {fileID: 1351379424}
   m_Layer: 0
-  m_Name: Waypoints 1 (2)
+  m_Name: Waypoints 3
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -2248,6 +2906,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 0
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1352702746
 GameObject:
   m_ObjectHideFlags: 0
@@ -2259,7 +2922,7 @@ GameObject:
   - component: {fileID: 1352702747}
   - component: {fileID: 1352702748}
   m_Layer: 0
-  m_Name: Waypoints 1 (6)
+  m_Name: Waypoints 7
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -2294,6 +2957,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   description: Side Event 3
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1419033316
 GameObject:
   m_ObjectHideFlags: 0
@@ -2608,6 +3276,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1471565496
 GameObject:
   m_ObjectHideFlags: 0
@@ -2654,6 +3327,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1523148270
 GameObject:
   m_ObjectHideFlags: 0
@@ -2700,6 +3378,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1542772444
 GameObject:
   m_ObjectHideFlags: 0
@@ -2845,7 +3528,7 @@ GameObject:
   - component: {fileID: 1621081717}
   - component: {fileID: 1621081718}
   m_Layer: 0
-  m_Name: Waypoints 1 (12)
+  m_Name: Waypoints 12
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -2880,6 +3563,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1659339365
 GameObject:
   m_ObjectHideFlags: 0
@@ -2912,7 +3600,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -848, y: 450}
+  m_AnchoredPosition: {x: -893, y: 473}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1684293465
@@ -2961,6 +3649,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1699834312
 GameObject:
   m_ObjectHideFlags: 0
@@ -2972,7 +3665,7 @@ GameObject:
   - component: {fileID: 1699834313}
   - component: {fileID: 1699834314}
   m_Layer: 0
-  m_Name: Waypoints 1 (4)
+  m_Name: Waypoints 5
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -3007,7 +3700,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 0
   description: 
---- !u!1 &1793157448
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
+--- !u!1 &1733418980
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -3015,44 +3713,132 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 1793157449}
-  - component: {fileID: 1793157450}
-  m_Layer: 0
-  m_Name: Waypoints 1 (10)
+  - component: {fileID: 1733418981}
+  - component: {fileID: 1733418983}
+  - component: {fileID: 1733418982}
+  m_Layer: 5
+  m_Name: Text (TMP)
   m_TagString: Untagged
-  m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
+  m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &1793157449
-Transform:
+--- !u!224 &1733418981
+RectTransform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1793157448}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -290, y: -33.345673, z: -93.59735}
-  m_LocalScale: {x: 100, y: 100, z: 100}
+  m_GameObject: {fileID: 1733418980}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1968640749}
+  m_Father: {fileID: 1338629080}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1793157450
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 0, y: 0}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1733418982
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1793157448}
+  m_GameObject: {fileID: 1733418980}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
-  description: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: Buy
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4281479730
+  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 24
+  m_fontSizeBase: 24
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &1733418983
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1733418980}
+  m_CullTransparentMesh: 1
 --- !u!1 &1821530174
 GameObject:
   m_ObjectHideFlags: 0
@@ -3064,7 +3850,7 @@ GameObject:
   - component: {fileID: 1821530175}
   - component: {fileID: 1821530176}
   m_Layer: 0
-  m_Name: Waypoints 1 (5)
+  m_Name: Waypoints 6
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -3099,6 +3885,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 0
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1837240889
 GameObject:
   m_ObjectHideFlags: 0
@@ -3131,7 +3922,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 830, y: 450}
+  m_AnchoredPosition: {x: 882, y: 476}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1844927377
@@ -3145,7 +3936,7 @@ GameObject:
   - component: {fileID: 1844927378}
   - component: {fileID: 1844927379}
   m_Layer: 0
-  m_Name: Waypoints 1 (14)
+  m_Name: Waypoints 14
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -3180,6 +3971,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1880573666
 GameObject:
   m_ObjectHideFlags: 0
@@ -3314,6 +4110,127 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1880573666}
   m_CullTransparentMesh: 1
+--- !u!1 &1892093699
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1892093703}
+  - component: {fileID: 1892093702}
+  - component: {fileID: 1892093701}
+  - component: {fileID: 1892093700}
+  m_Layer: 5
+  m_Name: Skip
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1892093700
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1892093699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Navigation:
+    m_Mode: 3
+    m_WrapAround: 0
+    m_SelectOnUp: {fileID: 0}
+    m_SelectOnDown: {fileID: 0}
+    m_SelectOnLeft: {fileID: 0}
+    m_SelectOnRight: {fileID: 0}
+  m_Transition: 1
+  m_Colors:
+    m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
+    m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_PressedColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 1}
+    m_SelectedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
+    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_ColorMultiplier: 1
+    m_FadeDuration: 0.1
+  m_SpriteState:
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
+    m_SelectedSprite: {fileID: 0}
+    m_DisabledSprite: {fileID: 0}
+  m_AnimationTriggers:
+    m_NormalTrigger: Normal
+    m_HighlightedTrigger: Highlighted
+    m_PressedTrigger: Pressed
+    m_SelectedTrigger: Selected
+    m_DisabledTrigger: Disabled
+  m_Interactable: 1
+  m_TargetGraphic: {fileID: 1892093701}
+  m_OnClick:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1892093701
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1892093699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  m_Type: 1
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &1892093702
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1892093699}
+  m_CullTransparentMesh: 1
+--- !u!224 &1892093703
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1892093699}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2.577, y: 2.577, z: 2.577}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 322430029}
+  m_Father: {fileID: 312578719}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 533, y: -417}
+  m_SizeDelta: {x: 160, y: 30}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1930916165
 GameObject:
   m_ObjectHideFlags: 0
@@ -3346,7 +4263,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -848, y: -428}
+  m_AnchoredPosition: {x: -895, y: -473}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1959678375
@@ -3395,6 +4312,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1968035974
 GameObject:
   m_ObjectHideFlags: 0
@@ -3441,6 +4363,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &1968640748
 GameObject:
   m_ObjectHideFlags: 0
@@ -3480,7 +4407,7 @@ Transform:
   - {fileID: 837427015}
   - {fileID: 2063492755}
   - {fileID: 401960808}
-  - {fileID: 1793157449}
+  - {fileID: 1275964217}
   - {fileID: 118527605}
   - {fileID: 1621081717}
   - {fileID: 1033973182}
@@ -3691,6 +4618,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: EVENT
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &2056661298
 GameObject:
   m_ObjectHideFlags: 0
@@ -3731,7 +4663,7 @@ MonoBehaviour:
   - {fileID: 837427015}
   - {fileID: 2063492755}
   - {fileID: 401960808}
-  - {fileID: 1793157449}
+  - {fileID: 0}
   - {fileID: 118527605}
   - {fileID: 1621081717}
   - {fileID: 1033973182}
@@ -3776,6 +4708,140 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2062596617
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2062596618}
+  - component: {fileID: 2062596619}
+  - component: {fileID: 2062596620}
+  m_Layer: 5
+  m_Name: Text (TMP)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &2062596618
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2062596617}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 2.092674, y: 2.092674, z: 2.092674}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 312578719}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 427}
+  m_SizeDelta: {x: 200, y: 50}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!222 &2062596619
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2062596617}
+  m_CullTransparentMesh: 1
+--- !u!114 &2062596620
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2062596617}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4278190080
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: -1183493901
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 36
+  m_fontSizeBase: 36
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 1
+  m_VerticalAlignment: 256
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_enableWordWrapping: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 1
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
 --- !u!1 &2063492754
 GameObject:
   m_ObjectHideFlags: 0
@@ -3787,7 +4853,7 @@ GameObject:
   - component: {fileID: 2063492755}
   - component: {fileID: 2063492756}
   m_Layer: 0
-  m_Name: Waypoints 1 (8)
+  m_Name: Waypoints 9
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -3822,6 +4888,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   description: Side Event 2
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &2071270207
 GameObject:
   m_ObjectHideFlags: 0
@@ -3868,6 +4939,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   description: 
+  owner: {fileID: 0}
+  sharesOwned: 0
+  maxShares: 4
+  companyCost: 100
+  shareCost: 25
 --- !u!1 &2115263563
 GameObject:
   m_ObjectHideFlags: 0
@@ -3991,7 +5067,7 @@ PrefabInstance:
     - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: boardTiles.Array.data[10]
       value: 
-      objectReference: {fileID: 1793157449}
+      objectReference: {fileID: 1275964217}
     - target: {fileID: 540935159818054347, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: boardTiles.Array.data[11]
       value: 
@@ -4210,6 +5286,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8924475397208095649, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4936575218940012831}
+    - targetCorrespondingSourceObject: {fileID: 8924475397208095649, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4936575218940012832}
   m_SourcePrefab: {fileID: 100100000, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
 --- !u!1 &4936575218940012828 stripped
 GameObject:
@@ -4253,6 +5332,21 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1b485940fa158d145a7ebcf7d64c4312, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 4936575218940012829}
+  _networkObjectCache: {fileID: 0}
+--- !u!114 &4936575218940012832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4936575218940012828}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ce878a6b822b4c45a4a647bcd6d2891, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _componentIndexCache: 255

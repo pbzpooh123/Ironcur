@@ -17,6 +17,7 @@ public class TurnManager : NetworkBehaviour
     private void Awake()
     {
         Instance = this;
+        roundtext.text = $"Round : {roundCount.Value}";
     }
 
     public override void OnStartServer()
@@ -60,22 +61,17 @@ public class TurnManager : NetworkBehaviour
             if (turnCount.Value % players.Count == 0) 
             {
                 roundCount.Value++;
-                roundtext.text = roundCount.Value.ToString();;
+                roundtext.text = $"Round : {roundCount.Value}";
                 Debug.Log($"[TurnManager] Round {roundCount.Value} completed!");
             }
         }
 
         currentPlayerIndex.Value = nextIndex;
-        
-        if (turnCount.Value % players.Count == 0)
-        {
-            roundCount.Value++;
 
-            if (roundCount.Value % 3 == 0)
-            {
+        if (roundCount.Value % 3 == 0)
+        {
                 EventManager.Instance.TriggerMainEvent(roundCount.Value);
                 // Game pauses until all ready
-            }
         }
 
         if (roundCount.Value >= 15)
