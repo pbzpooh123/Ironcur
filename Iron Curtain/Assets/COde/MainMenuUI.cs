@@ -34,7 +34,11 @@ public class MainMenuUI : MonoBehaviour
 
     [Header("Networking")]
     public LobbyUI lobbyUI;
+    
+    private bool isHosting = false;
+    public UnityEngine.UI.Button hostButton;
 
+    
     private void Start()
     {
         // Load last used player name if available
@@ -172,6 +176,14 @@ public class MainMenuUI : MonoBehaviour
 
     public async void HostGame()
     {
+        if (isHosting)   // prevent double execution
+        {
+            Debug.LogWarning("Already hosting, ignoring duplicate click.");
+            return;
+        }
+        isHosting = true;
+        hostButton.interactable = false;
+
         Debug.Log("HostGame() called");
 
         SavePlayerInfo();
@@ -208,6 +220,7 @@ public class MainMenuUI : MonoBehaviour
         catch (RelayServiceException e)
         {
             Debug.LogError("Relay Host Failed: " + e.Message);
+            isHosting = false; // reset on failure
         }
     }
 

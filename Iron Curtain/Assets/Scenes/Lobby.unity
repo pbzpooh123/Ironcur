@@ -6013,6 +6013,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 64ff8e1f590101745ad15bf39397613d, type: 2}
   - {fileID: 11400000, guid: 584dd6455e074654bb419add52faf097, type: 2}
   lobbyUI: {fileID: 1464092821}
+  hostButton: {fileID: 674318867}
 --- !u!1 &1420178516
 GameObject:
   m_ObjectHideFlags: 0
