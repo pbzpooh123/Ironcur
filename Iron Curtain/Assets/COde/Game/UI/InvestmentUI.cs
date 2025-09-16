@@ -31,7 +31,15 @@ public class InvestmentUI : MonoBehaviour
         buyButton.onClick.RemoveAllListeners();
         skipButton.onClick.RemoveAllListeners();
 
-        buyButton.onClick.AddListener(OnBuyCompanyClicked);
+        if (buyingCompany)
+        {
+            buyButton.onClick.AddListener(OnBuyCompanyClicked);
+        }
+        else
+        {
+            buyButton.onClick.AddListener(OnBuyShareClicked);
+        }
+
         skipButton.onClick.AddListener(OnSkipClicked);
     }
     
@@ -40,6 +48,15 @@ public class InvestmentUI : MonoBehaviour
         if (InstanceFinder.ClientManager.Connection != null)
         {
             MarketManager.Instance.CmdBuyCompany(InstanceFinder.ClientManager.Connection, currentTileIndex);
+            panel.SetActive(false);
+        }
+    }
+    
+    public void OnBuyShareClicked()
+    {
+        if (InstanceFinder.ClientManager.Connection != null)
+        {
+            MarketManager.Instance.CmdBuyShare(InstanceFinder.ClientManager.Connection, currentTileIndex);
             panel.SetActive(false);
         }
     }

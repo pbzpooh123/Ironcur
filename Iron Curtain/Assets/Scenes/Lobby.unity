@@ -6306,7 +6306,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomCodeText: {fileID: 1993546067}
   playerListContainer: {fileID: 1460042218}
-  playerEntryPrefab: {fileID: 3407994036059407988, guid: 9701cd6de76e78b4e9639635536def57, type: 3}
+  playerEntryPrefab: {fileID: 2503349591214032372, guid: 88f669302cd4c7e40a83b06b59bb3171, type: 3}
   quitButton: {fileID: 341472755}
   readyButton: {fileID: 361315707}
   startGameButton: {fileID: 198961054}

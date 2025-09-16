@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using FishNet.Object;
 using FishNet.Connection;
@@ -6,8 +7,22 @@ public class MarketManager : NetworkBehaviour
 {
     public static MarketManager Instance;
 
-    private void Awake() => Instance = this;
+    public List<StockData> stocks = new List<StockData>();
 
+    private void Awake()
+    {
+        Instance = this;
+
+        // Example setup — you can tweak these
+        stocks.Add(new StockData("Steel & Iron", 100));
+        stocks.Add(new StockData("Oil & Gas", 120));
+        stocks.Add(new StockData("Food & Beverage", 80));
+        stocks.Add(new StockData("Electronics", 90));
+        stocks.Add(new StockData("Weapons", 150));
+        stocks.Add(new StockData("Real Estate", 110));
+        stocks.Add(new StockData("Banking", 130));
+    }
+    
     [Server]
     public void OfferInvestment(PlayerPawn pawn, TileData tile, int tileIndex)
     {
@@ -51,9 +66,12 @@ public class MarketManager : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void CmdBuyShare(int tileIndex)
+    public void CmdBuyShare(NetworkConnection conn, int tileIndex)
     {
-        if (!Owner.FirstObject.TryGetComponent(out PlayerPawn pawn)) return;
+        if (conn == null || conn.FirstObject == null) return;
+
+        PlayerPawn pawn = conn.FirstObject.GetComponent<PlayerPawn>();
+        if (pawn == null) return;
 
         TileData tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
         if (tile == null || tile.tileType != TileType.Investment) return;
@@ -67,4 +85,24 @@ public class MarketManager : NetworkBehaviour
         tile.sharesOwned++;
         Debug.Log($"{pawn.playerName.Value} bought 1 share in {tile.owner.playerName.Value}'s company!");
     }
+
+    
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdBuyStock(NetworkConnection conn, string stockName, int price)
+    {
+        PlayerPawn pawn = conn.FirstObject.GetComponent<PlayerPawn>();
+        if (pawn == null) return;
+
+        if (pawn.money.Value < price) return;
+
+        pawn.money.Value -= price;
+
+        if (!pawn.portfolio.ContainsKey(stockName))
+            pawn.portfolio[stockName] = 0;
+
+        pawn.portfolio[stockName]++;
+
+        Debug.Log($"{pawn.playerName.Value} bought 1 share of {stockName}. Now owns {pawn.portfolio[stockName]} shares.");
+    }
+
 }
