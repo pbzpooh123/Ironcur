@@ -20,7 +20,12 @@ public class EventManager : NetworkBehaviour
     [Server]
     public void TriggerTileEvent(PlayerPawn pawn, string desc)
     {
-        TargetShowEvent(pawn.Owner, desc, false);
+        waitingForAll = true;
+        playersReady = 0;
+        totalPlayers = GameManager.Instance.Players.Count;
+
+        // Only this pawn sees the tile event
+        TargetShowEvent(pawn.Owner, desc, true);
     }
 
     // === Main Event (every 3 rounds) ===
@@ -56,8 +61,22 @@ public class EventManager : NetworkBehaviour
         {
             waitingForAll = false;
             Debug.Log("✅ All players acknowledged event. Resuming game!");
+            ResumeAfterEvent();
         }
     }
 
-   
+    // === Continue game flow ===
+    [Server]
+    private void ResumeAfterEvent()
+    {
+        // Resume normal game flow
+        var pawn = TurnManager.Instance.GetCurrentPawn();
+        if (pawn != null)
+        {
+            // Open stock market UI for current player
+            pawn.TargetOpenStockUI(pawn.Owner);
+            // Enable End Turn button
+            pawn.TargetEnableEndTurn(pawn.Owner, true);
+        }
+    }
 }

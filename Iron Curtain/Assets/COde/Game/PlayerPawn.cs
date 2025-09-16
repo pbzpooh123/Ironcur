@@ -120,32 +120,31 @@ public class PlayerPawn : NetworkBehaviour
         TileData data = GameManager.Instance.boardTiles[currentTile].GetComponent<TileData>();
         if (data == null) return;
 
-        switch (data.tileType)
+        // === 1. Event Tile ===
+        if (data.tileType == TileType.Event)
         {
-            case TileType.Event:
-                EventManager.Instance.TriggerTileEvent(this, data.description);
-                break;
-
-            case TileType.Investment:
-                if (data.owner == null)
-                {
-                    TargetShowInvestmentUI(Owner, currentTile, data.description, data.companyCost, true);
-                }
-                else if (data.owner != this && data.sharesOwned < data.maxShares)
-                {
-                    int sharePrice = Mathf.RoundToInt(data.companyCost * 0.5f);
-                    TargetShowInvestmentUI(Owner, currentTile, $"{data.owner.playerName.Value}'s company", sharePrice, false);
-                }
-                break;
-        }
-        
-        if (IsServer)
-        {
-            TargetOpenStockUI(Owner);
+            EventManager.Instance.TriggerTileEvent(this, data.description);
+            return; // 🚫 Stop here! Don't open stock UI if event happens
         }
 
+        // === 2. Investment Tile ===
+        if (data.tileType == TileType.Investment)
+        {
+            if (data.owner == null)
+            {
+                TargetShowInvestmentUI(Owner, currentTile, data.description, data.companyCost, true);
+            }
+            else if (data.owner != this && data.sharesOwned < data.maxShares)
+            {
+                int sharePrice = Mathf.RoundToInt(data.companyCost * 0.5f);
+                TargetShowInvestmentUI(Owner, currentTile, $"{data.owner.playerName.Value}'s company", sharePrice, false);
+            }
+        }
 
-        // after resolving tile, enable EndTurn button
+        // === 3. Stock Market UI (optional extra investment) ===
+        TargetOpenStockUI(Owner);
+
+        // === 4. Finally, enable End Turn ===
         TargetEnableEndTurn(Owner, true);
     }
 
@@ -157,7 +156,7 @@ public class PlayerPawn : NetworkBehaviour
     }
 
     [TargetRpc]
-    private void TargetEnableEndTurn(NetworkConnection conn, bool enable)
+    public void TargetEnableEndTurn(NetworkConnection conn, bool enable)
     {
         TurnUI ui = FindObjectOfType<TurnUI>();
         if (ui != null)
@@ -165,9 +164,17 @@ public class PlayerPawn : NetworkBehaviour
     }
     
     [TargetRpc]
-    private void TargetOpenStockUI(NetworkConnection conn)
+    public void TargetOpenStockUI(NetworkConnection conn)
     {
         StockMarketUI.Instance.Show(this);
+    }
+
+    [Server]
+    private void ResumeAfterEvent()
+    {
+        // After event ends → let stock market UI open
+        TargetOpenStockUI(Owner);
+        TargetEnableEndTurn(Owner, true);
     }
 
 }

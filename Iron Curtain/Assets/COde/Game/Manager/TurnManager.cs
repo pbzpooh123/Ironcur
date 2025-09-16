@@ -82,4 +82,12 @@ public class TurnManager : NetworkBehaviour
 
         StartTurn();
     }
+    
+    public PlayerPawn GetCurrentPawn()
+    {
+        var players = GameManager.Instance.Players;
+        if (players.Count == 0) return null;
+        return players[currentPlayerIndex.Value];
+    }
+
 }
