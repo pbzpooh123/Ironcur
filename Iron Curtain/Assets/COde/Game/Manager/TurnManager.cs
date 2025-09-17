@@ -17,7 +17,6 @@ public class TurnManager : NetworkBehaviour
     private void Awake()
     {
         Instance = this;
-        roundtext.text = $"Round : {roundCount.Value}";
     }
 
     public override void OnStartServer()
@@ -32,7 +31,7 @@ public class TurnManager : NetworkBehaviour
 
         var players = GameManager.Instance.Players;
         if (players.Count == 0) return;
-        
+
         if (currentPlayerIndex.Value >= players.Count)
             currentPlayerIndex.Value = 0;
 
@@ -50,28 +49,29 @@ public class TurnManager : NetworkBehaviour
 
         int nextIndex = currentPlayerIndex.Value + 1;
 
-        // ถ้าถึงผู้เล่นคนสุดท้ายที่จอย → new round
         if (nextIndex >= players.Count)
         {
             nextIndex = 0;
             turnCount.Value++;
 
-            Debug.Log($"[TurnManager] Completed a full cycle of turns. TurnCount={turnCount.Value}");
+            Debug.Log($"[TurnManager] Completed a full cycle. TurnCount={turnCount.Value}");
 
-            if (turnCount.Value % players.Count == 0) 
+            if (turnCount.Value % players.Count == 0)
             {
                 roundCount.Value++;
-                roundtext.text = $"Round : {roundCount.Value}";
+                RpcUpdateRoundUI(roundCount.Value); // tell all clients to update UI
                 Debug.Log($"[TurnManager] Round {roundCount.Value} completed!");
+
+                // trigger investments payouts
+                MarketManager.Instance.ProcessPayouts();
             }
         }
 
         currentPlayerIndex.Value = nextIndex;
 
-        if (roundCount.Value % 3 == 0)
+        if (roundCount.Value % 3 == 0 && roundCount.Value > 0)
         {
-                EventManager.Instance.TriggerMainEvent(roundCount.Value);
-                // Game pauses until all ready
+            EventManager.Instance.TriggerMainEvent(roundCount.Value);
         }
 
         if (roundCount.Value >= 15)
@@ -82,12 +82,18 @@ public class TurnManager : NetworkBehaviour
 
         StartTurn();
     }
-    
+
+    [ObserversRpc]
+    private void RpcUpdateRoundUI(int round)
+    {
+        if (roundtext != null)
+            roundtext.text = $"Round : {round}";
+    }
+
     public PlayerPawn GetCurrentPawn()
     {
         var players = GameManager.Instance.Players;
         if (players.Count == 0) return null;
         return players[currentPlayerIndex.Value];
     }
-
 }

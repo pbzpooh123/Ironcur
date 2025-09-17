@@ -173,6 +173,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &98137011
 GameObject:
   m_ObjectHideFlags: 0
@@ -224,6 +226,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &118527604
 GameObject:
   m_ObjectHideFlags: 0
@@ -275,6 +279,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &121884037
 GameObject:
   m_ObjectHideFlags: 0
@@ -326,6 +332,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &143938082
 GameObject:
   m_ObjectHideFlags: 0
@@ -498,6 +506,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &312578718
 GameObject:
   m_ObjectHideFlags: 0
@@ -628,6 +638,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &322430028
 GameObject:
   m_ObjectHideFlags: 0
@@ -813,6 +825,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &423422742
 GameObject:
   m_ObjectHideFlags: 0
@@ -864,6 +878,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &475119457
 GameObject:
   m_ObjectHideFlags: 0
@@ -915,6 +931,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &528077567
 GameObject:
   m_ObjectHideFlags: 0
@@ -966,6 +984,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &543362440
 GameObject:
   m_ObjectHideFlags: 0
@@ -1151,6 +1171,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &630938556
 GameObject:
   m_ObjectHideFlags: 0
@@ -1202,6 +1224,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &634894255
 GameObject:
   m_ObjectHideFlags: 0
@@ -1253,6 +1277,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &773949529
 GameObject:
   m_ObjectHideFlags: 0
@@ -1304,6 +1330,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &774712083
 GameObject:
   m_ObjectHideFlags: 0
@@ -1390,6 +1418,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &816270828
 GameObject:
   m_ObjectHideFlags: 0
@@ -1562,6 +1592,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &847709261
 GameObject:
   m_ObjectHideFlags: 0
@@ -1747,6 +1779,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &869416078
 GameObject:
   m_ObjectHideFlags: 0
@@ -1798,6 +1832,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &874533102
 GameObject:
   m_ObjectHideFlags: 0
@@ -1849,6 +1885,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &903583031
 GameObject:
   m_ObjectHideFlags: 0
@@ -1900,6 +1938,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &943587552
 GameObject:
   m_ObjectHideFlags: 0
@@ -2043,6 +2083,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1024428421
 GameObject:
   m_ObjectHideFlags: 0
@@ -2287,6 +2329,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1041493070
 GameObject:
   m_ObjectHideFlags: 0
@@ -2687,13 +2731,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 3
+  tileType: 0
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1132966800
 GameObject:
   m_ObjectHideFlags: 0
@@ -3083,6 +3129,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1275964216
 GameObject:
   m_ObjectHideFlags: 0
@@ -3134,6 +3182,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1289775145
 GameObject:
   m_ObjectHideFlags: 0
@@ -3408,6 +3458,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1352702746
 GameObject:
   m_ObjectHideFlags: 0
@@ -3459,6 +3511,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1419033316
 GameObject:
   m_ObjectHideFlags: 0
@@ -3778,6 +3832,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1471565496
 GameObject:
   m_ObjectHideFlags: 0
@@ -3829,6 +3885,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1523148270
 GameObject:
   m_ObjectHideFlags: 0
@@ -3880,6 +3938,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1542772444
 GameObject:
   m_ObjectHideFlags: 0
@@ -4199,6 +4259,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1659339365
 GameObject:
   m_ObjectHideFlags: 0
@@ -4285,6 +4347,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1699834312
 GameObject:
   m_ObjectHideFlags: 0
@@ -4336,6 +4400,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1733418980
 GameObject:
   m_ObjectHideFlags: 0
@@ -4521,6 +4587,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1837240889
 GameObject:
   m_ObjectHideFlags: 0
@@ -4607,6 +4675,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1880573666
 GameObject:
   m_ObjectHideFlags: 0
@@ -4948,6 +5018,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1968035974
 GameObject:
   m_ObjectHideFlags: 0
@@ -4999,6 +5071,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &1968640748
 GameObject:
   m_ObjectHideFlags: 0
@@ -5254,6 +5328,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &2056661298
 GameObject:
   m_ObjectHideFlags: 0
@@ -5524,6 +5600,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &2071270207
 GameObject:
   m_ObjectHideFlags: 0
@@ -5575,6 +5653,8 @@ MonoBehaviour:
   maxShares: 4
   companyCost: 100
   shareCost: 25
+  baseFactoryIncome: 50
+  shareIncome: 20
 --- !u!1 &2109391229
 GameObject:
   m_ObjectHideFlags: 0

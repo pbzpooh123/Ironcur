@@ -8,9 +8,12 @@ public class TileData : MonoBehaviour
     public string description;
 
     // Investment-specific data
-    public PlayerPawn owner;        // who owns the company
-    public int sharesOwned = 0;     // how many total shares are sold
-    public int maxShares = 4;       // total shares allowed
-    public int companyCost = 100;   // cost to buy company
-    public int shareCost = 25;      // cost to buy one share
+    public PlayerPawn owner;        
+    public int sharesOwned = 0;     
+    public int maxShares = 4;       
+    public int companyCost = 100;   
+    public int shareCost = 25;      
+    public int baseFactoryIncome = 50;
+    public int shareIncome = 20;     
+
 }

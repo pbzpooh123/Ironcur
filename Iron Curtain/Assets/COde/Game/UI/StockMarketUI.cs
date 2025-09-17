@@ -26,13 +26,11 @@ public class StockMarketUI : MonoBehaviour
     public void Show(PlayerPawn pawn)
     {
         myPawn = pawn;
-
         wrapper.SetActive(true); // Enable the whole window (panel + button)
-
         RefreshOptions();
     }
 
-    private void RefreshOptions()
+    public void RefreshOptions()
     {
         var stockList = MarketManager.Instance.stocks;
 
@@ -44,7 +42,10 @@ public class StockMarketUI : MonoBehaviour
         foreach (var stock in stockList)
         {
             int price = Mathf.RoundToInt(stock.basePrice * stock.priceMultiplier);
-            int owned = myPawn.portfolio.ContainsKey(stock.stockName) ? myPawn.portfolio[stock.stockName] : 0;
+
+            int owned = 0;
+            if (myPawn.stockPortfolio.ContainsKey(stock.stockName))
+                owned = myPawn.stockPortfolio[stock.stockName].count;
 
             AddOption(stock.stockName, price, owned);
         }

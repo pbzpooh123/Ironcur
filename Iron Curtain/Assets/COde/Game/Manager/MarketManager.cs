@@ -13,7 +13,7 @@ public class MarketManager : NetworkBehaviour
     {
         Instance = this;
 
-        // Example setup — you can tweak these
+        // Example stock setup
         stocks.Add(new StockData("Steel & Iron", 100));
         stocks.Add(new StockData("Oil & Gas", 120));
         stocks.Add(new StockData("Food & Beverage", 80));
@@ -22,31 +22,8 @@ public class MarketManager : NetworkBehaviour
         stocks.Add(new StockData("Real Estate", 110));
         stocks.Add(new StockData("Banking", 130));
     }
-    
-    [Server]
-    public void OfferInvestment(PlayerPawn pawn, TileData tile, int tileIndex)
-    {
-        if (tile.owner == null)
-        {
-            // Offer to buy the whole company
-            TargetShowInvestmentUI(pawn.Owner, tileIndex, tile.description, tile.companyCost, true);
-        }
-        else if (tile.owner != pawn && tile.sharesOwned < tile.maxShares)
-        {
-            // Offer to buy a share instead
-            int sharePrice = Mathf.RoundToInt(tile.companyCost * 0.5f);
-            TargetShowInvestmentUI(pawn.Owner, tileIndex, $"{tile.owner.playerName.Value}'s company", sharePrice, false);
-        }
-    }
 
-    // === Tell client to show UI ===
-    [TargetRpc]
-    private void TargetShowInvestmentUI(NetworkConnection conn, int tileIndex, string companyName, int cost, bool isCompany)
-    {
-        InvestmentUI.Instance.ShowOptions(tileIndex, companyName, cost, isCompany);
-    }
-
-    // === Commands from client ===
+    // === Investment Tiles ===
     [ServerRpc(RequireOwnership = false)]
     public void CmdBuyCompany(NetworkConnection conn, int tileIndex)
     {
@@ -83,13 +60,22 @@ public class MarketManager : NetworkBehaviour
 
         pawn.money.Value -= sharePrice;
         tile.sharesOwned++;
-        Debug.Log($"{pawn.playerName.Value} bought 1 share in {tile.owner.playerName.Value}'s company!");
+
+        string key = tile.description;
+        if (!pawn.factoryPortfolio.ContainsKey(key))
+            pawn.factoryPortfolio[key] = new ShareRecord { count = 0, roundBought = TurnManager.Instance.roundCount.Value };
+
+        pawn.factoryPortfolio[key].count++;
+        pawn.factoryPortfolio[key].roundBought = TurnManager.Instance.roundCount.Value;
+
+        Debug.Log($"{pawn.playerName.Value} bought 1 share in {tile.owner.playerName.Value}'s factory!");
     }
 
-    
     [ServerRpc(RequireOwnership = false)]
     public void CmdBuyStock(NetworkConnection conn, string stockName, int price)
     {
+        if (conn == null || conn.FirstObject == null) return;
+
         PlayerPawn pawn = conn.FirstObject.GetComponent<PlayerPawn>();
         if (pawn == null) return;
 
@@ -97,12 +83,70 @@ public class MarketManager : NetworkBehaviour
 
         pawn.money.Value -= price;
 
-        if (!pawn.portfolio.ContainsKey(stockName))
-            pawn.portfolio[stockName] = 0;
+        if (!pawn.stockPortfolio.ContainsKey(stockName))
+            pawn.stockPortfolio[stockName] = new ShareRecord { count = 0, roundBought = TurnManager.Instance.roundCount.Value };
 
-        pawn.portfolio[stockName]++;
+        pawn.stockPortfolio[stockName].count++;
+        pawn.stockPortfolio[stockName].roundBought = TurnManager.Instance.roundCount.Value;
 
-        Debug.Log($"{pawn.playerName.Value} bought 1 share of {stockName}. Now owns {pawn.portfolio[stockName]} shares.");
+        TargetConfirmBuy(conn, stockName);
+        Debug.Log($"{pawn.playerName.Value} bought 1 share of {stockName}. Now owns {pawn.stockPortfolio[stockName].count} shares.");
     }
 
+    // === Payout Logic ===
+    [Server]
+    public void ProcessPayouts()
+    {
+        foreach (var pawn in GameManager.Instance.Players)
+        {
+            // === Factory payout (every round) ===
+            foreach (var kvp in pawn.factoryPortfolio)
+            {
+                ShareRecord record = kvp.Value;
+
+                // manual lookup because boardTiles is GameObjects
+                TileData tile = null;
+                foreach (var go in GameManager.Instance.boardTiles)
+                {
+                    TileData td = go.GetComponent<TileData>();
+                    if (td != null && td.description == kvp.Key)
+                    {
+                        tile = td;
+                        break;
+                    }
+                }
+
+                if (tile == null) continue;
+
+                int income = Mathf.RoundToInt(tile.companyCost * 0.1f) * record.count;
+                pawn.money.Value += income;
+
+                Debug.Log($"{pawn.playerName.Value} earned ${income} from factory {kvp.Key}");
+            }
+
+            // === Stock payout (every 4 rounds, delayed by 2 rounds) ===
+            foreach (var kvp in pawn.stockPortfolio)
+            {
+                ShareRecord record = kvp.Value;
+                int age = TurnManager.Instance.roundCount.Value - record.roundBought;
+                if (age < 2) continue;
+                if (TurnManager.Instance.roundCount.Value % 4 != 0) continue;
+
+                StockData stock = stocks.Find(s => s.stockName == kvp.Key);
+                if (stock == null) continue;
+
+                int income = Mathf.RoundToInt(stock.basePrice * 0.1f * stock.priceMultiplier) * record.count;
+                pawn.money.Value += income;
+
+                Debug.Log($"{pawn.playerName.Value} received ${income} from stock {kvp.Key}");
+            }
+        }
+    }
+    
+    [TargetRpc]
+    public void TargetConfirmBuy(NetworkConnection conn, string stockName)
+    {
+        if (StockMarketUI.Instance != null)
+            StockMarketUI.Instance.RefreshOptions();
+    }
 }

@@ -24,9 +24,11 @@ public class PlayerPawn : NetworkBehaviour
     public readonly SyncVar<string> business   = new();
     public readonly SyncVar<string> country    = new();
     public readonly SyncVar<int>    lastRoll   = new();
-    public readonly SyncVar<int> money = new();
-    public Dictionary<string, int> portfolio = new Dictionary<string, int>();
+    public readonly SyncVar<int>    money      = new();
     
+    public Dictionary<string, ShareRecord> stockPortfolio   = new();
+    public Dictionary<string, ShareRecord> factoryPortfolio = new();
+
     public bool isMyTurn = false;
 
     public override void OnStartServer()
@@ -176,5 +178,7 @@ public class PlayerPawn : NetworkBehaviour
         TargetOpenStockUI(Owner);
         TargetEnableEndTurn(Owner, true);
     }
+    
+    
 
 }

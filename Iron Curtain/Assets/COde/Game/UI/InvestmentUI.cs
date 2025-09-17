@@ -7,6 +7,7 @@ public class InvestmentUI : MonoBehaviour
 {
     public static InvestmentUI Instance;
 
+    [Header("UI References")]
     public GameObject panel;
     public TMP_Text titleText;
     public TMP_Text costText;
@@ -47,7 +48,10 @@ public class InvestmentUI : MonoBehaviour
     {
         if (InstanceFinder.ClientManager.Connection != null)
         {
-            MarketManager.Instance.CmdBuyCompany(InstanceFinder.ClientManager.Connection, currentTileIndex);
+            MarketManager.Instance.CmdBuyCompany(
+                InstanceFinder.ClientManager.Connection, 
+                currentTileIndex
+            );
             panel.SetActive(false);
         }
     }
@@ -56,7 +60,10 @@ public class InvestmentUI : MonoBehaviour
     {
         if (InstanceFinder.ClientManager.Connection != null)
         {
-            MarketManager.Instance.CmdBuyShare(InstanceFinder.ClientManager.Connection, currentTileIndex);
+            MarketManager.Instance.CmdBuyShare(
+                InstanceFinder.ClientManager.Connection, 
+                currentTileIndex
+            );
             panel.SetActive(false);
         }
     }
