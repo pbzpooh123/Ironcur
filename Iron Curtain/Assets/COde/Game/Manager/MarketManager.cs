@@ -47,29 +47,35 @@ public class MarketManager : NetworkBehaviour
     {
         if (conn == null || conn.FirstObject == null) return;
 
-        PlayerPawn pawn = conn.FirstObject.GetComponent<PlayerPawn>();
-        if (pawn == null) return;
+        PlayerPawn buyer = conn.FirstObject.GetComponent<PlayerPawn>();
+        if (buyer == null) return;
 
         TileData tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
         if (tile == null || tile.tileType != TileType.Investment) return;
-        if (tile.owner == null || tile.owner == pawn) return; // must belong to another
+        if (tile.owner == null || tile.owner == buyer) return; // must belong to another
         if (tile.sharesOwned >= tile.maxShares) return;
 
         int sharePrice = Mathf.RoundToInt(tile.companyCost * 0.5f);
-        if (pawn.money.Value < sharePrice) return;
-
-        pawn.money.Value -= sharePrice;
+        if (buyer.money.Value < sharePrice) return;
+        
+        buyer.money.Value -= sharePrice;
+        
+        tile.owner.money.Value += sharePrice;
+        
         tile.sharesOwned++;
 
+        // Record in buyer's portfolio
         string key = tile.description;
-        if (!pawn.factoryPortfolio.ContainsKey(key))
-            pawn.factoryPortfolio[key] = new ShareRecord { count = 0, roundBought = TurnManager.Instance.roundCount.Value };
+        if (!buyer.factoryPortfolio.ContainsKey(key))
+            buyer.factoryPortfolio[key] = new ShareRecord { count = 0, roundBought = TurnManager.Instance.roundCount.Value };
 
-        pawn.factoryPortfolio[key].count++;
-        pawn.factoryPortfolio[key].roundBought = TurnManager.Instance.roundCount.Value;
+        buyer.factoryPortfolio[key].count++;
+        buyer.factoryPortfolio[key].roundBought = TurnManager.Instance.roundCount.Value;
 
-        Debug.Log($"{pawn.playerName.Value} bought 1 share in {tile.owner.playerName.Value}'s factory!");
+        Debug.Log($"{buyer.playerName.Value} bought 1 share in {tile.owner.playerName.Value}'s factory! " +
+                  $"{tile.owner.playerName.Value} received ${sharePrice} instantly.");
     }
+
 
     [ServerRpc(RequireOwnership = false)]
     public void CmdBuyStock(NetworkConnection conn, string stockName, int price)
