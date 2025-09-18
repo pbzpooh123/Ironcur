@@ -15,4 +15,12 @@ MonoBehaviour:
   eventName: 
   description: 
   type: 0
-  effects: []
+  effects:
+  - targetType: 3
+    targetName: 
+    moneyDelta: 0
+    multiplier: 0
+    duration: 0
+    skipTurn: 0
+    randomMoneyMin: 0
+    randomMoneyMax: 0
