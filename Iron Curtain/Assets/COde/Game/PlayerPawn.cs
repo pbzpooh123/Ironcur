@@ -125,7 +125,7 @@ public class PlayerPawn : NetworkBehaviour
         // === 1. Event Tile ===
         if (data.tileType == TileType.Event)
         {
-            EventManager.Instance.TriggerTileEvent(this, data.description);
+            EventManager.Instance.TriggerTileEvent(this);
             return; // 🚫 Stop here! Don't open stock UI if event happens
         }
 

@@ -6085,6 +6085,9 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 4936575218940012829}
   _networkObjectCache: {fileID: 0}
+  tileEvents: []
+  mainEvents:
+  - {fileID: 11400000, guid: 0191c79e1aa2560468791fafa5d8d971, type: 2}
 --- !u!114 &4936575218940012832
 MonoBehaviour:
   m_ObjectHideFlags: 0
