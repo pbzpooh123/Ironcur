@@ -219,8 +219,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
-  description: EVENT
+  tileType: 0
+  description: 
   owner: {fileID: 0}
   sharesOwned: 0
   maxShares: 4
@@ -272,7 +272,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 0
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -499,7 +499,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 0
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -631,7 +631,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 1
   description: EVENT
   owner: {fileID: 0}
   sharesOwned: 0
@@ -818,7 +818,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 0
+  tileType: 2
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -977,7 +977,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 1
   description: EVENT
   owner: {fileID: 0}
   sharesOwned: 0
@@ -1164,7 +1164,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 0
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -1217,7 +1217,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 0
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -1270,7 +1270,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 1
   description: EVENT
   owner: {fileID: 0}
   sharesOwned: 0
@@ -1772,7 +1772,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 1
   description: EVENT
   owner: {fileID: 0}
   sharesOwned: 0
@@ -1878,7 +1878,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 0
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -1931,7 +1931,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 0
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -2076,7 +2076,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 1
   description: EVENT
   owner: {fileID: 0}
   sharesOwned: 0
@@ -3122,7 +3122,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 1
   description: EVENT
   owner: {fileID: 0}
   sharesOwned: 0
@@ -3826,7 +3826,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileType: 2
-  description: EVENT
+  description: 
   owner: {fileID: 0}
   sharesOwned: 0
   maxShares: 4
@@ -3931,7 +3931,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 0
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -4340,7 +4340,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 0
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -4393,7 +4393,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 0
+  tileType: 2
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -4580,7 +4580,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 0
+  tileType: 2
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -4668,7 +4668,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 0
   description: 
   owner: {fileID: 0}
   sharesOwned: 0
@@ -5064,7 +5064,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 1
   description: EVENT
   owner: {fileID: 0}
   sharesOwned: 0
@@ -5322,7 +5322,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileType: 2
-  description: EVENT
+  description: 
   owner: {fileID: 0}
   sharesOwned: 0
   maxShares: 4
@@ -6085,8 +6085,36 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 4936575218940012829}
   _networkObjectCache: {fileID: 0}
-  tileEvents: []
-  mainEvents: []
+  tileEvents:
+  - {fileID: 11400000, guid: c228399759521484e832198cfe5897ba, type: 2}
+  - {fileID: 11400000, guid: b0518d7e9aae8f04784dd8168f90c71c, type: 2}
+  - {fileID: 11400000, guid: 2cbd100bde59dee4482fab1285ef0840, type: 2}
+  - {fileID: 11400000, guid: c782f7d782a90ef4cafc62d72fe6a3ec, type: 2}
+  - {fileID: 11400000, guid: 49a287035979ec641b99faa3389b5a69, type: 2}
+  - {fileID: 11400000, guid: 50b27b5088f2c3a43bedf3ea08732c5f, type: 2}
+  - {fileID: 11400000, guid: 96e620c678711234bb9d0687caf85712, type: 2}
+  - {fileID: 11400000, guid: 23c1f3c51aabf9a4cbf248cf4b9fef86, type: 2}
+  - {fileID: 11400000, guid: 7064c057668b4e64cb6323ef282649d1, type: 2}
+  - {fileID: 11400000, guid: 89e7f7d211e9e954aba032917fcb81b4, type: 2}
+  mainEvents:
+  - {fileID: 11400000, guid: 0191c79e1aa2560468791fafa5d8d971, type: 2}
+  - {fileID: 11400000, guid: 70aec3bae71546e4badb421051a9b94d, type: 2}
+  - {fileID: 11400000, guid: 2d2b12ce7a6c47342a7357c6320e94e1, type: 2}
+  - {fileID: 11400000, guid: efadb967b6adf224b9ff4733c06a3ee9, type: 2}
+  - {fileID: 11400000, guid: 53acf2cb16457e949a24bd7116b756b4, type: 2}
+  - {fileID: 11400000, guid: b7b1da90e38ea1343be226b20964dd1a, type: 2}
+  - {fileID: 11400000, guid: 3d7b7d3bc56a7dc4495c6011af7bd7e0, type: 2}
+  - {fileID: 11400000, guid: 15f4ae601eccf3e4692e45bb00539b06, type: 2}
+  - {fileID: 11400000, guid: 09f011fa680c4cc4482a900da43f9d08, type: 2}
+  - {fileID: 11400000, guid: 76126fb3c7840834a83d591d0582df79, type: 2}
+  - {fileID: 11400000, guid: af552fd1c791f5849ad71afd7ee26c2c, type: 2}
+  - {fileID: 11400000, guid: b6d107208d520f443bd555ccd49a3463, type: 2}
+  - {fileID: 11400000, guid: b6cecb38efd75824cb603d54eb68096e, type: 2}
+  - {fileID: 11400000, guid: bd8a8e50a0e819742bd46d0edd6fa4c1, type: 2}
+  - {fileID: 11400000, guid: 71d7b8dfa8f437449861d6d0d67eaedf, type: 2}
+  - {fileID: 11400000, guid: 38d741ce483b37a4e88ea6e17661bddf, type: 2}
+  - {fileID: 11400000, guid: 983b31752790d7b4cae047354e9a50a6, type: 2}
+  - {fileID: 11400000, guid: 23eb33fafbb05da488d580ceb02a0ae3, type: 2}
 --- !u!114 &4936575218940012832
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -6102,7 +6130,10 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 4936575218940012829}
   _networkObjectCache: {fileID: 0}
-  stocks: []
+  stocks:
+  - stockName: 
+    basePrice: 0
+    priceMultiplier: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
