@@ -28,6 +28,9 @@ public class StockMarketUI : MonoBehaviour
         myPawn = pawn;
         wrapper.SetActive(true); // Enable the whole window (panel + button)
         RefreshOptions();
+        // Disable End Turn while popup open
+        TurnUI ui = FindObjectOfType<TurnUI>();
+        if (ui != null) ui.ForceDisableEndTurn();
     }
 
     public void RefreshOptions()
@@ -76,7 +79,6 @@ public class StockMarketUI : MonoBehaviour
 
         // After closing, allow End Turn
         TurnUI ui = FindObjectOfType<TurnUI>();
-        if (ui != null)
-            ui.SetEndTurnInteractable(true);
+        if (ui != null) ui.SetEndTurnInteractable(true);
     }
 }

@@ -13,14 +13,16 @@ public class InvestmentUI : MonoBehaviour
     public TMP_Text costText;
     public Button buyButton;
     public Button skipButton;
+    private PlayerPawn currentPawn;
 
     private int currentTileIndex;
     private bool buyingCompany;
 
     private void Awake() => Instance = this;
 
-    public void ShowOptions(int tileIndex, string companyName, int cost, bool isCompany)
+    public void ShowOptions(PlayerPawn pawn,int tileIndex, string companyName, int cost, bool isCompany)
     {
+        currentPawn = pawn;
         currentTileIndex = tileIndex;
         buyingCompany = isCompany;
 
@@ -42,6 +44,9 @@ public class InvestmentUI : MonoBehaviour
         }
 
         skipButton.onClick.AddListener(OnSkipClicked);
+        // Disable End Turn while popup open
+        TurnUI ui = FindObjectOfType<TurnUI>();
+        if (ui != null) ui.ForceDisableEndTurn();
     }
     
     public void OnBuyCompanyClicked()
@@ -53,6 +58,8 @@ public class InvestmentUI : MonoBehaviour
                 currentTileIndex
             );
             panel.SetActive(false);
+            CloseAndContinue();
+
         }
     }
     
@@ -65,11 +72,26 @@ public class InvestmentUI : MonoBehaviour
                 currentTileIndex
             );
             panel.SetActive(false);
+            CloseAndContinue();
         }
+        
+
     }
 
     private void OnSkipClicked()
     {
         panel.SetActive(false);
+        CloseAndContinue();
+
+    }
+    
+    private void CloseAndContinue()
+    {
+        panel.SetActive(false);
+
+        if (currentPawn != null)
+        {
+            currentPawn.TargetOpenStockUI(currentPawn.Owner);
+        }
     }
 }

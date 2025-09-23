@@ -28,6 +28,9 @@ public class EventUI : MonoBehaviour
 
         okButton.onClick.RemoveAllListeners();
         okButton.onClick.AddListener(OnOk);
+        // Disable End Turn while popup open
+        TurnUI ui = FindObjectOfType<TurnUI>();
+        if (ui != null) ui.ForceDisableEndTurn();
     }
 
     private void OnOk()

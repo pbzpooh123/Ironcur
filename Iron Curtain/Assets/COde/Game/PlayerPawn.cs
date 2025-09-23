@@ -126,7 +126,7 @@ public class PlayerPawn : NetworkBehaviour
         if (data.tileType == TileType.Event)
         {
             EventManager.Instance.TriggerTileEvent(this);
-            return; // 🚫 Stop here! Don't open stock UI if event happens
+            return; 
         }
 
         // === 2. Investment Tile ===
@@ -134,29 +134,17 @@ public class PlayerPawn : NetworkBehaviour
         {
             if (data.owner == null)
             {
-                TargetShowInvestmentUI(Owner, currentTile, data.description, data.companyCost, true);
+                InvestmentUI.Instance.ShowOptions(this, currentTile, data.description, data.companyCost, true);
             }
             else if (data.owner != this && data.sharesOwned < data.maxShares)
             {
                 int sharePrice = Mathf.RoundToInt(data.companyCost * 0.5f);
-                TargetShowInvestmentUI(Owner, currentTile, $"{data.owner.playerName.Value}'s company", sharePrice, false);
+                InvestmentUI.Instance.ShowOptions(this, currentTile, $"{data.owner.playerName.Value}'s company", sharePrice, false);
             }
         }
-
-        // === 3. Stock Market UI (optional extra investment) ===
-        TargetOpenStockUI(Owner);
-
-        // === 4. Finally, enable End Turn ===
-        TargetEnableEndTurn(Owner, true);
     }
 
-    // === UI RPCs ===
-    [TargetRpc]
-    private void TargetShowInvestmentUI(NetworkConnection conn, int tileIndex, string companyName, int cost, bool isCompany)
-    {
-        InvestmentUI.Instance.ShowOptions(tileIndex, companyName, cost, isCompany);
-    }
-
+    
     [TargetRpc]
     public void TargetEnableEndTurn(NetworkConnection conn, bool enable)
     {

@@ -32,7 +32,7 @@ public class TurnUI : MonoBehaviour
         {
             myPawn.CmdRollDiceAndMove();   // client → server
             rollDiceButton.interactable = false;
-            endTurnButton.interactable = true;
+            endTurnButton.interactable = false;
         }
     }
 
@@ -49,5 +49,11 @@ public class TurnUI : MonoBehaviour
     {
         endTurnButton.interactable = enable;
     }
+    
+    public void ForceDisableEndTurn()
+    {
+        SetEndTurnInteractable(false);
+    }
+
 
 }

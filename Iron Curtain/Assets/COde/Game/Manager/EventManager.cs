@@ -29,11 +29,11 @@ public class EventManager : NetworkBehaviour
         playersReady = 0;
         totalPlayers = GameManager.Instance.Players.Count;
 
-        // Only this pawn sees the tile event
+        // only to the pawn who triggered
         TargetShowEvent(pawn.Owner, desc, true);
     }
 
-    // (Optional) Overload if you ever want random tile SOs
+   
     [Server]
     public void TriggerTileEvent(PlayerPawn pawn)
     {
@@ -77,7 +77,7 @@ public class EventManager : NetworkBehaviour
             ApplyEventToAll(e);
     }
 
-    // === Client popup (keeps 2-arg signature: message + pauseAll) ===
+    // === Client popup ===
     [TargetRpc]
     private void TargetShowEvent(NetworkConnection conn, string message, bool pauseAll)
     {
@@ -97,7 +97,7 @@ public class EventManager : NetworkBehaviour
         if (playersReady >= totalPlayers)
         {
             waitingForAll = false;
-            Debug.Log("✅ All players acknowledged event. Resuming game!");
+            Debug.Log("All players acknowledged event. Resuming game!");
             ResumeAfterEvent();
         }
     }
@@ -111,7 +111,6 @@ public class EventManager : NetworkBehaviour
         {
             // These must be public TargetRpcs on PlayerPawn
             pawn.TargetOpenStockUI(pawn.Owner);
-            pawn.TargetEnableEndTurn(pawn.Owner, true);
         }
     }
 
