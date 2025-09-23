@@ -125,7 +125,7 @@ private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
         // === Instant money ===
         if (effect.moneyDelta != 0)
         {
-            pawn.money.Value += effect.moneyDelta;
+            pawn.AddMoney(effect.moneyDelta);
             Debug.Log($"{pawn.playerName.Value} money changed by {effect.moneyDelta} from event {e.eventName}");
         }
 
@@ -163,7 +163,7 @@ private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
                 // Global instant money
                 if (effect.moneyDelta != 0)
                 {
-                    p.money.Value += effect.moneyDelta;
+                    p.AddMoney(effect.moneyDelta);
                     Debug.Log($"{p.playerName.Value} global money change {effect.moneyDelta} from {e.eventName}");
                 }
 

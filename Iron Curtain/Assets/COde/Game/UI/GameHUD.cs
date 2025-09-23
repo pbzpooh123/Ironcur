@@ -22,34 +22,32 @@ public class GameHUD : MonoBehaviour
         anchors = new Transform[4] { topLeftAnchor, topRightAnchor, bottomLeftAnchor, bottomRightAnchor };
     }
 
-    public void CreatePlayerPanel(int slotIndex, string name, string business, string country, float profit)
+    public PlayerInfoPanel CreatePlayerPanel(int slotIndex, string name, string business, string country, int profit)
     {
         if (playerPanelPrefab == null)
         {
-            Debug.LogError("❌ Player Panel Prefab is not assigned!");
-            return;
+            Debug.LogError("Player Panel Prefab is not assigned!");
+            return null;
         }
 
         if (slotIndex < 0 || slotIndex >= anchors.Length)
         {
-            Debug.LogError($"❌ Slot {slotIndex} is invalid!");
-            return;
+            Debug.LogError($"Slot {slotIndex} is invalid!");
+            return null;
         }
 
         // Spawn panel at the correct corner
         GameObject panel = Instantiate(playerPanelPrefab, anchors[slotIndex]);
         panel.name = $"PlayerPanel_{slotIndex}";
 
-        TMP_Text[] texts = panel.GetComponentsInChildren<TMP_Text>();
-        if (texts.Length >= 4)
-        {
-            texts[0].text = name;
-            texts[1].text = business;
-            texts[2].text = country;
-            texts[3].text = $"Profit: {profit:0}";
-        }
+        PlayerInfoPanel infoPanel = panel.GetComponent<PlayerInfoPanel>();
+        if (infoPanel != null)
+            infoPanel.SetInfo(name, business, country, profit);
 
-        Debug.Log($"✅ Spawned Player Panel for {name} in slot {slotIndex}");
+        Debug.Log($"Spawned Player Panel for {name} in slot {slotIndex}");
+        return infoPanel;
     }
+
+    
     
 }

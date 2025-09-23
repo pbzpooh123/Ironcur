@@ -35,10 +35,10 @@ public class MarketManager : NetworkBehaviour
         TileData tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
         if (tile == null || tile.tileType != TileType.Investment) return;
         if (tile.owner != null) return; // already owned
-        if (pawn.money.Value < tile.companyCost) return;
-
+        
         // Deduct money and set ownership
-        pawn.money.Value -= tile.companyCost;
+        pawn.AddMoney(tile.companyCost);
+        
         tile.owner = pawn;
 
         // Register full ownership in factoryPortfolio
@@ -75,13 +75,14 @@ public class MarketManager : NetworkBehaviour
         if (tile.sharesOwned >= tile.maxShares) return;
 
         int sharePrice = Mathf.RoundToInt(tile.companyCost * 0.5f);
-        if (buyer.money.Value < sharePrice) return;
-
+        
         // Buyer pays
-        buyer.money.Value -= sharePrice;
+        buyer.TrySpendMoney(sharePrice);
+        
 
         // Owner earns
-        tile.owner.money.Value += sharePrice;
+        tile.owner.AddMoney(sharePrice);
+        
 
         // Increase global share count
         tile.sharesOwned++;
@@ -115,10 +116,9 @@ public class MarketManager : NetworkBehaviour
 
         PlayerPawn pawn = conn.FirstObject.GetComponent<PlayerPawn>();
         if (pawn == null) return;
-
-        if (pawn.money.Value < price) return;
-
-        pawn.money.Value -= price;
+        
+        pawn.TrySpendMoney(price);
+       
 
         if (!pawn.stockPortfolio.ContainsKey(stockName))
             pawn.stockPortfolio[stockName] = new ShareRecord { count = 0, roundBought = TurnManager.Instance.roundCount.Value };
@@ -162,7 +162,8 @@ public class MarketManager : NetworkBehaviour
                     }
                     if (tile == null) continue;
                     int income = Mathf.RoundToInt(tile.companyCost * 0.1f * record.count * record.multiplier); 
-                    pawn.money.Value += income;
+                    pawn.AddMoney(income);
+                   
                     Debug.Log($"{pawn.playerName.Value} earned ${income} from factory {kvp.Key} (x{record.multiplier})"); 
                 } 
                 // === Stocks (every 4 rounds, delayed by 2 rounds) ===
@@ -185,7 +186,8 @@ public class MarketManager : NetworkBehaviour
                  if (stock == null) continue; 
                  // base income = 10% of base price × multiplier × shares
                  int income = Mathf.RoundToInt(stock.basePrice * 0.1f * stock.priceMultiplier * record.multiplier) * record.count;
-                pawn.money.Value += income; 
+                pawn.AddMoney(income);
+               
                 Debug.Log($"{pawn.playerName.Value} received ${income} from stock {kvp.Key} (x{record.multiplier})"); 
              } 
         } 

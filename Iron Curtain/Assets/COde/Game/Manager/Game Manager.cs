@@ -50,11 +50,11 @@ public class GameManager : NetworkBehaviour
         InstanceFinder.SceneManager.LoadGlobalScenes(data);
     }
 
-    // ✅ เรียกโดย FishNet หลัง Scene โหลดเสร็จ
+    // เรียกโดย FishNet หลัง Scene โหลดเสร็จ
     public override void OnStartServer()
     {
         base.OnStartServer();
-        Debug.Log("✅ BoardGameScene loaded. Moving players to start...");
+        Debug.Log("BoardGameScene loaded. Moving players to start...");
 
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
         {
@@ -64,7 +64,7 @@ public class GameManager : NetworkBehaviour
             }
         }
 
-        // ✅ Handle late joins
+        // Handle late joins
         InstanceFinder.ServerManager.OnRemoteConnectionState += OnPlayerJoined;
     }
 
@@ -110,7 +110,7 @@ public class GameManager : NetworkBehaviour
                 pawn.playerName.Value,
                 pawn.business.Value,
                 pawn.country.Value,
-                0f
+                0
             );
             
             Debug.Log($"[Server] Assigning HUD slot {assignedSlot} to {pawn.playerName.Value}");
@@ -119,7 +119,8 @@ public class GameManager : NetworkBehaviour
         {
             Debug.LogWarning($"[Server] No pawn found for connection {connectionId}.");
         }
+       
     }
 
-  
+    
 }

@@ -24,19 +24,45 @@ public class PlayerPawn : NetworkBehaviour
     public readonly SyncVar<string> business   = new();
     public readonly SyncVar<string> country    = new();
     public readonly SyncVar<int>    lastRoll   = new();
-    public readonly SyncVar<int>    money      = new();
     
     public Dictionary<string, ShareRecord> stockPortfolio   = new();
     public Dictionary<string, ShareRecord> factoryPortfolio = new();
 
     public bool isMyTurn = false;
+    public readonly SyncVar<int> money = new SyncVar<int>(); 
 
-    public override void OnStartServer()
+    public PlayerInfoPanel infoPanel;  // assigned when spawning the panel
+
+    public override void OnStartClient()
     {
-        base.OnStartServer();
-        money.Value = 500; // starting cash
+        base.OnStartClient();
+        money.OnChange += OnMoneyChanged;
+        
+    }
+    private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
+    {
+        Debug.Log($"{playerName.Value} money changed {oldValue} -> {newValue}");
+        
+        if (infoPanel != null)
+            infoPanel.UpdateProfit(newValue);
     }
 
+   
+    [Server]
+    public void AddMoney(int amount)
+    {
+        money.Value += amount;
+    }
+
+    [Server]
+    public bool TrySpendMoney(int amount)
+    {
+        if (money.Value < amount) return false;
+        money.Value -= amount;
+        return true;
+    }
+    
+    
     // === Called from UI Button ===
     public void OnRollDiceButton()
     {

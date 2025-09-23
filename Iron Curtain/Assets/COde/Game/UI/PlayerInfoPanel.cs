@@ -8,16 +8,17 @@ public class PlayerInfoPanel : MonoBehaviour
     public TMP_Text countryText;
     public TMP_Text profitText;
 
-    public void SetInfo(string name, string business, string country, float profit = 0f)
+    public void SetInfo(string name, string business, string country, int profit = 0)
     {
         nameText.text = name;
         businessText.text = business;
         countryText.text = country;
-        profitText.text = $"Profit: {profit:0}";
+        profitText.text = $"Money: {profit:0}";
     }
 
-    public void UpdateProfit(float profit)
+    public void UpdateProfit(int profit)
     {
-        profitText.text = $"Profit: {profit:0}";
+        profitText.text = $"Money: {profit:0}";
     }
+
 }

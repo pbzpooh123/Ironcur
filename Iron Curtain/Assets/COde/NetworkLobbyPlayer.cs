@@ -122,17 +122,16 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     }
    
     [TargetRpc]
-    public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, string business, string country, float profit)
+    public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, string business, string country, int profit)
     {
-        Debug.Log($"[Client] TargetSetHUD received → {name} (slot {slotIndex})");
-
-        if (GameHUD.Instance == null)
+        var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, business, country, profit);
+        
+        if (conn.FirstObject != null && conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
         {
-            Debug.LogError("❌ GameHUD not found in MainGame scene!");
-            return;
+            pawn.infoPanel = panel;
+            pawn.AddMoney(500);
         }
-
-        GameHUD.Instance.CreatePlayerPanel(slotIndex, name, business, country, profit);
+        
     }
 
     
