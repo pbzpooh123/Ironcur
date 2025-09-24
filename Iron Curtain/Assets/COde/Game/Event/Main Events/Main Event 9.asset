@@ -12,21 +12,30 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cbe400ba1a1d1f4abe7d0e1b90b131b, type: 3}
   m_Name: Main Event 9
   m_EditorClassIdentifier: 
-  eventName: "\u0E2A\u0E07\u0E04\u0E23\u0E32\u0E21\u0E40\u0E27\u0E35\u0E22\u0E14\u0E19\u0E32\u0E21
-    (Vietnam War)"
-  description: "\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14: \u0E2A\u0E2B\u0E23\u0E31\u0E10\u0E2F
-    \u0E40\u0E02\u0E49\u0E32\u0E44\u0E1B\u0E21\u0E35\u0E2A\u0E48\u0E27\u0E19\u0E23\u0E48\u0E27\u0E21\u0E43\u0E19\u0E2A\u0E07\u0E04\u0E23\u0E32\u0E21\u0E40\u0E27\u0E35\u0E22\u0E14\u0E19\u0E32\u0E21\u0E2D\u0E22\u0E48\u0E32\u0E07\u0E40\u0E15\u0E47\u0E21\u0E15\u0E31\u0E27\r\n\u0E1A\u0E23\u0E34\u0E29\u0E31\u0E17\u0E1C\u0E25\u0E34\u0E15\u0E40\u0E2B\u0E25\u0E47\u0E01\u0E41\u0E25\u0E30\u0E40\u0E2B\u0E25\u0E47\u0E01\u0E01\u0E25\u0E49\u0E32
-    (Steel & Iron Production):\u0E23\u0E32\u0E22\u0E44\u0E14\u0E49\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E02\u0E36\u0E49\u0E19
-    100% \u0E15\u0E25\u0E2D\u0E14\u0E0A\u0E48\u0E27\u0E07\u0E2A\u0E07\u0E04\u0E23\u0E32\u0E21
-    \r\n\u0E1A\u0E23\u0E34\u0E29\u0E31\u0E17\u0E1C\u0E25\u0E34\u0E15\u0E2D\u0E32\u0E27\u0E38\u0E18
-    (Weapon Manufacturing):\u0E23\u0E32\u0E22\u0E44\u0E14\u0E49\u0E40\u0E1E\u0E34\u0E48\u0E21\u0E02\u0E36\u0E49\u0E19
-    200% \u0E15\u0E25\u0E2D\u0E14\u0E0A\u0E48\u0E27\u0E07\u0E2A\u0E07\u0E04\u0E23\u0E32\u0E21"
+  eventName: Vietnam War
+  description: 'United States Fully Engages in the Vietnam War
+
+
+    Steel & Iron
+    Production: +100% revenue for the duration of the war
+
+
+    Weapon Manufacturing:
+    +200% revenue for the duration of the war'
   type: 1
   effects:
   - targetType: 0
-    targetName: 
-    moneyDelta: 0
-    multiplier: 0
+    targetName: Steel & Iron Production
+    moneyDelta: 150
+    multiplier: 2
+    duration: 0
+    skipTurn: 0
+    randomMoneyMin: 0
+    randomMoneyMax: 0
+  - targetType: 0
+    targetName: Weapon Manufacturing
+    moneyDelta: 500
+    multiplier: 2
     duration: 0
     skipTurn: 0
     randomMoneyMin: 0
