@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cbe400ba1a1d1f4abe7d0e1b90b131b, type: 3}
   m_Name: Side Event 7
   m_EditorClassIdentifier: 
-  eventName: "\u0E23\u0E30\u0E14\u0E21\u0E17\u0E38\u0E19\u0E1E\u0E31\u0E12\u0E19\u0E32\u0E01\u0E34\u0E08\u0E01\u0E32\u0E23\u0E43\u0E2B\u0E21\u0E48"
-  description: "\u0E23\u0E32\u0E22\u0E25\u0E30\u0E40\u0E2D\u0E35\u0E22\u0E14: \u0E21\u0E35\u0E1C\u0E39\u0E49\u0E2B\u0E27\u0E31\u0E07\u0E14\u0E35\u0E1A\u0E23\u0E34\u0E08\u0E32\u0E04\u0E40\u0E07\u0E34\u0E19\u0E43\u0E2B\u0E49\u0E04\u0E38\u0E13\r\n\u0E1C\u0E39\u0E49\u0E40\u0E25\u0E48\u0E19\u0E17\u0E38\u0E01\u0E04\u0E19\u0E22\u0E01\u0E40\u0E27\u0E49\u0E19
-    \u0E1C\u0E39\u0E49\u0E17\u0E35\u0E48\u0E44\u0E14\u0E49 Event \u0E19\u0E35\u0E49\u0E1A\u0E23\u0E34\u0E08\u0E32\u0E04\u0E40\u0E07\u0E34\u0E19\u0E43\u0E2B\u0E49\u0E04\u0E38\u0E13
-    100M\r\n"
+  eventName: Fundraising for New Business Development
+  description: 'A Benefactor Donates Money to You
+
+
+    Effect: All players, except
+    the one who triggered this event, pay $100M to you'
   type: 0
   effects: []
