@@ -37,7 +37,7 @@ public class MarketManager : NetworkBehaviour
         if (tile.owner != null) return; // already owned
         
         // Deduct money and set ownership
-        pawn.AddMoney(tile.companyCost);
+        pawn.TrySpendMoney(tile.companyCost);
         
         tile.owner = pawn;
 
