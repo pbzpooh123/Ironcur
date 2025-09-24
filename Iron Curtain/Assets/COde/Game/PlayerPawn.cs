@@ -57,9 +57,15 @@ public class PlayerPawn : NetworkBehaviour
     [Server]
     public bool TrySpendMoney(int amount)
     {
-        if (money.Value < amount) return false;
-        money.Value -= amount;
-        return true;
+        if (money.Value < amount)
+        {
+            return false;
+        }
+        else
+        {
+            money.Value -= amount;
+            return true;
+        }
     }
     
     

@@ -37,7 +37,14 @@ public class MarketManager : NetworkBehaviour
         if (tile.owner != null) return; // already owned
         
         // Deduct money and set ownership
-        pawn.TrySpendMoney(tile.companyCost);
+        if (pawn.money.Value < tile.companyCost)
+        {
+            return;
+        }
+        else
+        {
+            pawn.TrySpendMoney(tile.companyCost);
+        }
         
         tile.owner = pawn;
 
@@ -77,11 +84,15 @@ public class MarketManager : NetworkBehaviour
         int sharePrice = Mathf.RoundToInt(tile.companyCost * 0.5f);
         
         // Buyer pays
-        buyer.TrySpendMoney(sharePrice);
-        
-
-        // Owner earns
-        tile.owner.AddMoney(sharePrice);
+        if (buyer.money.Value < sharePrice)
+        {
+            return;
+        }
+        else
+        {
+            buyer.TrySpendMoney(sharePrice);
+            tile.owner.AddMoney(sharePrice);
+        }
         
 
         // Increase global share count
@@ -116,8 +127,15 @@ public class MarketManager : NetworkBehaviour
 
         PlayerPawn pawn = conn.FirstObject.GetComponent<PlayerPawn>();
         if (pawn == null) return;
+        if (pawn.money.Value < price)
+        {
+            return;
+        }
+        else
+        {
+            pawn.TrySpendMoney(price);
+        }
         
-        pawn.TrySpendMoney(price);
        
 
         if (!pawn.stockPortfolio.ContainsKey(stockName))
