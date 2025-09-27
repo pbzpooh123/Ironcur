@@ -87,7 +87,11 @@ public class LobbyUI : MonoBehaviour
     {
         if (InstanceFinder.IsServer && NetworkManagerLobby.Instance.AllPlayersReady())
         {
-            GameManager.StartGame();
+            SceneLoadData data = new SceneLoadData("Game1")
+            {
+                ReplaceScenes = ReplaceOption.All
+            };
+            InstanceFinder.SceneManager.LoadGlobalScenes(data);
             CloseAllPanels();
         }
     }
