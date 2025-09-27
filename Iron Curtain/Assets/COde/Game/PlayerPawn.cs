@@ -193,17 +193,6 @@ public class PlayerPawn : NetworkBehaviour
         TargetEnableEndTurn(Owner, true);
     }
     
-    [TargetRpc]
-    public void TargetSetTurnOrder(NetworkConnection conn, int turnIndex)
-    {
-        var panels = FindObjectsOfType<PlayerInfoPanel>();
-        foreach (var panel in panels)
-        {
-            if (panel.nameText.text == playerName.Value) 
-            {
-                panel.turnOrderText.text = $"Turn #{turnIndex + 1}";
-            }
-        }
-    }
+    
 
 }

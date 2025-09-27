@@ -53,7 +53,7 @@ public class NetworkManagerLobby : MonoBehaviour
             NetworkLobbyPlayer player = conn.Value.FirstObject.GetComponent<NetworkLobbyPlayer>();
             if (player != null)
             {
-                playerDetails.Add($"{player.playerName})");
+                playerDetails.Add($"{player.playerName} - {player.business} ({player.country})");
             }
         }
 
@@ -103,7 +103,7 @@ public class NetworkManagerLobby : MonoBehaviour
 
             var player = conn.Value.FirstObject.GetComponent<NetworkLobbyPlayer>();
             if (player != null)
-                result.Add($"{player.playerName.Value} )" +
+                result.Add($"{player.playerName.Value} - {player.business.Value} ({player.country.Value})" +
                            (player.isReady.Value ? " ✅" : " ❌"));
 
         }

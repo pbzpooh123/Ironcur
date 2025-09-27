@@ -22,7 +22,7 @@ public class GameHUD : MonoBehaviour
         anchors = new Transform[4] { topLeftAnchor, topRightAnchor, bottomLeftAnchor, bottomRightAnchor };
     }
 
-    public PlayerInfoPanel CreatePlayerPanel(int slotIndex, string name, int profit)
+    public PlayerInfoPanel CreatePlayerPanel(int slotIndex, string name, string business, string country, int profit)
     {
         if (playerPanelPrefab == null)
         {
@@ -42,7 +42,7 @@ public class GameHUD : MonoBehaviour
 
         PlayerInfoPanel infoPanel = panel.GetComponent<PlayerInfoPanel>();
         if (infoPanel != null)
-            infoPanel.SetInfo(name, profit);
+            infoPanel.SetInfo(name, business, country, profit);
 
         Debug.Log($"Spawned Player Panel for {name} in slot {slotIndex}");
         return infoPanel;
