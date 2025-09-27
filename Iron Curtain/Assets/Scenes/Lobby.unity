@@ -2001,6 +2001,7 @@ GameObject:
   - component: {fileID: 578322366}
   - component: {fileID: 578322368}
   - component: {fileID: 578322369}
+  - component: {fileID: 578322370}
   m_Layer: 0
   m_Name: Network Manager
   m_TagString: Untagged
@@ -2139,6 +2140,25 @@ MonoBehaviour:
     PacketJitterMS: 0
     PacketDropRate: 0
   m_MaximumClients: 5
+--- !u!114 &578322370
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 578322362}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d0962ead4b02a34aae248fccce671ce, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  WriteSceneObjectDetails: 1
+  ValidateRpcLengths: 0
+  DisableObserversRpcLinks: 0
+  DisableTargetRpcLinks: 0
+  DisableServerRpcLinks: 0
+  DisableReplicateRpcLinks: 0
+  DisableReconcileRpcLinks: 0
 --- !u!1 &578900853
 GameObject:
   m_ObjectHideFlags: 0
@@ -5885,6 +5905,7 @@ GameObject:
   - component: {fileID: 1356706733}
   - component: {fileID: 1356706732}
   - component: {fileID: 1356706736}
+  - component: {fileID: 1356706737}
   m_Layer: 5
   m_Name: Main Menu
   m_TagString: Untagged
@@ -6014,6 +6035,18 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 584dd6455e074654bb419add52faf097, type: 2}
   lobbyUI: {fileID: 1464092821}
   hostButton: {fileID: 674318867}
+--- !u!114 &1356706737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1356706731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f3793acbec5b3e4295e949e838f9410, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1420178516
 GameObject:
   m_ObjectHideFlags: 0

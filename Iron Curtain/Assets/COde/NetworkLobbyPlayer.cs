@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using FishNet.Object;
 using FishNet.Connection;
 using FishNet.Object.Synchronizing;
@@ -124,14 +125,22 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     [TargetRpc]
     public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, string business, string country, int profit)
     {
+        StartCoroutine(WaitForHUD(slotIndex, name, business, country, profit, conn));
+    }
+
+    private IEnumerator WaitForHUD(int slotIndex, string name, string business, string country, int profit, NetworkConnection conn)
+    {
+        // Wait until HUD exists in the scene
+        while (GameHUD.Instance == null)
+            yield return null;
+
         var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, business, country, profit);
-        
+
         if (conn.FirstObject != null && conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
         {
             pawn.infoPanel = panel;
             pawn.AddMoney(500);
         }
-        
     }
 
     

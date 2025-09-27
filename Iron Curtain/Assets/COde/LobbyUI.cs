@@ -87,14 +87,7 @@ public class LobbyUI : MonoBehaviour
     {
         if (InstanceFinder.IsServer && NetworkManagerLobby.Instance.AllPlayersReady())
         {
-            Debug.Log("All players ready. Switching to game scene...");
-
-            SceneLoadData loadData = new SceneLoadData("MainGameScene")
-            {
-                ReplaceScenes = ReplaceOption.All
-            };
-            
-            InstanceFinder.SceneManager.LoadGlobalScenes(loadData);
+            GameManager.StartGame();
             CloseAllPanels();
         }
     }

@@ -37,8 +37,19 @@ public class PlayerPawn : NetworkBehaviour
     {
         base.OnStartClient();
         money.OnChange += OnMoneyChanged;
-        
+        StartCoroutine(SetupHUD());
     }
+    
+    private IEnumerator SetupHUD()
+    {
+        while (GameHUD.Instance == null)
+            yield return null;
+
+        int slot = GameManager.Instance.GetSlotForPlayer(OwnerId);
+        var panel = GameHUD.Instance.CreatePlayerPanel(slot, playerName.Value, business.Value, country.Value, money.Value);
+        infoPanel = panel;
+    }
+    
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
     {
         Debug.Log($"{playerName.Value} money changed {oldValue} -> {newValue}");

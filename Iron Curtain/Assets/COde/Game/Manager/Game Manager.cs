@@ -36,13 +36,13 @@ public class GameManager : NetworkBehaviour
         return boardTiles[index].position;
     }
 
-    // 🚀 เรียกตอน Host กด Start Game ใน Lobby
+    // รียกตอน Host กด Start Game ใน Lobby
     [Server]
-    public void StartGame()
+    public static void StartGame()
     {
-        Debug.Log("Loading BoardGameScene...");
+        Debug.Log("Loading MainGameScene...");
 
-        SceneLoadData data = new SceneLoadData("BoardGameScene")
+        SceneLoadData data = new SceneLoadData("MainGameScene")
         {
             ReplaceScenes = ReplaceOption.All
         };
@@ -122,5 +122,13 @@ public class GameManager : NetworkBehaviour
        
     }
 
+    [Server]
+    public int GetSlotForPlayer(int connectionId)
+    {
+        if (playerSlots.TryGetValue(connectionId, out int slot))
+            return slot;
+        return -1; // not found
+    }
+    
     
 }
