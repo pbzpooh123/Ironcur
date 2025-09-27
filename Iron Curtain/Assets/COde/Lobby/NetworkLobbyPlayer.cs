@@ -8,8 +8,6 @@ using System.Collections.Generic;
 public class NetworkLobbyPlayer : NetworkBehaviour
 {
     public readonly SyncVar<string> playerName = new();
-    public readonly SyncVar<string> business = new();
-    public readonly SyncVar<string> country = new();
     public readonly SyncVar<bool> isReady = new();
     public readonly SyncVar<float> profit = new();
     
@@ -31,9 +29,7 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         if (IsOwner)
         {
             SetPlayerInfo(
-                PlayerPrefs.GetString("PlayerName"),
-                PlayerPrefs.GetString("Business"),
-                PlayerPrefs.GetString("Country")
+                PlayerPrefs.GetString("PlayerName")
             );
 
             RequestRoomCode();
@@ -41,13 +37,9 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     }
 
     [ServerRpc]
-    public void SetPlayerInfo(string newName, string newBusiness, string newCountry)
+    public void SetPlayerInfo(string newName)
     {
         playerName.Value = newName;
-        business.Value = newBusiness;
-        country.Value = newCountry;
-
-
         NetworkManagerLobby.Instance.UpdateLobbyUI();
     }
 
@@ -122,9 +114,9 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     }
    
     [TargetRpc]
-    public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, string business, string country, int profit)
+    public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name,  int profit)
     {
-        var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, business, country, profit);
+        var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, profit);
         
         if (conn.FirstObject != null && conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
         {

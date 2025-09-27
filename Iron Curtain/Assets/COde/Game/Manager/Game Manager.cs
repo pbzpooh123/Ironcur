@@ -18,11 +18,7 @@ public class GameManager : NetworkBehaviour
     private Dictionary<int, int> playerSlots = new Dictionary<int, int>(); 
     
     public List<PlayerPawn> Players => new List<PlayerPawn>(playerPawns.Values);
-
     
-    
-    
-
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -36,7 +32,7 @@ public class GameManager : NetworkBehaviour
         return boardTiles[index].position;
     }
 
-    // 🚀 เรียกตอน Host กด Start Game ใน Lobby
+    
     [Server]
     public void StartGame()
     {
@@ -50,7 +46,7 @@ public class GameManager : NetworkBehaviour
         InstanceFinder.SceneManager.LoadGlobalScenes(data);
     }
 
-    // เรียกโดย FishNet หลัง Scene โหลดเสร็จ
+   
     public override void OnStartServer()
     {
         base.OnStartServer();
@@ -92,8 +88,6 @@ public class GameManager : NetworkBehaviour
             pawn.transform.position = GetTilePosition(0);
 
             pawn.playerName.Value = lobbyPlayer.playerName.Value;
-            pawn.business.Value   = lobbyPlayer.business.Value;
-            pawn.country.Value    = lobbyPlayer.country.Value;
 
             playerPawns[connectionId] = pawn;
 
@@ -108,8 +102,6 @@ public class GameManager : NetworkBehaviour
                 lobbyPlayer.Owner,
                 assignedSlot,
                 pawn.playerName.Value,
-                pawn.business.Value,
-                pawn.country.Value,
                 0
             );
             
@@ -121,6 +113,4 @@ public class GameManager : NetworkBehaviour
         }
        
     }
-
-    
 }
