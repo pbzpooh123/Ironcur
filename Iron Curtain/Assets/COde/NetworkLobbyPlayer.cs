@@ -125,6 +125,7 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     [TargetRpc]
     public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, string business, string country, int profit)
     {
+<<<<<<< HEAD
         StartCoroutine(WaitForHUD(slotIndex, name, business, country, profit, conn));
     }
 
@@ -134,6 +135,8 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         while (GameHUD.Instance == null)
             yield return null;
         
+=======
+>>>>>>> parent of 11ec333 (remove somrthing a bit)
         var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, business, country, profit);
         
         if (conn.FirstObject != null && conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
