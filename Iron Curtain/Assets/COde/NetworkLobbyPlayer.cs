@@ -1,147 +1,138 @@
-using System;
 using System.Collections;
+using System.Collections.Generic;
 using FishNet.Object;
 using FishNet.Connection;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
-using System.Collections.Generic;
 
-public class NetworkLobbyPlayer : NetworkBehaviour
+public partial class NetworkLobbyPlayer : NetworkBehaviour
 {
+    public static NetworkLobbyPlayer Local;
+
     public readonly SyncVar<string> playerName = new();
-    public readonly SyncVar<string> business = new();
-    public readonly SyncVar<string> country = new();
-    public readonly SyncVar<bool> isReady = new();
-    public readonly SyncVar<float> profit = new();
-    
-    
-    
-    private LobbyUI lobbyUI;
+    public readonly SyncVar<bool>   isReady    = new();
+    public readonly SyncVar<float>  profit     = new();
+    [System.NonSerialized] public bool HudSpawned;
+
+    private LobbyUI _lobbyUI; // <-- add this
 
     public override void OnStartClient()
     {
         base.OnStartClient();
-        Invoke(nameof(FindLobbyUI), 0.5f);
-    }
-    
+        if (IsOwner) Local = this;
 
-    void FindLobbyUI()
+        // Was: Invoke(nameof(FindLobbyUI), 0.25f);
+        // Now we call the actual init you implemented:
+        Invoke(nameof(CacheLobbyUIAndInitOwner), 0.25f);
+    }
+
+    public override void OnStopClient()
     {
-        lobbyUI = FindObjectOfType<LobbyUI>();
+        if (IsOwner && Local == this) Local = null;
+        base.OnStopClient();
+    }
+
+    private void CacheLobbyUIAndInitOwner()
+    {
+        _lobbyUI = FindObjectOfType<LobbyUI>();
 
         if (IsOwner)
         {
             SetPlayerInfo(
-                PlayerPrefs.GetString("PlayerName"),
-                PlayerPrefs.GetString("Business"),
-                PlayerPrefs.GetString("Country")
+                PlayerPrefs.GetString("PlayerName", "Player")
             );
 
             RequestRoomCode();
         }
     }
 
-    [ServerRpc]
-    public void SetPlayerInfo(string newName, string newBusiness, string newCountry)
+    /* --------------------- Server RPCs --------------------- */
+
+    [ServerRpc(RequireOwnership = false)]
+    public void SetPlayerInfo(string newName)
     {
         playerName.Value = newName;
-        business.Value = newBusiness;
-        country.Value = newCountry;
-
-
-        NetworkManagerLobby.Instance.UpdateLobbyUI();
+        NetworkManagerLobby.Instance?.BroadcastRoster();
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void RequestRoomCode()
     {
-        TargetReceiveRoomCode(Owner, NetworkManagerLobby.Instance.roomCode);
+        var code = NetworkManagerLobby.Instance?.roomCode ?? string.Empty;
+        Target_SetRoomCode(Owner, code);
     }
 
-    [TargetRpc]
-    public void TargetReceiveRoomCode(NetworkConnection conn, string code)
-    {
-        LobbyUI ui = FindObjectOfType<LobbyUI>();
-        if (ui != null)
-        {
-            ui.SetRoomCode(code);
-        }
-    }
-
-    [ObserversRpc]
-    public void UpdatedPlayerList(List<string> playerDetails)
-
-    {
-        if (lobbyUI == null)
-        {
-            lobbyUI = FindObjectOfType<LobbyUI>();
-            if (lobbyUI == null)
-            {
-                Debug.LogError("NetworkLobbyPlayer: LobbyUI is still missing! Cannot update player list.");
-                return;
-            }
-        }
-
-        lobbyUI.UpdatePlayerList(playerDetails);
-    }
-
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void JoinRoom(string enteredCode)
     {
-        if (NetworkManagerLobby.Instance.roomCode == enteredCode)
+        string want = (enteredCode ?? string.Empty).Trim().ToUpperInvariant();
+        string have = (NetworkManagerLobby.Instance?.roomCode ?? string.Empty).Trim().ToUpperInvariant();
+
+        if (!string.IsNullOrEmpty(want) && want == have)
         {
-            TargetShowWaitingPanel(Owner);
+            Target_ShowWaitingPanel(Owner);
+            NetworkManagerLobby.Instance?.BroadcastRoster();
         }
         else
         {
-            Debug.Log("Invalid Room Code!");
+            Debug.Log("JoinRoom: Invalid room code.");
         }
     }
 
-    [TargetRpc]
-    public void TargetShowWaitingPanel(NetworkConnection conn)
-    {
-        MainMenuUI ui = FindObjectOfType<MainMenuUI>();
-        if (ui != null)
-        {
-            ui.lobbyPanel.SetActive(true);
-            ui.mainMenuPanel.SetActive(false);
-        }
-    }
-
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void ToggleReady()
     {
         isReady.Value = !isReady.Value;
-        NetworkManagerLobby.Instance.UpdateLobbyUI();
+        NetworkManagerLobby.Instance?.OnPlayerReadyStateChanged(); // server will BroadcastRoster()
+        Debug.Log($"[Server] {playerName.Value} ready = {isReady.Value}");
     }
 
-    private void OnReadyStatusChanged(bool oldVal, bool newVal, bool asServer)
-    {
-        if (lobbyUI == null) lobbyUI = FindObjectOfType<LobbyUI>();
-        lobbyUI?.UpdatePlayerList(NetworkManagerLobby.Instance.GetPlayerList());
-    }
-   
+    /* --------------------- Target RPCs (UI pushes) --------------------- */
+
     [TargetRpc]
-    public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, string business, string country, int profit)
+    public void Target_SetRoomCode(NetworkConnection target, string code)
     {
-        StartCoroutine(WaitForHUD(slotIndex, name, profit, conn));
+        if (_lobbyUI == null) _lobbyUI = FindObjectOfType<LobbyUI>();
+        _lobbyUI?.SetRoomCode(code);
     }
 
-    private IEnumerator WaitForHUD(int slotIndex, string name, int profit, NetworkConnection conn)
+    [TargetRpc]
+    public void Target_UpdatePlayerList(NetworkConnection target, List<string> roster)
     {
-        // Wait until HUD exists in the scene
+        if (_lobbyUI == null) _lobbyUI = FindObjectOfType<LobbyUI>();
+        _lobbyUI?.UpdatePlayerList(roster);
+    }
+
+    [TargetRpc]
+    public void Target_ShowWaitingPanel(NetworkConnection target)
+    {
+        var menu = FindObjectOfType<MainMenuUI>();
+        if (menu != null)
+        {
+            menu.lobbyPanel.SetActive(true);
+            if (menu.mainMenuPanel != null) menu.mainMenuPanel.SetActive(false);
+        }
+    }
+
+    /* --------------------- HUD hookup (unchanged) --------------------- */
+
+    [TargetRpc]
+    public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, int profitAmount)
+    {
+        StartCoroutine(WaitForHUD(slotIndex, name, profitAmount, conn));
+    }
+
+    private IEnumerator WaitForHUD(int slotIndex, string name, int profitAmount, NetworkConnection conn)
+    {
         while (GameHUD.Instance == null)
             yield return null;
 
-        var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name,  profit);
+        var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, profitAmount);
 
-        if (conn.FirstObject != null && conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
+        if (conn?.FirstObject != null && conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
         {
             pawn.infoPanel = panel;
             pawn.AddMoney(500);
         }
     }
-
-    
 }

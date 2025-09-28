@@ -1,13 +1,16 @@
 using UnityEngine;
 using TMPro;
+using Unity.Services.Core;
+using Unity.Services.Authentication;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using Unity.Networking.Transport.Relay;
 using FishNet;
 using FishNet.Managing;
-using FishNet.Transporting;
 using FishNet.Transporting.UTP;
-using System.Collections.Generic;
+using FishNet.Managing.Client;
+using FishNet.Transporting;
+
 
 public class MainMenuUI : MonoBehaviour
 {
@@ -30,223 +33,155 @@ public class MainMenuUI : MonoBehaviour
 
     [Header("Business Info Preview")]
     public TMP_Text businessDescriptionText;
-    public List<BusinessInfo> businessInfoList;
 
     [Header("Networking")]
     public LobbyUI lobbyUI;
-    
-    private bool isHosting = false;
     public UnityEngine.UI.Button hostButton;
 
-    
-    private void Start()
+    private bool isHosting;
+
+    private async void Start()
     {
+        // Initialize UGS + anonymous sign-in once at boot
+        await EnsureUnityServicesAsync();
+
         // Load last used player name if available
         if (PlayerPrefs.HasKey("PlayerName"))
             nameInput.text = PlayerPrefs.GetString("PlayerName");
 
-        businessDropdown.onValueChanged.AddListener(OnBusinessChanged);
-        OnBusinessChanged(businessDropdown.value);
+        // Use a proper connection event instead of Invoke(...)
+        InstanceFinder.ClientManager.OnClientConnectionState += OnClientConnectionStateChanged;
 
-        OpenStartPanel(); // Default start panel
-    }
-
-    // --- UI Navigation ---
-
-    public void OpenStartPanel()
-    {
-        CloseAllPanels();
-        startPanel.SetActive(true);
+        OpenStartPanel();
     }
 
-    public void OpenNameCountryPanel()
+    private void OnDestroy()
     {
-        CloseAllPanels();
-        nameCountryPanel.SetActive(true);
-    }
-    
-    public void OpenSettingsPanel()
-    {
-        CloseAllPanels();
-        settingsPanel.SetActive(true);
-    }
-    
-    public void BacktoSettingsPanel()
-    {
-        soundPanel.SetActive(false);
-        languagePanel.SetActive(false);
-    }
-    
-    public void OpenSoundPanel()
-    {
-        soundPanel.SetActive(true);
-        languagePanel.SetActive(false);
-    }
-    
-    public void OpenLanguagePanel()
-    {
-        soundPanel.SetActive(false);
-        languagePanel.SetActive(true);
+        if (InstanceFinder.ClientManager != null)
+            InstanceFinder.ClientManager.OnClientConnectionState -= OnClientConnectionStateChanged;
     }
 
-    public void OpenBusinessPanel()
+    private async System.Threading.Tasks.Task EnsureUnityServicesAsync()
     {
-        CloseAllPanels();
-        businessPanel.SetActive(true);
+        if (UnityServices.State != ServicesInitializationState.Initialized &&
+            UnityServices.State != ServicesInitializationState.Initializing)
+        {
+            await UnityServices.InitializeAsync();
+        }
+        if (!AuthenticationService.Instance.IsSignedIn)
+        {
+            await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        }
     }
 
-    public void OpenHostClientPanel()
-    {
-        CloseAllPanels();
-        hostClientPanel.SetActive(true);
-    }
+    // --- UI Navigation (unchanged) ---
+    public void OpenStartPanel() { CloseAllPanels(); startPanel.SetActive(true); }
+    public void OpenNameCountryPanel() { CloseAllPanels(); nameCountryPanel.SetActive(true); }
+    public void OpenSettingsPanel() { CloseAllPanels(); settingsPanel.SetActive(true); }
+    public void BacktoSettingsPanel(){ soundPanel.SetActive(false); languagePanel.SetActive(false); }
+    public void OpenSoundPanel() { soundPanel.SetActive(true); languagePanel.SetActive(false); }
+    public void OpenLanguagePanel(){ soundPanel.SetActive(false); languagePanel.SetActive(true); }
+    public void OpenBusinessPanel(){ CloseAllPanels(); businessPanel.SetActive(true); }
+    public void OpenHostClientPanel(){ CloseAllPanels(); hostClientPanel.SetActive(true); }
+    private void CloseAllPanels(){ startPanel.SetActive(false); nameCountryPanel.SetActive(false); businessPanel.SetActive(false); hostClientPanel.SetActive(false);  settingsPanel.SetActive(false); }
 
-    private void CloseAllPanels()
-    {
-        startPanel.SetActive(false);
-        nameCountryPanel.SetActive(false);
-        businessPanel.SetActive(false);
-        hostClientPanel.SetActive(false);
-        lobbyPanel.SetActive(false);
-        settingsPanel.SetActive(false);
-    }
-
-    // --- UI Button Handlers ---
-
-    public void OnClickStartGame()
-    {
-        OpenNameCountryPanel();
-    }
-
-    public void OnClickQuitGame()
-    {
-        Application.Quit();
-    }
-
+    public void OnClickStartGame(){ OpenNameCountryPanel(); }
+    public void OnClickQuitGame(){ Application.Quit(); }
     public void OnClickNextFromNameCountry()
     {
         bool nameValid = !string.IsNullOrWhiteSpace(nameInput.text);
         bool countrySelected = countryDropdown.value >= 0;
         bool businessSelected = businessDropdown.value >= 0;
 
-        if (nameValid && countrySelected && businessSelected)
-        {
-            OpenHostClientPanel();
-        }
-        else
-        {
-            Debug.LogWarning("Please enter a name and select a country.");
-        }
+        if (nameValid && countrySelected && businessSelected) OpenHostClientPanel();
+        else Debug.LogWarning("Please enter a name");
     }
-
-    public void OnClickBackToNameCountry()
-    {
-        OpenNameCountryPanel();
-    }
-
-    public void OnClickConfirmBusiness()
-    {
-        if (businessDropdown.value >= 0)
-        {
-            OpenHostClientPanel();
-        }
-        else
-        {
-            Debug.LogWarning("Please select a business before continuing.");
-        }
-    }
-
-    // --- Business Description ---
-
-    public void OnBusinessChanged(int index)
-    {
-        if (index < 0 || index >= businessInfoList.Count || businessDescriptionText == null)
-        {
-            businessDescriptionText.text = "No info available.";
-            return;
-        }
-
-        BusinessInfo info = businessInfoList[index];
-        businessDescriptionText.text = $"<b>{info.businessName}</b>\n\n" +
-                                       $"<b>Description:</b>\n{info.description}\n\n" +
-                                       $"<color=green><b>Perk:</b></color>\n{info.perk}\n\n";
-    }
+    public void OnClickBackToNameCountry(){ OpenNameCountryPanel(); }
 
     // --- Networking ---
 
     public async void HostGame()
     {
-        if (isHosting)   // prevent double execution
-        {
-            Debug.LogWarning("Already hosting, ignoring duplicate click.");
-            return;
-        }
-        isHosting = true;
-        hostButton.interactable = false;
-
-        Debug.Log("HostGame() called");
+        if (isHosting) { Debug.LogWarning("Already hosting, ignoring duplicate click."); return; }
+        isHosting = true; hostButton.interactable = false;
 
         SavePlayerInfo();
 
         try
         {
-            Debug.Log("Requesting Relay allocation...");
-            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(4);
-            Debug.Log("Relay allocation successful");
+            await EnsureUnityServicesAsync();
 
+            // For a 4-player game (host + 3 clients) pass 3
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(3);
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-            Debug.Log("Join Code received: " + joinCode);
 
+            // Store/show room code
             NetworkManagerLobby.Instance.roomCode = joinCode;
+            if (lobbyUI != null) lobbyUI.SetRoomCode(joinCode);
 
-            var transport = (UnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
-            transport.SetRelayServerData(new RelayServerData(allocation, "dtls"));
+            // Configure FishyUnityTransport for Relay
+            var utp = InstanceFinder.NetworkManager.TransportManager.GetTransport<UnityTransport>();
 
-            InstanceFinder.ServerManager.StartConnection();
-            InstanceFinder.ClientManager.StartConnection();
+            // If you’re on newer packages, prefer AllocationUtils.ToRelayServerData(allocation, "dtls");
+            utp.SetRelayServerData(new RelayServerData(allocation, "dtls"));
 
-            mainMenuPanel.SetActive(false);
-            lobbyPanel.SetActive(true);
+            // If building WebGL:
+            // utp.UseWebSockets = true;
+            // utp.SetRelayServerData(new RelayServerData(allocation, "wss"));
 
-            if (lobbyUI != null)
+            // Start server then (optionally) local client
+            if (InstanceFinder.ServerManager.StartConnection())
             {
-                lobbyUI.SetRoomCode(joinCode);
+                InstanceFinder.ClientManager.StartConnection();
             }
             else
             {
-                Debug.LogError("lobbyUI is null!");
+                Debug.LogError("Server failed to start.");
+                isHosting = false; hostButton.interactable = true;
+                return;
             }
+
+            mainMenuPanel.SetActive(false);
+            lobbyPanel.SetActive(true);
         }
         catch (RelayServiceException e)
         {
             Debug.LogError("Relay Host Failed: " + e.Message);
-            isHosting = false; // reset on failure
+            isHosting = false; hostButton.interactable = true;
         }
     }
-
 
     public async void JoinGame()
     {
         SavePlayerInfo();
 
-        string joinCode = roomCodeInput.text.ToUpper();
+        string joinCode = roomCodeInput.text.Trim().ToUpper();
+        if (string.IsNullOrEmpty(joinCode) || joinCode.Length < 6)
+        {
+            Debug.LogWarning("Invalid room code.");
+            return;
+        }
 
         try
         {
+            await EnsureUnityServicesAsync();
+
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
 
-            var transport = (UnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
-            transport.SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
+            var utp = InstanceFinder.NetworkManager.TransportManager.GetTransport<UnityTransport>();
+            // If on new packages use AllocationUtils.ToRelayServerData(joinAllocation, "dtls");
+            utp.SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
 
             InstanceFinder.ClientManager.StartConnection();
-
+            CloseAllPanels();
             lobbyPanel.SetActive(true);
             hostClientPanel.SetActive(false);
 
-            Invoke(nameof(RequestJoinRoom), 2f);
+            // no Invoke(...) — we’ll request room join after we’re actually connected
+            _pendingJoinCode = joinCode;
 
-            if (lobbyUI != null)
-                lobbyUI.SetRoomCode(joinCode);
+            if (lobbyUI != null) lobbyUI.SetRoomCode(joinCode);
+            
         }
         catch (RelayServiceException e)
         {
@@ -254,25 +189,40 @@ public class MainMenuUI : MonoBehaviour
         }
     }
 
-    private void RequestJoinRoom()
+    private string _pendingJoinCode;
+
+    private void OnClientConnectionStateChanged(FishNet.Transporting.ClientConnectionStateArgs args)
     {
-        foreach (var obj in InstanceFinder.ClientManager.Objects.Spawned.Values)
+        if (args.ConnectionState == LocalConnectionState.Started)
         {
-            if (obj.IsOwner && obj.TryGetComponent(out NetworkLobbyPlayer player))
+            // Local client connected: now your player object will spawn.
+            // Wait one frame so spawned list is populated.
+            StartCoroutine(CallJoinOnLocalPlayerNextFrame());
+        }
+    }
+
+    private System.Collections.IEnumerator CallJoinOnLocalPlayerNextFrame()
+    {
+        yield return null;
+
+        foreach (var nob in InstanceFinder.ClientManager.Objects.Spawned.Values)
+        {
+            if (nob.IsOwner && nob.TryGetComponent(out NetworkLobbyPlayer player))
             {
-                player.JoinRoom(roomCodeInput.text.ToUpper());
-                return;
+                if (!string.IsNullOrEmpty(_pendingJoinCode))
+                    player.JoinRoom(_pendingJoinCode); // your [ServerRpc] JoinRoom(...)
+                _pendingJoinCode = null;
+                yield break;
             }
         }
-
-        Debug.LogError("Local player not found! Has the player spawned yet?");
+        Debug.LogWarning("Local player not found yet; will try again next frame.");
+        StartCoroutine(CallJoinOnLocalPlayerNextFrame());
     }
 
     private void SavePlayerInfo()
     {
         PlayerPrefs.SetString("PlayerName", nameInput.text);
-        PlayerPrefs.SetString("Business", businessDropdown.options[businessDropdown.value].text);
-        PlayerPrefs.SetString("Country", countryDropdown.options[countryDropdown.value].text);
+        // consider also saving Business/Country if you use them elsewhere
         PlayerPrefs.Save();
     }
 }

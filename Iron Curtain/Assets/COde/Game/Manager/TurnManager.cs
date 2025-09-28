@@ -28,11 +28,14 @@ public class TurnManager : NetworkBehaviour
     private void StartTurn()
     {
         if (!IsServer) return;
+        if (GameManager.Instance == null) return;
 
-        var players = GameManager.Instance.Players;
-        if (players.Count == 0) return;
+        // snapshot + count
+        var players = GameManager.Instance.GetPlayersSnapshot();
+        int playerCount = GameManager.Instance.PlayerCount;
+        if (playerCount == 0) return;
 
-        if (currentPlayerIndex.Value >= players.Count)
+        if (currentPlayerIndex.Value >= playerCount)
             currentPlayerIndex.Value = 0;
 
         PlayerPawn currentPlayer = players[currentPlayerIndex.Value];
@@ -44,36 +47,40 @@ public class TurnManager : NetworkBehaviour
     [Server]
     public void EndTurn()
     {
-        var players = GameManager.Instance.Players;
-        if (players.Count == 0) return;
+        if (GameManager.Instance == null) return;
+
+        var players = GameManager.Instance.GetPlayersSnapshot();
+        int playerCount = GameManager.Instance.PlayerCount;
+        if (playerCount == 0) return;
 
         int nextIndex = currentPlayerIndex.Value + 1;
 
-        if (nextIndex >= players.Count)
+        if (nextIndex >= playerCount)
         {
             nextIndex = 0;
             turnCount.Value++;
 
             Debug.Log($"[TurnManager] Completed a full cycle. TurnCount={turnCount.Value}");
 
-            if (turnCount.Value % players.Count == 0)
+            // A “round” = everyone has taken one turn.
+            if (turnCount.Value % playerCount == 0)
             {
                 roundCount.Value++;
-                RpcUpdateRoundUI(roundCount.Value); // tell all clients to update UI
+                RpcUpdateRoundUI(roundCount.Value); // update client UI
                 Debug.Log($"[TurnManager] Round {roundCount.Value} completed!");
 
-                // trigger investments payouts
-                MarketManager.Instance.ProcessPayouts();
+                // trigger investment payouts
+                MarketManager.Instance?.ProcessPayouts();
             }
         }
 
         currentPlayerIndex.Value = nextIndex;
 
-        if (roundCount.Value % 3 == 0 && roundCount.Value > 0)
-        {
-            EventManager.Instance.TriggerMainEvent(roundCount.Value);
-        }
+        // main event every 3 rounds
+        if (roundCount.Value > 0 && (roundCount.Value % 3 == 0))
+            EventManager.Instance?.TriggerMainEvent(roundCount.Value);
 
+        // simple game-over guard
         if (roundCount.Value >= 15)
         {
             Debug.Log("Game Over! Count money and decide winner.");
@@ -92,8 +99,12 @@ public class TurnManager : NetworkBehaviour
 
     public PlayerPawn GetCurrentPawn()
     {
-        var players = GameManager.Instance.Players;
-        if (players.Count == 0) return null;
-        return players[currentPlayerIndex.Value];
+        if (GameManager.Instance == null) return null;
+
+        var players = GameManager.Instance.GetPlayersSnapshot();
+        int playerCount = GameManager.Instance.PlayerCount;
+        if (playerCount == 0) return null;
+
+        return players[Mathf.Clamp(currentPlayerIndex.Value, 0, playerCount - 1)];
     }
 }

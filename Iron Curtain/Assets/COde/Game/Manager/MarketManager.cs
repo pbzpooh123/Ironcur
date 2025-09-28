@@ -134,63 +134,76 @@ public class MarketManager : NetworkBehaviour
     [Server]
     public void ProcessPayouts()
     {
-        int currentRound = TurnManager.Instance.roundCount.Value;
+        // NEW (null-guard + snapshot)
+if (GameManager.Instance == null) return;
 
-            foreach (var pawn in GameManager.Instance.Players)
+int currentRound = TurnManager.Instance.roundCount.Value;
+
+foreach (var pawn in GameManager.Instance.GetPlayersSnapshot())
+{
+    // === Factories (payout every round) ===
+    foreach (var kvp in pawn.factoryPortfolio)
+    {
+        var record = kvp.Value;
+
+        // reset expired multipliers
+        if (record.multiplierExpiresAt > 0 && currentRound >= record.multiplierExpiresAt)
         {
-             // === Factories (payout every round) ===
-                foreach (var kvp in pawn.factoryPortfolio)
-                {
-                     ShareRecord record = kvp.Value;
+            record.multiplier = 1f;
+            record.multiplierExpiresAt = 0;
+            // If ShareRecord is a struct, write back:
+            pawn.factoryPortfolio[kvp.Key] = record;
+        }
 
-                        // reset expired multipliers
-                        if (record.multiplierExpiresAt > 0 && currentRound >= record.multiplierExpiresAt)
-                    {
-                         record.multiplier = 1f;
-                        record.multiplierExpiresAt = 0;
-                        
-                    } // find tile
-                    TileData tile = null;
-                    foreach (var go in GameManager.Instance.boardTiles)
-                    {
-                        var td = go.GetComponent<TileData>();
-                        if (td != null && td.description == kvp.Key)
-                        {
-                            tile = td;
-                             break;
-                        } 
-                    }
-                    if (tile == null) continue;
-                    int income = Mathf.RoundToInt(tile.companyCost * 0.1f * record.count * record.multiplier); 
-                    pawn.AddMoney(income);
-                   
-                    Debug.Log($"{pawn.playerName.Value} earned ${income} from factory {kvp.Key} (x{record.multiplier})"); 
-                } 
-                // === Stocks (every 4 rounds, delayed by 2 rounds) ===
-                foreach (var kvp in pawn.stockPortfolio)
-             {
-                 ShareRecord record = kvp.Value;
-                 int age = currentRound - record.roundBought;
-                 if (age < 2) continue;              // not matured yet
-                 if (currentRound % 4 != 0) continue; // only every 4th round
+        // find tile
+        TileData tile = null;
+        foreach (var go in GameManager.Instance.boardTiles)
+        {
+            var td = go.GetComponent<TileData>();
+            if (td != null && td.description == kvp.Key)
+            {
+                tile = td;
+                break;
+            }
+        }
+        if (tile == null) continue;
 
-                // reset expired multipliers
-                 if (record.multiplierExpiresAt > 0 && currentRound >= record.multiplierExpiresAt)
-                 { 
-                     record.multiplier = 1f;
-                     record.multiplierExpiresAt = 0;
-                 }
+        int income = Mathf.RoundToInt(tile.companyCost * 0.1f * record.count * record.multiplier);
+        pawn.AddMoney(income);
+        Debug.Log($"{pawn.playerName.Value} earned ${income} from factory {kvp.Key} (x{record.multiplier})");
 
-                 // find stock definition
-                 StockData stock = stocks.Find(s => s.stockName == kvp.Key);
-                 if (stock == null) continue; 
-                 // base income = 10% of base price × multiplier × shares
-                 int income = Mathf.RoundToInt(stock.basePrice * 0.1f * stock.priceMultiplier * record.multiplier) * record.count;
-                pawn.AddMoney(income);
-               
-                Debug.Log($"{pawn.playerName.Value} received ${income} from stock {kvp.Key} (x{record.multiplier})"); 
-             } 
-        } 
+        // ensure write-back if ShareRecord is a struct
+        pawn.factoryPortfolio[kvp.Key] = record;
+    }
+
+    // === Stocks (every 4 rounds, delayed by 2 rounds) ===
+    foreach (var kvp in pawn.stockPortfolio)
+    {
+        var record = kvp.Value;
+        int age = currentRound - record.roundBought;
+        if (age < 2) continue;              // not matured yet
+        if (currentRound % 4 != 0) continue; // only every 4th round
+
+        // reset expired multipliers
+        if (record.multiplierExpiresAt > 0 && currentRound >= record.multiplierExpiresAt)
+        {
+            record.multiplier = 1f;
+            record.multiplierExpiresAt = 0;
+        }
+
+        // find stock definition
+        StockData stock = stocks.Find(s => s.stockName == kvp.Key);
+        if (stock == null) continue;
+
+        int income = Mathf.RoundToInt(stock.basePrice * 0.1f * stock.priceMultiplier * record.multiplier) * record.count;
+        pawn.AddMoney(income);
+        Debug.Log($"{pawn.playerName.Value} received ${income} from stock {kvp.Key} (x{record.multiplier})");
+
+        // ensure write-back if ShareRecord is a struct
+        pawn.stockPortfolio[kvp.Key] = record;
+    }
+}
+
     }
 
     

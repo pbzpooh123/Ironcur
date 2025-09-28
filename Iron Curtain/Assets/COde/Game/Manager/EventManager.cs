@@ -21,19 +21,18 @@ public class EventManager : NetworkBehaviour
         Instance = this;
     }
 
-    // === TILE EVENT (match your call: TriggerTileEvent(this, data.description)) ===
+    // === TILE EVENT (custom desc) ===
     [Server]
     public void TriggerTileEvent(PlayerPawn pawn, string desc)
     {
         waitingForAll = true;
         playersReady = 0;
-        totalPlayers = GameManager.Instance.Players.Count;
+        totalPlayers = GameManager.Instance != null ? GameManager.Instance.PlayerCount : 0;
 
-        // only to the pawn who triggered
         TargetShowEvent(pawn.Owner, desc, true);
     }
 
-   
+    // === TILE EVENT (random) ===
     [Server]
     public void TriggerTileEvent(PlayerPawn pawn)
     {
@@ -43,19 +42,19 @@ public class EventManager : NetworkBehaviour
         var e = tileEvents[Random.Range(0, tileEvents.Count)];
         waitingForAll = true;
         playersReady = 0;
-        totalPlayers = GameManager.Instance.Players.Count;
+        totalPlayers = GameManager.Instance != null ? GameManager.Instance.PlayerCount : 0;
 
         TargetShowEvent(pawn.Owner, $"{e.eventName}\n\n{e.description}", true);
-        ApplyEventToPawn(e, pawn); // only to the pawn who triggered
+        ApplyEventToPawn(e, pawn);
     }
 
-    // === MAIN EVENT (global, every 3 rounds) ===
+    // === MAIN EVENT (global) ===
     [Server]
     public void TriggerMainEvent(int round)
     {
         waitingForAll = true;
         playersReady = 0;
-        totalPlayers = GameManager.Instance.Players.Count;
+        totalPlayers = GameManager.Instance != null ? GameManager.Instance.PlayerCount : 0;
 
         string msg;
         GameEventSO e = null;
@@ -77,7 +76,6 @@ public class EventManager : NetworkBehaviour
             ApplyEventToAll(e);
     }
 
-    // === Client popup ===
     [TargetRpc]
     private void TargetShowEvent(NetworkConnection conn, string message, bool pauseAll)
     {
@@ -85,7 +83,6 @@ public class EventManager : NetworkBehaviour
             EventUI.Instance.Show(message, pauseAll);
     }
 
-    // === Players click "Continue" on the event popup ===
     [ServerRpc(RequireOwnership = false)]
     public void CmdPlayerReady(NetworkConnection conn = null)
     {
@@ -102,97 +99,80 @@ public class EventManager : NetworkBehaviour
         }
     }
 
-    // === Resume game: show stock UI → enable End Turn for the current pawn ===
     [Server]
     private void ResumeAfterEvent()
     {
         var pawn = TurnManager.Instance.GetCurrentPawn();
         if (pawn != null)
-        {
-            // These must be public TargetRpcs on PlayerPawn
             pawn.TargetOpenStockUI(pawn.Owner);
-        }
     }
 
     // === Apply event effects ===
     [Server]
-private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
-{
-    if (e == null || pawn == null) return;
-
-    foreach (var effect in e.effects)
+    private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
     {
-        // === Instant money ===
-        if (effect.moneyDelta != 0)
-        {
-            pawn.AddMoney(effect.moneyDelta);
-            Debug.Log($"{pawn.playerName.Value} money changed by {effect.moneyDelta} from event {e.eventName}");
-        }
+        if (e == null || pawn == null) return;
 
-        // === Stock effect ===
-        if (effect.targetType == TargetType.Stock && !string.IsNullOrEmpty(effect.targetName))
+        foreach (var effect in e.effects)
         {
-            if (pawn.stockPortfolio.ContainsKey(effect.targetName))
+            if (effect.moneyDelta != 0)
             {
-                var rec = pawn.stockPortfolio[effect.targetName];
-                rec.multiplier *= effect.multiplier;
-                rec.multiplierExpiresAt = TurnManager.Instance.roundCount.Value + effect.duration;
-
-                Debug.Log($"{pawn.playerName.Value}'s {effect.targetName} stock multiplier x{rec.multiplier} until round {rec.multiplierExpiresAt}");
+                pawn.AddMoney(effect.moneyDelta);
+                Debug.Log($"{pawn.playerName.Value} money changed by {effect.moneyDelta} from event {e.eventName}");
             }
-        }
 
-        // === Factory effect ===
-        if (effect.targetType == TargetType.Factory && !string.IsNullOrEmpty(effect.targetName))
-        {
-            if (pawn.factoryPortfolio.ContainsKey(effect.targetName))
+            if (effect.targetType == TargetType.Stock && !string.IsNullOrEmpty(effect.targetName))
             {
-                var rec = pawn.factoryPortfolio[effect.targetName];
-                rec.multiplier *= effect.multiplier;
-                rec.multiplierExpiresAt = TurnManager.Instance.roundCount.Value + effect.duration;
-
-                Debug.Log($"{pawn.playerName.Value}'s {effect.targetName} factory multiplier x{rec.multiplier} until round {rec.multiplierExpiresAt}");
-            }
-        }
-
-        // === Global effect (money + multipliers for all) ===
-        if (effect.targetType == TargetType.Global)
-        {
-            foreach (var p in GameManager.Instance.Players)
-            {
-                // Global instant money
-                if (effect.moneyDelta != 0)
+                if (pawn.stockPortfolio.TryGetValue(effect.targetName, out var rec))
                 {
-                    p.AddMoney(effect.moneyDelta);
-                    Debug.Log($"{p.playerName.Value} global money change {effect.moneyDelta} from {e.eventName}");
-                }
-
-                // Apply global stock multiplier
-                foreach (var kvp in p.stockPortfolio)
-                {
-                    var rec = kvp.Value;
                     rec.multiplier *= effect.multiplier;
                     rec.multiplierExpiresAt = TurnManager.Instance.roundCount.Value + effect.duration;
+                    pawn.stockPortfolio[effect.targetName] = rec;
                 }
+            }
 
-                // Apply global factory multiplier
-                foreach (var kvp in p.factoryPortfolio)
+            if (effect.targetType == TargetType.Factory && !string.IsNullOrEmpty(effect.targetName))
+            {
+                if (pawn.factoryPortfolio.TryGetValue(effect.targetName, out var rec))
                 {
-                    var rec = kvp.Value;
                     rec.multiplier *= effect.multiplier;
                     rec.multiplierExpiresAt = TurnManager.Instance.roundCount.Value + effect.duration;
+                    pawn.factoryPortfolio[effect.targetName] = rec;
+                }
+            }
+
+            if (effect.targetType == TargetType.Global && GameManager.Instance != null)
+            {
+                foreach (var p in GameManager.Instance.GetPlayersSnapshot())
+                {
+                    if (effect.moneyDelta != 0)
+                        p.AddMoney(effect.moneyDelta);
+
+                    foreach (var kvp in p.stockPortfolio)
+                    {
+                        var r = kvp.Value;
+                        r.multiplier *= effect.multiplier;
+                        r.multiplierExpiresAt = TurnManager.Instance.roundCount.Value + effect.duration;
+                        p.stockPortfolio[kvp.Key] = r;
+                    }
+
+                    foreach (var kvp in p.factoryPortfolio)
+                    {
+                        var r = kvp.Value;
+                        r.multiplier *= effect.multiplier;
+                        r.multiplierExpiresAt = TurnManager.Instance.roundCount.Value + effect.duration;
+                        p.factoryPortfolio[kvp.Key] = r;
+                    }
                 }
             }
         }
     }
-}
 
-[Server]
-private void ApplyEventToAll(GameEventSO e)
-{
-    if (e == null) return;
-    foreach (var pawn in GameManager.Instance.Players)
-        ApplyEventToPawn(e, pawn);
-}
-
+    [Server]
+    private void ApplyEventToAll(GameEventSO e)
+    {
+        if (e == null || GameManager.Instance == null) return;
+        foreach (var pawn in GameManager.Instance.GetPlayersSnapshot())
+            ApplyEventToPawn(e, pawn);
+    }
 }
