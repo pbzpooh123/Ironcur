@@ -1998,7 +1998,6 @@ GameObject:
   - component: {fileID: 578322364}
   - component: {fileID: 578322365}
   - component: {fileID: 578322367}
-  - component: {fileID: 578322366}
   - component: {fileID: 578322368}
   - component: {fileID: 578322369}
   - component: {fileID: 578322370}
@@ -2056,25 +2055,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   roomCode: 
---- !u!114 &578322366
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 578322362}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3fdaae44044276a49a52229c1597e33b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _updateOrder: 0
-  _timingType: 0
-  _allowTickDropping: 1
-  _maximumFrameTicks: 3
-  _tickRate: 30
-  _pingInterval: 1
-  _physicsMode: 0
 --- !u!114 &578322367
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2149,16 +2129,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 578322362}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6d0962ead4b02a34aae248fccce671ce, type: 3}
+  m_Script: {fileID: 11500000, guid: 7d331f979d46e8e4a9fc90070c596d44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  WriteSceneObjectDetails: 1
-  ValidateRpcLengths: 0
-  DisableObserversRpcLinks: 0
-  DisableTargetRpcLinks: 0
-  DisableServerRpcLinks: 0
-  DisableReplicateRpcLinks: 0
-  DisableReconcileRpcLinks: 0
+  _updateHostVisibility: 1
+  _maximumTimedObserversDuration: 10
+  _defaultConditions:
+  - {fileID: 11400000, guid: 2033f54fd2794464bae08fa5a55c8996, type: 2}
 --- !u!1 &578900853
 GameObject:
   m_ObjectHideFlags: 0
