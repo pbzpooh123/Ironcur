@@ -43,17 +43,7 @@ public class GameManager : NetworkBehaviour
         return boardTiles[index].position;
     }
 
-    /* Called by host when pressing Start from lobby. Keep it simple and replace scenes. */
-    [Server]
-    public static void StartGame()
-    {
-        var data = new SceneLoadData("MainGameScene")
-        {
-            ReplaceScenes = ReplaceOption.All   // <— simple & version-safe
-        };
-        InstanceFinder.SceneManager.LoadGlobalScenes(data);
-    }
-
+    
     /* SERVER lifecycle for scene load */
     public override void OnStartServer()
     {
@@ -119,8 +109,6 @@ public class GameManager : NetworkBehaviour
         
         _playerPawns[connId] = pawn;
         
-        pawn.PlaceAtTile(0);
-        
         pawn.playerName.Value = lobbyPlayer.playerName.Value;
         if (pawn.money.Value == 0) pawn.money.Value = 1500; 
 
@@ -150,8 +138,7 @@ public class GameManager : NetworkBehaviour
     {
         while (GameHUD.Instance == null)
             yield return null;
-
-        GameHUD.Instance.AddOrUpdatePlayerPanel(slot, name, money);
+        
     }
     
     private readonly Dictionary<int, int> _slotByConn = new(); // connId -> slot

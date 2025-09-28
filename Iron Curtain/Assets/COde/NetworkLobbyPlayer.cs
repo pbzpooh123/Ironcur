@@ -114,25 +114,11 @@ public partial class NetworkLobbyPlayer : NetworkBehaviour
         }
     }
 
-    /* --------------------- HUD hookup (unchanged) --------------------- */
-
-    [TargetRpc]
-    public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, int profitAmount)
-    {
-        StartCoroutine(WaitForHUD(slotIndex, name, profitAmount, conn));
+  
+    
     }
 
-    private IEnumerator WaitForHUD(int slotIndex, string name, int profitAmount, NetworkConnection conn)
-    {
-        while (GameHUD.Instance == null)
-            yield return null;
 
-        var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, profitAmount);
 
-        if (conn?.FirstObject != null && conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
-        {
-            pawn.infoPanel = panel;
-            pawn.AddMoney(500);
-        }
-    }
-}
+
+

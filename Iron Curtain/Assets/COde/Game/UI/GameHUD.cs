@@ -25,12 +25,11 @@ public class GameHUD : MonoBehaviour
         _anchors = new Transform[4] { topLeftAnchor, topRightAnchor, bottomLeftAnchor, bottomRightAnchor };
     }
 
-    // Backward-compatible: still used by older code
-    public PlayerInfoPanel CreatePlayerPanel(int slotIndex, string name, int money)
-        => AddOrUpdatePlayerPanel(slotIndex, name, money);
 
-    /// <summary>Adds a panel if missing; otherwise updates name/money.</summary>
-    public PlayerInfoPanel AddOrUpdatePlayerPanel(int slotIndex, string name, int money)
+
+ 
+
+    public PlayerInfoPanel CreatePlayerPanel(int slotIndex, string name, string business, string country, int profit)
     {
         if (playerPanelPrefab == null)
         {
@@ -45,9 +44,9 @@ public class GameHUD : MonoBehaviour
 
         if (_panels.TryGetValue(slotIndex, out var existing))
         {
-            existing.SetInfo(name, money);
             return existing;
         }
+
 
         // Create new
         GameObject panelGO = Instantiate(playerPanelPrefab, _anchors[slotIndex]);
@@ -58,10 +57,10 @@ public class GameHUD : MonoBehaviour
             Debug.LogError("Player Panel Prefab must have PlayerInfoPanel component.");
             return null;
         }
-
-        infoPanel.SetInfo(name, money);
+        
+        
         _panels[slotIndex] = infoPanel;
-        Debug.Log($"[HUD] Created panel for {name} in slot {slotIndex} (${money})");
+        Debug.Log($"[HUD] Created panel for {name} in slot {slotIndex}");
         return infoPanel;
     }
     

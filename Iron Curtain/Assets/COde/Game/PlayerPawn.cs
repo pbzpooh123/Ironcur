@@ -37,7 +37,7 @@ public class PlayerPawn : NetworkBehaviour
         base.OnStartClient();
         money.OnChange += OnMoneyChanged;
     }
-
+    
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
     {
         Debug.Log($"{playerName.Value} money changed {oldValue} -> {newValue}");
@@ -185,19 +185,6 @@ public class PlayerPawn : NetworkBehaviour
         TargetEnableEndTurn(Owner, true);
     }
 
+
     /* ---------- Spawn/Teleport ---------- */
-
-    [Server]
-    public void PlaceAtTile(int tileIdx)
-    {
-        currentTile.Value = tileIdx; // write SyncVar on server
-        var pos = GameManager.Instance.GetTilePosition(tileIdx);
-        transform.SetPositionAndRotation(pos, Quaternion.identity);
-
-        if (TryGetComponent<Rigidbody>(out var rb))
-        {
-            rb.velocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
-    }
 }

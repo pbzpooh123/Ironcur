@@ -25,8 +25,7 @@ public class LobbyUI : MonoBehaviour
         if (!quitButton) Debug.LogError("LobbyUI: quitButton is NOT assigned!");
         if (!readyButton) Debug.LogError("LobbyUI: readyButton is NOT assigned!");
         if (!startGameButton) Debug.LogError("LobbyUI: startGameButton is NOT assigned!");
-
-        quitButton.onClick.AddListener(QuitLobby);
+        
         readyButton.onClick.AddListener(OnReadyClicked);
         startGameButton.onClick.AddListener(OnStartClicked);
         
@@ -129,12 +128,8 @@ public class LobbyUI : MonoBehaviour
         SceneUnloadData sld = new   SceneUnloadData(sceneName);
         InstanceFinder.SceneManager.UnloadGlobalScenes(sld);
     }
-
-    private void CloseAllPanels()
-    {
-        if (lobbyPanel) lobbyPanel.SetActive(false);
-    }
-
+    
+    
     private void QuitLobby()
     {
         // Clients: disconnect self

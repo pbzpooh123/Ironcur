@@ -30,7 +30,7 @@ public class TurnUI : MonoBehaviour
     {
         if (myPawn != null && myPawn.IsOwner)
         {
-            myPawn.CmdRollDiceAndMove();   // client → server
+            
             rollDiceButton.interactable = false;
             endTurnButton.interactable = true;
         }
@@ -39,8 +39,7 @@ public class TurnUI : MonoBehaviour
     private void OnEndTurnClicked()
     {
         if (myPawn != null && myPawn.IsOwner)
-        {
-            myPawn.CmdEndTurn();          // client → server
+        {        // client → server
             endTurnButton.interactable = false;
         }
     }

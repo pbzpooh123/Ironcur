@@ -119,9 +119,12 @@ public class MainMenuUI : MonoBehaviour
             NetworkManagerLobby.Instance.roomCode = joinCode;
             if (lobbyUI != null) lobbyUI.SetRoomCode(joinCode);
 
+
             // Configure FishyUnityTransport for Relay
             var utp = InstanceFinder.NetworkManager.TransportManager.GetTransport<UnityTransport>();
 
+            var transport = (UnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
+            transport.SetRelayServerData(new RelayServerData(allocation, "dtls"));
             // If you’re on newer packages, prefer AllocationUtils.ToRelayServerData(allocation, "dtls");
             utp.SetRelayServerData(new RelayServerData(allocation, "dtls"));
             
@@ -165,9 +168,13 @@ public class MainMenuUI : MonoBehaviour
 
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
 
+
             var utp = InstanceFinder.NetworkManager.TransportManager.GetTransport<UnityTransport>();
             
             utp.SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
+            var transport = (UnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
+            transport.SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
+
 
             InstanceFinder.ClientManager.StartConnection();
            
