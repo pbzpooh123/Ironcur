@@ -5750,6 +5750,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: 748454ecdeb9e884c9d6ba5f386f2d6f, type: 2}
     - target: {fileID: 2948085464646735908, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: _isSpawnable
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2948085464646735908, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: <SceneId>k__BackingField
       value: 4242005941
       objectReference: {fileID: 0}
@@ -5796,6 +5800,10 @@ PrefabInstance:
     - target: {fileID: 8924475397208095649, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: m_Name
       value: Game Manager
+      objectReference: {fileID: 0}
+    - target: {fileID: 8924475397208095649, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

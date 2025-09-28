@@ -9,15 +9,6 @@ EditorBuildSettings:
     path: Assets/Scenes/Lobby.unity
     guid: 5d81e1c7190238843b0860003e18a9df
   - enabled: 1
-<<<<<<< HEAD
-=======
-    path: Assets/Scenes/Game1.unity
-    guid: 00bc8c94db36a6f4caf5c523f97bbf0c
-  - enabled: 0
->>>>>>> parent of f9ada80 (IDK what i do but it work)
     path: Assets/Scenes/MainGameScene.unity
     guid: 692284fbe251de447ba5e8e4e827b647
-  - enabled: 0
-    path: Assets/Scenes/Game1.unity
-    guid: 00bc8c94db36a6f4caf5c523f97bbf0c
   m_configObjects: {}
