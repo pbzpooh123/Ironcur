@@ -87,15 +87,34 @@ public class LobbyUI : MonoBehaviour
     {
         if (InstanceFinder.IsServer && NetworkManagerLobby.Instance.AllPlayersReady())
         {
-            SceneLoadData data = new SceneLoadData("Game1")
-            {
-                ReplaceScenes = ReplaceOption.All
-            };
-            InstanceFinder.SceneManager.LoadGlobalScenes(data);
-            CloseAllPanels();
+            LoadScene("MainGameScene");
+            UnLoadScene("Lobby");
+        }
+        else
+        {
+            return;
         }
     }
+
+    void LoadScene(string scenename)
+    {
+        if (!InstanceFinder.IsServer)
+        {
+            return;
+        }
+        SceneLoadData sld = new SceneLoadData(scenename);
+        InstanceFinder.SceneManager.LoadGlobalScenes(sld);
+    }
     
+    void UnLoadScene(string scenename)
+    {
+        if (!InstanceFinder.IsServer)
+        {
+            return;
+        }
+        SceneUnloadData sld = new SceneUnloadData(scenename);
+        InstanceFinder.SceneManager.UnloadGlobalScenes(sld);
+    }
     private void CloseAllPanels()
     {
         lobbyPanel.SetActive(false);

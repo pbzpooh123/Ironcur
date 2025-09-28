@@ -42,7 +42,7 @@ public class GameManager : NetworkBehaviour
     {
         Debug.Log("Loading MainGameScene...");
 
-        SceneLoadData data = new SceneLoadData("Game1")
+        SceneLoadData data = new SceneLoadData("MainGameScene")
         {
             ReplaceScenes = ReplaceOption.All
         };

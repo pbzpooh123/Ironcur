@@ -46,7 +46,7 @@ public class PlayerPawn : NetworkBehaviour
             yield return null;
 
         int slot = GameManager.Instance.GetSlotForPlayer(OwnerId);
-        var panel = GameHUD.Instance.CreatePlayerPanel(slot, playerName.Value, business.Value, country.Value, money.Value);
+        var panel = GameHUD.Instance.CreatePlayerPanel(slot, playerName.Value, money.Value);
         infoPanel = panel;
     }
     

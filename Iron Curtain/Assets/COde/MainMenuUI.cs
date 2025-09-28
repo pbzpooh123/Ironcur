@@ -199,7 +199,7 @@ public class MainMenuUI : MonoBehaviour
 
             NetworkManagerLobby.Instance.roomCode = joinCode;
 
-            var transport = (FishyUnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
+            var transport = (UnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
             transport.SetRelayServerData(new RelayServerData(allocation, "dtls"));
 
             InstanceFinder.ServerManager.StartConnection();
@@ -235,7 +235,7 @@ public class MainMenuUI : MonoBehaviour
         {
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
 
-            var transport = (FishyUnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
+            var transport = (UnityTransport)InstanceFinder.NetworkManager.TransportManager.Transport;
             transport.SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
 
             InstanceFinder.ClientManager.StartConnection();
