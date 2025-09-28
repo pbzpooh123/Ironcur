@@ -10,60 +10,45 @@ public class BusinessData
 {
     public string businessType;
     public int baseIncome;
-    public float incomeMultiplier = 1f;   // 1 = normal, >1 = plus, <1 = minus
+    public float incomeMultiplier = 1f;
     public int ownedShares = 0;
 }
-
 
 public class PlayerPawn : NetworkBehaviour
 {
     public float moveSpeed = 4f;
-    private int currentTile = 0;
+    public int id;
 
     public readonly SyncVar<string> playerName = new();
-    public readonly SyncVar<string> business   = new();
-    public readonly SyncVar<string> country    = new();
     public readonly SyncVar<int>    lastRoll   = new();
-    
+
     public Dictionary<string, ShareRecord> stockPortfolio   = new();
     public Dictionary<string, ShareRecord> factoryPortfolio = new();
 
     public bool isMyTurn = false;
-    public readonly SyncVar<int> money = new SyncVar<int>(); 
 
-    public PlayerInfoPanel infoPanel;  // assigned when spawning the panel
+    public readonly SyncVar<int> money       = new();     // OK
+    public readonly SyncVar<int> currentTile = new();     // Sync the tile (server writes)
+
+    public PlayerInfoPanel infoPanel;
 
     public override void OnStartClient()
     {
         base.OnStartClient();
         money.OnChange += OnMoneyChanged;
-        StartCoroutine(SetupHUD());
     }
-    
-    private IEnumerator SetupHUD()
-    {
-        while (GameHUD.Instance == null)
-            yield return null;
 
-        int slot = GameManager.Instance.GetSlotForPlayer(OwnerId);
-        var panel = GameHUD.Instance.CreatePlayerPanel(slot, playerName.Value, money.Value);
-        infoPanel = panel;
-    }
-    
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
     {
         Debug.Log($"{playerName.Value} money changed {oldValue} -> {newValue}");
-        
         if (infoPanel != null)
             infoPanel.UpdateProfit(newValue);
     }
 
-   
+    /* ---------- Money ---------- */
+
     [Server]
-    public void AddMoney(int amount)
-    {
-        money.Value += amount;
-    }
+    public void AddMoney(int amount) => money.Value += amount;
 
     [Server]
     public bool TrySpendMoney(int amount)
@@ -72,9 +57,9 @@ public class PlayerPawn : NetworkBehaviour
         money.Value -= amount;
         return true;
     }
-    
-    
-    // === Called from UI Button ===
+
+    /* ---------- Turn UI ---------- */
+
     public void OnRollDiceButton()
     {
         if (!IsOwner || !isMyTurn) return;
@@ -87,18 +72,13 @@ public class PlayerPawn : NetworkBehaviour
         CmdEndTurn();
     }
 
-    // --- Server side ---
     [ServerRpc]
     public void CmdRollDiceAndMove()
     {
         int roll = Random.Range(1, 7);
         lastRoll.Value = roll;
-
-        // broadcast movement steps to all
         RpcMoveSteps(roll);
         Debug.Log($"{playerName.Value} rolled {roll}");
-
-        // client will get EndTurn UI enabled AFTER finishing movement
     }
 
     [ServerRpc]
@@ -114,13 +94,13 @@ public class PlayerPawn : NetworkBehaviour
         Debug.Log($"{playerName.Value} it’s your turn!");
         isMyTurn = true;
 
-        // Enable UI
-        TurnUI ui = FindObjectOfType<TurnUI>();
-        if (ui != null)
-            ui.BindPawn(this);
+        var ui = FindObjectOfType<TurnUI>();
+        if (ui != null) ui.BindPawn(this);
     }
 
-    // --- Movement ---
+    /* ---------- Movement ---------- */
+
+    // Visual movement runs on everyone, but only the SERVER updates SyncVar currentTile at the end.
     [ObserversRpc]
     private void RpcMoveSteps(int steps)
     {
@@ -132,9 +112,12 @@ public class PlayerPawn : NetworkBehaviour
     {
         int tileCount = GameManager.Instance.TileCount;
 
+        // Drive animation from a local variable; start from the synced tile.
+        int localTile = currentTile.Value;
+
         for (int i = 1; i <= steps; i++)
         {
-            int nextTile = (currentTile + 1) % tileCount;
+            int nextTile = (localTile + 1) % tileCount;
             Vector3 targetPos = GameManager.Instance.GetTilePosition(nextTile);
 
             while (Vector3.Distance(transform.position, targetPos) > 0.05f)
@@ -144,52 +127,51 @@ public class PlayerPawn : NetworkBehaviour
             }
 
             transform.position = targetPos;
-            currentTile = nextTile; // update step
+            localTile = nextTile;
 
             yield return new WaitForSeconds(0.1f);
         }
 
-        // === Trigger tile logic after finishing movement ===
+        // Only the SERVER commits the new tile to the SyncVar and runs tile logic.
         if (IsServer)
+        {
+            currentTile.Value = localTile;
             HandleTileLogic();
+        }
     }
 
     private void HandleTileLogic()
     {
-        TileData data = GameManager.Instance.boardTiles[currentTile].GetComponent<TileData>();
+        var data = GameManager.Instance.boardTiles[currentTile.Value].GetComponent<TileData>();
         if (data == null) return;
 
-        // === 1. Event Tile ===
         if (data.tileType == TileType.Event)
         {
             EventManager.Instance.TriggerTileEvent(this);
-            return; 
+            return;
         }
 
-        // === 2. Investment Tile ===
         if (data.tileType == TileType.Investment)
         {
             if (data.owner == null)
             {
-                InvestmentUI.Instance.ShowOptions(this, currentTile, data.description, data.companyCost, true);
+                InvestmentUI.Instance.ShowOptions(this, currentTile.Value, data.description, data.companyCost, true);
             }
             else if (data.owner != this && data.sharesOwned < data.maxShares)
             {
                 int sharePrice = Mathf.RoundToInt(data.companyCost * 0.5f);
-                InvestmentUI.Instance.ShowOptions(this, currentTile, $"{data.owner.playerName.Value}'s company", sharePrice, false);
+                InvestmentUI.Instance.ShowOptions(this, currentTile.Value, $"{data.owner.playerName.Value}'s company", sharePrice, false);
             }
         }
     }
 
-    
     [TargetRpc]
     public void TargetEnableEndTurn(NetworkConnection conn, bool enable)
     {
-        TurnUI ui = FindObjectOfType<TurnUI>();
-        if (ui != null)
-            ui.SetEndTurnInteractable(enable);
+        var ui = FindObjectOfType<TurnUI>();
+        if (ui != null) ui.SetEndTurnInteractable(enable);
     }
-    
+
     [TargetRpc]
     public void TargetOpenStockUI(NetworkConnection conn)
     {
@@ -199,11 +181,23 @@ public class PlayerPawn : NetworkBehaviour
     [Server]
     private void ResumeAfterEvent()
     {
-        // After event ends → let stock market UI open
         TargetOpenStockUI(Owner);
         TargetEnableEndTurn(Owner, true);
     }
-    
-    
 
+    /* ---------- Spawn/Teleport ---------- */
+
+    [Server]
+    public void PlaceAtTile(int tileIdx)
+    {
+        currentTile.Value = tileIdx; // write SyncVar on server
+        var pos = GameManager.Instance.GetTilePosition(tileIdx);
+        transform.SetPositionAndRotation(pos, Quaternion.identity);
+
+        if (TryGetComponent<Rigidbody>(out var rb))
+        {
+            rb.velocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
+    }
 }

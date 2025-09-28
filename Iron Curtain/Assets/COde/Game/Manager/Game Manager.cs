@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
@@ -57,11 +58,9 @@ public class GameManager : NetworkBehaviour
     public override void OnStartServer()
     {
         base.OnStartServer();
-
-        // Listen for when MainGameScene finishes loading on the SERVER.
+        
         InstanceFinder.SceneManager.OnLoadEnd += HandleSceneLoadEnd_Server;
-
-        // Also track late joins (clients connecting AFTER scene change).
+        
         InstanceFinder.ServerManager.OnRemoteConnectionState += OnPlayerRemoteConnectionState_Server;
     }
 
@@ -80,8 +79,7 @@ public class GameManager : NetworkBehaviour
     private void HandleSceneLoadEnd_Server(SceneLoadEndEventArgs args)
     {
         if (!InstanceFinder.IsServer) return;
-
-        // Only respond when our MainGameScene finished loading.
+        
         bool loadedMain = false;
         foreach (var s in args.LoadedScenes)
         {
@@ -91,84 +89,49 @@ public class GameManager : NetworkBehaviour
 
         _mainSceneLoadedServer = true;
 
-        // Place each connected player and create HUD once.
-        int idx = 0;
         foreach (var kvp in InstanceFinder.ServerManager.Clients)
         {
-            NetworkConnection conn = kvp.Value;
-            if (conn == null || conn.FirstObject == null) continue;
-
-            if (conn.FirstObject.TryGetComponent(out NetworkLobbyPlayer lobbyPlayer))
-            {
-                MovePawnToStart(conn, lobbyPlayer, idx);
-                idx++;
-            }
+            var conn = kvp.Value;
+            if (conn?.FirstObject == null) continue;
+            if (conn.FirstObject.TryGetComponent(out NetworkLobbyPlayer lp))
+                MovePawnToStart(conn, lp);
         }
     }
 
     private void OnPlayerRemoteConnectionState_Server(NetworkConnection conn, RemoteConnectionStateArgs args)
     {
-        if (!InstanceFinder.IsServer) return;
-
-        // Late join: when a client connects after the main scene is active, place them too.
-        if (args.ConnectionState == RemoteConnectionState.Started && _mainSceneLoadedServer)
-        {
-            if (conn != null && conn.FirstObject != null &&
-                conn.FirstObject.TryGetComponent(out NetworkLobbyPlayer lobbyPlayer))
-            {
-                int idx = _nextSlotIndex; // give them the next slot
-                MovePawnToStart(conn, lobbyPlayer, idx);
-            }
-        }
+        if (args.ConnectionState != RemoteConnectionState.Started || !_mainSceneLoadedServer) return;
+        if (conn?.FirstObject == null) return;
+        if (conn.FirstObject.TryGetComponent(out NetworkLobbyPlayer lp))
+            MovePawnToStart(conn, lp); // same path
     }
 
     [Server]
-    private void MovePawnToStart(NetworkConnection conn, NetworkLobbyPlayer lobbyPlayer, int preferredSlotIndex)
+    private void MovePawnToStart(NetworkConnection conn, NetworkLobbyPlayer lobbyPlayer)
     {
-        int connectionId = conn.ClientId;
+        int connId = conn.ClientId;
 
-        // Find pawn owned by this connection
         if (conn.FirstObject == null || !conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
         {
-            Debug.LogWarning($"[Server] No pawn found for connection {connectionId}.");
+            Debug.LogWarning($"[Server] No pawn for connection {connId}.");
             return;
         }
+        
+        _playerPawns[connId] = pawn;
+        
+        pawn.PlaceAtTile(0);
+        
+        pawn.playerName.Value = lobbyPlayer.playerName.Value;
+        if (pawn.money.Value == 0) pawn.money.Value = 1500; 
 
-        // Server-authoritative spawn at tile 0 (or choose per-player start point here)
-        Vector3 startPos = GetTilePosition(0);
-        pawn.transform.SetPositionAndRotation(startPos, Quaternion.identity);
+        
+        int slot = GetOrAssignSlot(connId);
+        _playerSlots[connId] = slot; 
+        
+        if (_hudSent.Add(connId))
+            Rpc_AddOrUpdateHUD(slot, pawn.playerName.Value, pawn.money.Value);
 
-        // Optionally set game logic state (tile index) on server
-        // pawn.PlaceAtTile(0); // if you implemented a server method that sets SyncVar + position
-
-        // Keep a reference
-        _playerPawns[connectionId] = pawn;
-
-        // Assign persistent slot for HUD
-        if (!_playerSlots.TryGetValue(connectionId, out int assignedSlot))
-        {
-            assignedSlot = preferredSlotIndex % 4; // or however many slots you have
-            _playerSlots[connectionId] = assignedSlot;
-            _nextSlotIndex = assignedSlot + 1;
-        }
-
-        // Send HUD exactly once
-        if (!_hudSent.Contains(connectionId))
-        {
-            _hudSent.Add(connectionId);
-
-            // Ensure we pass correct data. If PlayerPawn doesn't have business/country, pass "".
-            string name = lobbyPlayer.playerName.Value;
-
-            lobbyPlayer.TargetSetHUD(
-                lobbyPlayer.Owner,
-                assignedSlot,
-                name,
-                0
-            );
-
-            Debug.Log($"[Server] HUD slot {assignedSlot} -> {name}");
-        }
+        Debug.Log($"[Server] Placed '{pawn.playerName.Value}' at tile 0, slot {slot}, ${pawn.money.Value}");
     }
 
     [Server]
@@ -176,4 +139,34 @@ public class GameManager : NetworkBehaviour
     {
         return _playerSlots.TryGetValue(connectionId, out int slot) ? slot : -1;
     }
+    
+    [ObserversRpc]
+    private void Rpc_AddOrUpdateHUD(int slotIndex, string name, int money)
+    {
+        Instance.StartCoroutine(WaitHUD(slotIndex, name, money));
+    }
+
+    private IEnumerator WaitHUD(int slot, string name, int money)
+    {
+        while (GameHUD.Instance == null)
+            yield return null;
+
+        GameHUD.Instance.AddOrUpdatePlayerPanel(slot, name, money);
+    }
+    
+    private readonly Dictionary<int, int> _slotByConn = new(); // connId -> slot
+
+    [Server]
+    private int GetOrAssignSlot(int connId)
+    {
+        if (_slotByConn.TryGetValue(connId, out int s))
+            return s;
+
+        // Assign next slot by join order (0,1,2,3...)
+        s = _slotByConn.Count % 4;   // or % maxPanels
+        _slotByConn[connId] = s;
+        return s;
+    }
+    
+    
 }

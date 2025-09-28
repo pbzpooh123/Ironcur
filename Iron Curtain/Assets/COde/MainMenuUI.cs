@@ -124,10 +124,7 @@ public class MainMenuUI : MonoBehaviour
 
             // If you’re on newer packages, prefer AllocationUtils.ToRelayServerData(allocation, "dtls");
             utp.SetRelayServerData(new RelayServerData(allocation, "dtls"));
-
-            // If building WebGL:
-            // utp.UseWebSockets = true;
-            // utp.SetRelayServerData(new RelayServerData(allocation, "wss"));
+            
 
             // Start server then (optionally) local client
             if (InstanceFinder.ServerManager.StartConnection())
@@ -169,15 +166,14 @@ public class MainMenuUI : MonoBehaviour
             JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
 
             var utp = InstanceFinder.NetworkManager.TransportManager.GetTransport<UnityTransport>();
-            // If on new packages use AllocationUtils.ToRelayServerData(joinAllocation, "dtls");
+            
             utp.SetRelayServerData(new RelayServerData(joinAllocation, "dtls"));
 
             InstanceFinder.ClientManager.StartConnection();
-            CloseAllPanels();
+           
             lobbyPanel.SetActive(true);
-            hostClientPanel.SetActive(false);
-
-            // no Invoke(...) — we’ll request room join after we’re actually connected
+            mainMenuPanel.SetActive(false);
+            
             _pendingJoinCode = joinCode;
 
             if (lobbyUI != null) lobbyUI.SetRoomCode(joinCode);
