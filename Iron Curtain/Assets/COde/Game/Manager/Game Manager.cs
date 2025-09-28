@@ -35,12 +35,7 @@ public class GameManager : NetworkBehaviour
         if (index < 0 || index >= boardTiles.Length) return Vector3.zero;
         return boardTiles[index].position;
     }
-<<<<<<< HEAD
-    
-=======
 
-    // 🚀 เรียกตอน Host กด Start Game ใน Lobby
->>>>>>> parent of 11ec333 (remove somrthing a bit)
     [Server]
     public static void StartGame()
     {
@@ -125,7 +120,7 @@ public class GameManager : NetworkBehaviour
         }
        
     }
-<<<<<<< HEAD
+
     
     [Server]
     public int GetSlotForPlayer(int connectionId)
@@ -134,9 +129,5 @@ public class GameManager : NetworkBehaviour
             return slot;
         return -1; // not found
     }
-    
-=======
 
->>>>>>> parent of 11ec333 (remove somrthing a bit)
-    
 }
