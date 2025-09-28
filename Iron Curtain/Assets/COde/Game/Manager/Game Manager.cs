@@ -35,8 +35,7 @@ public class GameManager : NetworkBehaviour
         if (index < 0 || index >= boardTiles.Length) return Vector3.zero;
         return boardTiles[index].position;
     }
-
-    // รียกตอน Host กด Start Game ใน Lobby
+    
     [Server]
     public static void StartGame()
     {
@@ -121,7 +120,7 @@ public class GameManager : NetworkBehaviour
         }
        
     }
-
+    
     [Server]
     public int GetSlotForPlayer(int connectionId)
     {

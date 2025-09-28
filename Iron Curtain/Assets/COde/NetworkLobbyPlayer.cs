@@ -133,9 +133,9 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         // Wait until HUD exists in the scene
         while (GameHUD.Instance == null)
             yield return null;
-
+        
         var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, business, country, profit);
-
+        
         if (conn.FirstObject != null && conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
         {
             pawn.infoPanel = panel;
