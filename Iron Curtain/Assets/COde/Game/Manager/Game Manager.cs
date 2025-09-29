@@ -80,48 +80,33 @@ public class GameManager : NetworkBehaviour
     [Server]
     private void MovePawnToStart(int connectionId, NetworkLobbyPlayer lobbyPlayer)
     {
-        if (!InstanceFinder.ServerManager.Clients.TryGetValue(connectionId, out NetworkConnection conn))
+        if (!InstanceFinder.ServerManager.Clients.TryGetValue(connectionId, out var conn))
             return;
 
         if (conn.FirstObject != null && conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
         {
-            // IMPORTANT: assign ownership to the client
             if (pawn.Owner != conn)
-            {
                 pawn.GiveOwnership(conn);
-                Debug.Log($"[Server] Ownership of {pawn.playerName.Value} pawn given to connection {connectionId}");
-            }
-
-            // Place pawn at tile 0
-            pawn.transform.position = GetTilePosition(0);
-
-            // Set sync vars
+           
+            pawn.RpcTeleportTo(GetTilePosition(0));
             pawn.playerName.Value = lobbyPlayer.playerName.Value;
 
-            // Store references
             playerPawns[connectionId] = pawn;
-
-            // Assign HUD slot
+            
             if (!playerSlots.TryGetValue(connectionId, out int assignedSlot))
             {
                 assignedSlot = nextSlotIndex % 4;
                 playerSlots[connectionId] = assignedSlot;
                 nextSlotIndex++;
             }
-
+            
             lobbyPlayer.TargetSetHUD(
-                lobbyPlayer.Owner,
                 assignedSlot,
                 pawn.playerName.Value,
-                0
+                pawn.money.Value,
+                conn.ClientId
             );
-            pawn.AddMoney(1000);
         }
-        else
-        {
-            Debug.LogWarning($"[Server] No pawn found for connection {connectionId}.");
-        }
-        
     }
 
     

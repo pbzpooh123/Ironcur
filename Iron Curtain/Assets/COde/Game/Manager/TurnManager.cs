@@ -25,6 +25,16 @@ public class TurnManager : NetworkBehaviour
     public override void OnStartServer()
     {
         base.OnStartServer();
+        if (Owner != null)
+        {
+            GiveOwnership(Owner); 
+        }
+        StartCoroutine(DelayedStart());
+    }
+
+    private System.Collections.IEnumerator DelayedStart()
+    {
+        yield return null; 
         StartGame();
     }
 

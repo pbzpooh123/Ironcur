@@ -1,7 +1,6 @@
-using System;
+using System.Collections;
 using System.Collections.Generic;
 using FishNet.Object;
-using FishNet.Connection;
 using FishNet.Object.Synchronizing;
 using UnityEngine;
 
@@ -10,7 +9,7 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     public readonly SyncVar<string> playerName = new();
     public readonly SyncVar<bool> isReady = new();
     public readonly SyncVar<float> profit = new();
-    
+
     private LobbyUI lobbyUI;
 
     public override void OnStartClient()
@@ -45,7 +44,7 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     }
 
     [TargetRpc]
-    public void TargetReceiveRoomCode(NetworkConnection conn, string code)
+    public void TargetReceiveRoomCode(FishNet.Connection.NetworkConnection conn, string code)
     {
         FindObjectOfType<LobbyUI>()?.SetRoomCode(code);
     }
@@ -71,7 +70,7 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     }
 
     [TargetRpc]
-    public void TargetShowWaitingPanel(NetworkConnection conn)
+    public void TargetShowWaitingPanel(FishNet.Connection.NetworkConnection conn)
     {
         var ui = FindObjectOfType<MainMenuUI>();
         if (ui != null)
@@ -93,27 +92,28 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         if (lobbyUI == null) lobbyUI = FindObjectOfType<LobbyUI>();
         lobbyUI?.UpdatePlayerList(NetworkManagerLobby.Instance.GetPlayerList());
     }
-   
+
+    /* ---------------- HUD BROADCAST TO ALL ---------------- */
+    
     [ObserversRpc]
-    public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, int profit)
+    public void TargetSetHUD(int slotIndex, string name, int initialMoney, int ownerConnectionId)
     {
-        StartCoroutine(WaitForHUD(slotIndex, name, profit));
+        StartCoroutine(WaitForHUD(slotIndex, name, initialMoney, ownerConnectionId));
     }
 
-    private System.Collections.IEnumerator WaitForHUD(int slotIndex, string name, int profit)
+    private IEnumerator WaitForHUD(int slotIndex, string name, int initialMoney, int ownerConnectionId)
     {
-        // Wait until GameHUD is present
         while (GameHUD.Instance == null)
             yield return null;
-
-        var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, profit);
-
-        // Find the local pawn instead of using conn.FirstObject
+        
+        var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, initialMoney);
+        
         foreach (var pawn in FindObjectsOfType<PlayerPawn>())
         {
-            if (pawn.playerName.Value == name)  // match by name (or connectionId if you store it)
+            if (pawn.Owner != null && pawn.Owner.ClientId == ownerConnectionId)
             {
                 pawn.infoPanel = panel;
+                panel.UpdateMoney(pawn.money.Value);
                 break;
             }
         }

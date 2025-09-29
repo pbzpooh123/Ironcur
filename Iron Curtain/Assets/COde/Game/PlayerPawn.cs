@@ -31,6 +31,18 @@ public class PlayerPawn : NetworkBehaviour
     public bool isMyTurn = false;
     public PlayerInfoPanel infoPanel;
 
+    
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        
+        if (Owner != null)
+            GiveOwnership(Owner);
+        
+        if (money.Value == 0)
+            money.Value = 1000;
+    }
+
     public override void OnStartClient()
     {
         base.OnStartClient();
@@ -223,5 +235,11 @@ public class PlayerPawn : NetworkBehaviour
         }
         if (infoPanel != null)
             infoPanel.SetTurnOrder(turnIndex + 1);
+    }
+    
+    [ObserversRpc(BufferLast = true)]
+    public void RpcTeleportTo(Vector3 pos)
+    {
+        transform.position = pos;
     }
 }

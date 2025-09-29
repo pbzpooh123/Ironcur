@@ -78,7 +78,7 @@ public class EventManager : NetworkBehaviour
     }
 
     // === Client popup ===
-    [TargetRpc]
+    [ObserversRpc]
     private void TargetShowEvent(NetworkConnection conn, string message, bool pauseAll)
     {
         if (EventUI.Instance != null)

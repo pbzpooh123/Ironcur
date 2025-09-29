@@ -94,7 +94,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   nameText: {fileID: 8373539576515487660}
   profitText: {fileID: 8247013670169860833}
-  turnOrderText: {fileID: 0}
+  turnOrderText: {fileID: 7933157853146841130}
 --- !u!114 &5923547694135254486
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -255,7 +255,7 @@ GameObject:
   - component: {fileID: 8394394577897151940}
   - component: {fileID: 7933157853146841130}
   m_Layer: 5
-  m_Name: Bussniess
+  m_Name: Turn
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
