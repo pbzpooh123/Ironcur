@@ -42,7 +42,7 @@ public class GameHUD : MonoBehaviour
 
         PlayerInfoPanel infoPanel = panel.GetComponent<PlayerInfoPanel>();
         if (infoPanel != null)
-            infoPanel.SetInfo(name,profit);
+            infoPanel.SetInfo(name, profit);
 
         Debug.Log($"Spawned Player Panel for {name} in slot {slotIndex}");
         return infoPanel;

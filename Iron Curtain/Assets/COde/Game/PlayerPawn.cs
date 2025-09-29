@@ -37,19 +37,8 @@ public class PlayerPawn : NetworkBehaviour
     {
         base.OnStartClient();
         money.OnChange += OnMoneyChanged;
-        StartCoroutine(SetupHUD());
+        
     }
-    
-    private IEnumerator SetupHUD()
-    {
-        while (GameHUD.Instance == null)
-            yield return null;
-
-        int slot = GameManager.Instance.GetSlotForPlayer(OwnerId);
-        var panel = GameHUD.Instance.CreatePlayerPanel(slot, playerName.Value, money.Value);
-        infoPanel = panel;
-    }
-
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
     {
         Debug.Log($"{playerName.Value} money changed {oldValue} -> {newValue}");
@@ -68,9 +57,15 @@ public class PlayerPawn : NetworkBehaviour
     [Server]
     public bool TrySpendMoney(int amount)
     {
-        if (money.Value < amount) return false;
-        money.Value -= amount;
-        return true;
+        if (money.Value < amount)
+        {
+            return false;
+        }
+        else
+        {
+            money.Value -= amount;
+            return true;
+        }
     }
     
     
@@ -204,20 +199,16 @@ public class PlayerPawn : NetworkBehaviour
         TargetEnableEndTurn(Owner, true);
     }
     
- 
-    /* ---------- Spawn/Teleport ---------- */
-
-    [Server]
-    public void PlaceAtTile(int tileIdx)
+    [TargetRpc]
+    public void TargetSetTurnOrder(NetworkConnection conn, int turnIndex)
     {
-        currentTile = tileIdx; // write SyncVar on server
-        var pos = GameManager.Instance.GetTilePosition(tileIdx);
-        transform.SetPositionAndRotation(pos, Quaternion.identity);
-
-        if (TryGetComponent<Rigidbody>(out var rb))
+        var panels = FindObjectsOfType<PlayerInfoPanel>();
+        foreach (var panel in panels)
         {
-            rb.velocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
+            if (panel.nameText.text == playerName.Value) 
+            {
+                panel.turnOrderText.text = $"Turn #{turnIndex + 1}";
+            }
         }
     }
 

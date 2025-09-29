@@ -23,194 +23,133 @@ public class MarketManager : NetworkBehaviour
         stocks.Add(new StockData("Banking", 130));
     }
 
-    // === Investment Tiles ===
+    // === Buy full company from investment tile ===
     [ServerRpc(RequireOwnership = false)]
     public void CmdBuyCompany(NetworkConnection conn, int tileIndex)
     {
         if (conn == null || conn.FirstObject == null) return;
-
-        PlayerPawn pawn = conn.FirstObject.GetComponent<PlayerPawn>();
+        var pawn = conn.FirstObject.GetComponent<PlayerPawn>();
         if (pawn == null) return;
 
-        TileData tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
+        var tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
         if (tile == null || tile.tileType != TileType.Investment) return;
-        if (tile.owner != null) return; // already owned
-        
-        // Deduct money and set ownership
-        pawn.TrySpendMoney(tile.companyCost);
-        
+        if (tile.owner != null) return;
+        if (pawn.money.Value < tile.companyCost) return;
+
+        pawn.AddMoney(-tile.companyCost);
         tile.owner = pawn;
 
-        // Register full ownership in factoryPortfolio
         string key = tile.description;
         if (!pawn.factoryPortfolio.ContainsKey(key))
-        {
-            pawn.factoryPortfolio[key] = new ShareRecord 
-            { 
-                count = tile.maxShares, 
-                roundBought = TurnManager.Instance.roundCount.Value 
-            };
-        }
+            pawn.factoryPortfolio[key] = new ShareRecord { count = tile.maxShares, roundBought = TurnManager.Instance.roundCount.Value };
         else
-        {
             pawn.factoryPortfolio[key].count += tile.maxShares;
-            pawn.factoryPortfolio[key].roundBought = TurnManager.Instance.roundCount.Value;
-        }
 
-        Debug.Log($"{pawn.playerName.Value} bought company {tile.description} with {tile.maxShares} shares!");
+        Debug.Log($"{pawn.playerName.Value} bought {tile.description} company!");
     }
 
-
+    // === Buy a share from another player’s company ===
     [ServerRpc(RequireOwnership = false)]
     public void CmdBuyShare(NetworkConnection conn, int tileIndex)
     {
         if (conn == null || conn.FirstObject == null) return;
-
-        PlayerPawn buyer = conn.FirstObject.GetComponent<PlayerPawn>();
+        var buyer = conn.FirstObject.GetComponent<PlayerPawn>();
         if (buyer == null) return;
 
-        TileData tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
+        var tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
         if (tile == null || tile.tileType != TileType.Investment) return;
-        if (tile.owner == null || tile.owner == buyer) return; // must belong to another
+        if (tile.owner == null || tile.owner == buyer) return;
         if (tile.sharesOwned >= tile.maxShares) return;
 
         int sharePrice = Mathf.RoundToInt(tile.companyCost * 0.5f);
-        
-        // Buyer pays
-        buyer.TrySpendMoney(sharePrice);
-        
+        if (buyer.money.Value < sharePrice) return;
 
-        // Owner earns
+        buyer.AddMoney(-sharePrice);
         tile.owner.AddMoney(sharePrice);
-        
 
-        // Increase global share count
         tile.sharesOwned++;
 
         string key = tile.description;
-
-        // === Transfer logic ===
-        // Buyer gains 1 share
         if (!buyer.factoryPortfolio.ContainsKey(key))
             buyer.factoryPortfolio[key] = new ShareRecord { count = 0, roundBought = TurnManager.Instance.roundCount.Value };
 
         buyer.factoryPortfolio[key].count++;
-        buyer.factoryPortfolio[key].roundBought = TurnManager.Instance.roundCount.Value;
+        tile.owner.factoryPortfolio[key].count--;
 
-        // Owner loses 1 share
-        if (tile.owner.factoryPortfolio.ContainsKey(key))
-        {
-            tile.owner.factoryPortfolio[key].count = Mathf.Max(0, tile.owner.factoryPortfolio[key].count - 1);
-        }
-
-        Debug.Log($"{buyer.playerName.Value} bought 1 share in {tile.owner.playerName.Value}'s factory! " +
-                  $"{tile.owner.playerName.Value} received ${sharePrice} instantly.");
+        Debug.Log($"{buyer.playerName.Value} bought a share in {tile.owner.playerName.Value}'s {key}.");
     }
 
-
-
+    // === Buy a stock ===
     [ServerRpc(RequireOwnership = false)]
     public void CmdBuyStock(NetworkConnection conn, string stockName, int price)
     {
         if (conn == null || conn.FirstObject == null) return;
-
-        PlayerPawn pawn = conn.FirstObject.GetComponent<PlayerPawn>();
+        var pawn = conn.FirstObject.GetComponent<PlayerPawn>();
         if (pawn == null) return;
-        
-        pawn.TrySpendMoney(price);
-       
+        if (pawn.money.Value < price) return;
+
+        pawn.AddMoney(-price);
 
         if (!pawn.stockPortfolio.ContainsKey(stockName))
             pawn.stockPortfolio[stockName] = new ShareRecord { count = 0, roundBought = TurnManager.Instance.roundCount.Value };
 
         pawn.stockPortfolio[stockName].count++;
-        pawn.stockPortfolio[stockName].roundBought = TurnManager.Instance.roundCount.Value;
 
         TargetConfirmBuy(conn, stockName);
-        Debug.Log($"{pawn.playerName.Value} bought 1 share of {stockName}. Now owns {pawn.stockPortfolio[stockName].count} shares.");
+        Debug.Log($"{pawn.playerName.Value} bought stock {stockName}.");
     }
 
-    // === Payout Logic ===
+    // === Process payouts at end of round ===
     [Server]
     public void ProcessPayouts()
     {
-        // NEW (null-guard + snapshot)
-if (GameManager.Instance == null) return;
+        int round = TurnManager.Instance.roundCount.Value;
 
-int currentRound = TurnManager.Instance.roundCount.Value;
-
-foreach (var pawn in GameManager.Instance.GetPlayersSnapshot())
-{
-    // === Factories (payout every round) ===
-    foreach (var kvp in pawn.factoryPortfolio)
-    {
-        var record = kvp.Value;
-
-        // reset expired multipliers
-        if (record.multiplierExpiresAt > 0 && currentRound >= record.multiplierExpiresAt)
+        foreach (var pawn in GameManager.Instance.Players)
         {
-            record.multiplier = 1f;
-            record.multiplierExpiresAt = 0;
-            // If ShareRecord is a struct, write back:
-            pawn.factoryPortfolio[kvp.Key] = record;
-        }
+            // Factories: income each round
+            foreach (var kvp in pawn.factoryPortfolio)
+            {
+                var tile = FindTileByName(kvp.Key);
+                if (tile == null) continue;
 
-        // find tile
-        TileData tile = null;
+                int income = Mathf.RoundToInt(tile.companyCost * 0.1f) * kvp.Value.count;
+                pawn.AddMoney(income);
+                Debug.Log($"{pawn.playerName.Value} earned {income} from {kvp.Key} factory.");
+            }
+
+            // Stocks: income every 4 rounds (after 2 rounds held)
+            foreach (var kvp in pawn.stockPortfolio)
+            {
+                var record = kvp.Value;
+                int age = round - record.roundBought;
+                if (age < 2) continue;
+                if (round % 4 != 0) continue;
+
+                var stock = stocks.Find(s => s.stockName == kvp.Key);
+                if (stock == null) continue;
+
+                int income = Mathf.RoundToInt(stock.basePrice * 0.1f) * record.count;
+                pawn.AddMoney(income);
+                Debug.Log($"{pawn.playerName.Value} earned {income} from stock {kvp.Key}.");
+            }
+        }
+    }
+
+    private TileData FindTileByName(string name)
+    {
         foreach (var go in GameManager.Instance.boardTiles)
         {
             var td = go.GetComponent<TileData>();
-            if (td != null && td.description == kvp.Key)
-            {
-                tile = td;
-                break;
-            }
+            if (td != null && td.description == name)
+                return td;
         }
-        if (tile == null) continue;
-
-        int income = Mathf.RoundToInt(tile.companyCost * 0.1f * record.count * record.multiplier);
-        pawn.AddMoney(income);
-        Debug.Log($"{pawn.playerName.Value} earned ${income} from factory {kvp.Key} (x{record.multiplier})");
-
-        // ensure write-back if ShareRecord is a struct
-        pawn.factoryPortfolio[kvp.Key] = record;
+        return null;
     }
 
-    // === Stocks (every 4 rounds, delayed by 2 rounds) ===
-    foreach (var kvp in pawn.stockPortfolio)
-    {
-        var record = kvp.Value;
-        int age = currentRound - record.roundBought;
-        if (age < 2) continue;              // not matured yet
-        if (currentRound % 4 != 0) continue; // only every 4th round
-
-        // reset expired multipliers
-        if (record.multiplierExpiresAt > 0 && currentRound >= record.multiplierExpiresAt)
-        {
-            record.multiplier = 1f;
-            record.multiplierExpiresAt = 0;
-        }
-
-        // find stock definition
-        StockData stock = stocks.Find(s => s.stockName == kvp.Key);
-        if (stock == null) continue;
-
-        int income = Mathf.RoundToInt(stock.basePrice * 0.1f * stock.priceMultiplier * record.multiplier) * record.count;
-        pawn.AddMoney(income);
-        Debug.Log($"{pawn.playerName.Value} received ${income} from stock {kvp.Key} (x{record.multiplier})");
-
-        // ensure write-back if ShareRecord is a struct
-        pawn.stockPortfolio[kvp.Key] = record;
-    }
-}
-
-    }
-
-    
     [TargetRpc]
-    public void TargetConfirmBuy(NetworkConnection conn, string stockName)
+    private void TargetConfirmBuy(NetworkConnection conn, string stockName)
     {
-        if (StockMarketUI.Instance != null)
-            StockMarketUI.Instance.RefreshOptions();
+        StockMarketUI.Instance?.RefreshOptions();
     }
 }
