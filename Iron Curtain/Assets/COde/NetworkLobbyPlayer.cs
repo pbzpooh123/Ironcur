@@ -109,13 +109,11 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, profit);
 
         // Find the local pawn instead of using conn.FirstObject
-        PlayerPawn[] pawns = FindObjectsOfType<PlayerPawn>();
-        foreach (var pawn in pawns)
+        foreach (var pawn in FindObjectsOfType<PlayerPawn>())
         {
-            if (pawn.playerName.Value == name)
+            if (pawn.playerName.Value == name)  // match by name (or connectionId if you store it)
             {
                 pawn.infoPanel = panel;
-                pawn.AddMoney(500);
                 break;
             }
         }

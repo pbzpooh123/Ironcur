@@ -115,11 +115,13 @@ public class GameManager : NetworkBehaviour
                 pawn.playerName.Value,
                 0
             );
+            pawn.AddMoney(1000);
         }
         else
         {
             Debug.LogWarning($"[Server] No pawn found for connection {connectionId}.");
         }
+        
     }
 
     
