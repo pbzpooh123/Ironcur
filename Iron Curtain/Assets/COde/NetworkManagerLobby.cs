@@ -2,9 +2,8 @@ using FishNet;
 using FishNet.Managing;
 using FishNet.Managing.Server;
 using FishNet.Object;
-using FishNet.Transporting;
-using FishNet.Connection; // <-- add this
 using System.Collections.Generic;
+using FishNet.Transporting;
 using UnityEngine;
 
 public class NetworkManagerLobby : MonoBehaviour
@@ -14,7 +13,6 @@ public class NetworkManagerLobby : MonoBehaviour
     private NetworkManager _networkManager;
 
     [Header("Lobby State")]
-    [Tooltip("6-char alphanum room code. Host sets this on server start.")]
     public string roomCode;
 
     private void Awake()
@@ -37,7 +35,6 @@ public class NetworkManagerLobby : MonoBehaviour
         if (_networkManager == null) return;
 
         _networkManager.ServerManager.OnServerConnectionState += OnServerConnectionState;
-        _networkManager.ServerManager.OnRemoteConnectionState += OnRemoteConnectionState; // signature below
     }
 
     private void OnDisable()
@@ -45,19 +42,16 @@ public class NetworkManagerLobby : MonoBehaviour
         if (_networkManager == null) return;
 
         _networkManager.ServerManager.OnServerConnectionState -= OnServerConnectionState;
-        _networkManager.ServerManager.OnRemoteConnectionState -= OnRemoteConnectionState;
     }
 
     private void OnServerConnectionState(ServerConnectionStateArgs args)
     {
-        // Fires when the SERVER starts/stops.
         if (args.ConnectionState == LocalConnectionState.Started)
         {
             if (string.IsNullOrWhiteSpace(roomCode))
                 roomCode = GenerateRoomCode();
 
-            BroadcastRoomCode(roomCode);
-            BroadcastRoster();
+            UpdateLobbyUI();
         }
         else if (args.ConnectionState == LocalConnectionState.Stopped)
         {
@@ -65,103 +59,61 @@ public class NetworkManagerLobby : MonoBehaviour
         }
     }
 
-    // ✅ Correct signature for OnRemoteConnectionState:
-    private void OnRemoteConnectionState(NetworkConnection conn, RemoteConnectionStateArgs args)
+    public void UpdateLobbyUI()
     {
-        // Fires when a CLIENT connects/disconnects to the server.
-        if (args.ConnectionState == RemoteConnectionState.Started ||
-            args.ConnectionState == RemoteConnectionState.Stopped)
-        {
-            // Defer one frame so FirstObject has spawned/despawned.
-            StartCoroutine(DeferBroadcastOneFrame());
-        }
-    }
-
-    private System.Collections.IEnumerator DeferBroadcastOneFrame()
-    {
-        yield return null; // next frame
-        BroadcastRoster();
-    }
-
-    [Server]
-    public void BroadcastRoster()
-    {
-        if (!_networkManager || !_networkManager.IsServer)
-            return;
-
-        List<string> roster = BuildRoster();
+        List<string> playerList = GetPlayerList();
 
         foreach (var kvp in _networkManager.ServerManager.Clients)
         {
-            var c = kvp.Value;
-            if (c == null) continue;
+            var conn = kvp.Value;
+            if (conn == null || conn.FirstObject == null) continue;
 
-            NetworkObject first = c.FirstObject;
-            if (first == null) continue;
-
-            if (first.TryGetComponent(out NetworkLobbyPlayer player))
+            if (conn.FirstObject.TryGetComponent(out NetworkLobbyPlayer player))
             {
-                player.Target_UpdatePlayerList(c, roster);
-                if (!string.IsNullOrEmpty(roomCode))
-                    player.Target_SetRoomCode(c, roomCode);
+                player.UpdatedPlayerList(playerList);
+                player.TargetReceiveRoomCode(conn, roomCode);
             }
         }
     }
 
-    [Server]
-    public void BroadcastRoomCode(string code)
+    public List<string> GetPlayerList()
     {
-        if (!_networkManager || !_networkManager.IsServer)
-            return;
+        List<string> players = new List<string>();
 
         foreach (var kvp in _networkManager.ServerManager.Clients)
         {
-            var c = kvp.Value;
-            if (c == null) continue;
+            var conn = kvp.Value;
+            if (conn == null || conn.FirstObject == null) continue;
 
-            NetworkObject first = c.FirstObject;
-            if (first == null) continue;
-
-            if (first.TryGetComponent(out NetworkLobbyPlayer player))
-                player.Target_SetRoomCode(c, code);
-        }
-    }
-
-    private List<string> BuildRoster()
-    {
-        var result = new List<string>();
-
-        foreach (var kvp in _networkManager.ServerManager.Clients)
-        {
-            var c = kvp.Value;
-            if (c == null || c.FirstObject == null) continue;
-
-            if (c.FirstObject.TryGetComponent(out NetworkLobbyPlayer p))
+            if (conn.FirstObject.TryGetComponent(out NetworkLobbyPlayer player))
             {
-                string line = $"{p.playerName.Value}" +
-                              (p.isReady.Value ? " ✅" : " ❌");
-                result.Add(line);
+                string details = $"{player.playerName.Value} | {player.business.Value} | {player.country.Value}";
+                if (player.isReady.Value)
+                    details += " ✅";
+                else
+                    details += " ❌";
+
+                players.Add(details);
             }
         }
 
-        return result;
+        return players;
     }
 
     public bool AllPlayersReady()
     {
-        if (_networkManager == null) return false;
-
         foreach (var kvp in _networkManager.ServerManager.Clients)
         {
-            var c = kvp.Value;
-            if (c == null || c.FirstObject == null) continue;
+            var conn = kvp.Value;
+            if (conn == null || conn.FirstObject == null) continue;
 
-            if (c.FirstObject.TryGetComponent(out NetworkLobbyPlayer p))
+            if (conn.FirstObject.TryGetComponent(out NetworkLobbyPlayer player))
             {
-                if (!p.isReady.Value)
+                if (!player.isReady.Value)
                     return false;
             }
         }
+
         return true;
     }
 
@@ -172,11 +124,5 @@ public class NetworkManagerLobby : MonoBehaviour
         for (int i = 0; i < 6; i++)
             sb.Append(chars[UnityEngine.Random.Range(0, chars.Length)]);
         return sb.ToString();
-    }
-
-    [Server]
-    public void OnPlayerReadyStateChanged()
-    {
-        BroadcastRoster();
     }
 }
