@@ -3,19 +3,26 @@ using TMPro;
 
 public class PlayerInfoPanel : MonoBehaviour
 {
+    [Header("Refs")]
     public TMP_Text nameText;
     public TMP_Text profitText;
-    public TMP_Text turnOrderText;
 
-    public void SetInfo(string name, int profit = 0)
+    [Header("Optional")]
+    public TMP_Text turnOrderText; // <-- add this in your prefab (optional)
+
+    public void SetInfo(string name, int money = 0)
     {
-        nameText.text = name;
-        profitText.text = $"Money: {profit:0}";
+        if (nameText)     nameText.text = name;
+        UpdateMoney(money);
     }
 
-    public void UpdateProfit(int profit)
+    public void UpdateMoney(int money)
     {
-        profitText.text = $"Money: {profit:0}";
+        if (profitText) profitText.text = $"Money: {money:0}";
     }
 
+    public void SetTurnOrder(int orderIndex) // 1-based
+    {
+        if (turnOrderText) turnOrderText.text = $"Turn #{orderIndex}";
+    }
 }

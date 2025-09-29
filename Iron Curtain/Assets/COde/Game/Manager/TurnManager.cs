@@ -33,12 +33,14 @@ public class TurnManager : NetworkBehaviour
     {
         var players = GameManager.Instance.Players;
         if (players.Count == 0) return;
-        
+
+        // Shuffle turn order
         turnOrder = new List<PlayerPawn>(players);
         ShuffleList(turnOrder);
 
         currentPlayerIndex.Value = 0;
 
+        // Tell everyone their order
         for (int i = 0; i < turnOrder.Count; i++)
         {
             var pawn = turnOrder[i];
@@ -57,9 +59,15 @@ public class TurnManager : NetworkBehaviour
             currentPlayerIndex.Value = 0;
 
         PlayerPawn currentPlayer = turnOrder[currentPlayerIndex.Value];
-        currentPlayer.TargetStartTurn(currentPlayer.Owner);
-
-        Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value}");
+        if (currentPlayer != null)
+        {
+            currentPlayer.TargetStartTurn(currentPlayer.Owner);
+            Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value}");
+        }
+        else
+        {
+            Debug.LogWarning("[TurnManager] Current player is null.");
+        }
     }
 
     [Server]
@@ -76,23 +84,27 @@ public class TurnManager : NetworkBehaviour
 
             Debug.Log($"[TurnManager] Completed a full cycle. TurnCount={turnCount.Value}");
 
+            // A round = everyone has played once
             if (turnCount.Value % turnOrder.Count == 0)
             {
                 roundCount.Value++;
                 RpcUpdateRoundUI(roundCount.Value);
                 Debug.Log($"[TurnManager] Round {roundCount.Value} completed!");
 
-                MarketManager.Instance.ProcessPayouts();
+                // Trigger investments payout
+                MarketManager.Instance?.ProcessPayouts();
             }
         }
 
         currentPlayerIndex.Value = nextIndex;
 
-        if (roundCount.Value % 3 == 0 && roundCount.Value > 0)
+        // Trigger global events every 3 rounds
+        if (roundCount.Value > 0 && (roundCount.Value % 3 == 0))
         {
-            EventManager.Instance.TriggerMainEvent(roundCount.Value);
+            EventManager.Instance?.TriggerMainEvent(roundCount.Value);
         }
 
+        // Simple game-over guard
         if (roundCount.Value >= 15)
         {
             Debug.Log("Game Over! Count money and decide winner.");
@@ -112,7 +124,7 @@ public class TurnManager : NetworkBehaviour
     public PlayerPawn GetCurrentPawn()
     {
         if (turnOrder.Count == 0) return null;
-        return turnOrder[currentPlayerIndex.Value];
+        return turnOrder[Mathf.Clamp(currentPlayerIndex.Value, 0, turnOrder.Count - 1)];
     }
 
     // === Utility ===

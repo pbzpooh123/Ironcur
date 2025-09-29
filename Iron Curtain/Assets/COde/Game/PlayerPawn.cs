@@ -10,10 +10,9 @@ public class BusinessData
 {
     public string businessType;
     public int baseIncome;
-    public float incomeMultiplier = 1f;   // 1 = normal, >1 = plus, <1 = minus
+    public float incomeMultiplier = 1f;
     public int ownedShares = 0;
 }
-
 
 public class PlayerPawn : NetworkBehaviour
 {
@@ -24,52 +23,46 @@ public class PlayerPawn : NetworkBehaviour
     public readonly SyncVar<string> business   = new();
     public readonly SyncVar<string> country    = new();
     public readonly SyncVar<int>    lastRoll   = new();
-    
+    public readonly SyncVar<int>    money      = new();
+
     public Dictionary<string, ShareRecord> stockPortfolio   = new();
     public Dictionary<string, ShareRecord> factoryPortfolio = new();
 
     public bool isMyTurn = false;
-    public readonly SyncVar<int> money = new SyncVar<int>(); 
-
-    public PlayerInfoPanel infoPanel;  // assigned when spawning the panel
+    public PlayerInfoPanel infoPanel;
 
     public override void OnStartClient()
     {
         base.OnStartClient();
         money.OnChange += OnMoneyChanged;
-        
     }
+
+    public override void OnStopClient()
+    {
+        money.OnChange -= OnMoneyChanged;
+        base.OnStopClient();
+    }
+
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
     {
         Debug.Log($"{playerName.Value} money changed {oldValue} -> {newValue}");
-        
         if (infoPanel != null)
-            infoPanel.UpdateProfit(newValue);
+            infoPanel.UpdateMoney(newValue);
     }
 
-   
+    /* ---------- Server-side money helpers ---------- */
     [Server]
-    public void AddMoney(int amount)
-    {
-        money.Value += amount;
-    }
+    public void AddMoney(int amount) => money.Value += amount;
 
     [Server]
     public bool TrySpendMoney(int amount)
     {
-        if (money.Value < amount)
-        {
-            return false;
-        }
-        else
-        {
-            money.Value -= amount;
-            return true;
-        }
+        if (money.Value < amount) return false;
+        money.Value -= amount;
+        return true;
     }
-    
-    
-    // === Called from UI Button ===
+
+    /* ---------- Turn buttons ---------- */
     public void OnRollDiceButton()
     {
         if (!IsOwner || !isMyTurn) return;
@@ -82,25 +75,20 @@ public class PlayerPawn : NetworkBehaviour
         CmdEndTurn();
     }
 
-    // --- Server side ---
     [ServerRpc]
     public void CmdRollDiceAndMove()
     {
         int roll = Random.Range(1, 7);
         lastRoll.Value = roll;
-
-        // broadcast movement steps to all
         RpcMoveSteps(roll);
         Debug.Log($"{playerName.Value} rolled {roll}");
-
-        // client will get EndTurn UI enabled AFTER finishing movement
+        // End turn UI is handled after tile logic.
     }
 
     [ServerRpc]
     public void CmdEndTurn()
     {
-        if (IsServer)
-            TurnManager.Instance.EndTurn();
+        if (IsServer) TurnManager.Instance.EndTurn();
     }
 
     [TargetRpc]
@@ -109,13 +97,14 @@ public class PlayerPawn : NetworkBehaviour
         Debug.Log($"{playerName.Value} it’s your turn!");
         isMyTurn = true;
 
-        // Enable UI
-        TurnUI ui = FindObjectOfType<TurnUI>();
-        if (ui != null)
-            ui.BindPawn(this);
+        var ui = FindObjectOfType<TurnUI>();
+        if (ui != null) ui.BindPawn(this);
+
+        // Disable EndTurn initially; re-enable after tile + optional stock UI.
+        TargetEnableEndTurn(conn, false);
     }
 
-    // --- Movement ---
+    /* ---------- Movement ---------- */
     [ObserversRpc]
     private void RpcMoveSteps(int steps)
     {
@@ -126,7 +115,6 @@ public class PlayerPawn : NetworkBehaviour
     private IEnumerator MoveStepByStep(int steps)
     {
         int tileCount = GameManager.Instance.TileCount;
-
         for (int i = 1; i <= steps; i++)
         {
             int nextTile = (currentTile + 1) % tileCount;
@@ -139,52 +127,64 @@ public class PlayerPawn : NetworkBehaviour
             }
 
             transform.position = targetPos;
-            currentTile = nextTile; // update step
-
+            currentTile = nextTile;
             yield return new WaitForSeconds(0.1f);
         }
 
-        // === Trigger tile logic after finishing movement ===
         if (IsServer)
             HandleTileLogic();
     }
 
+    [Server]
     private void HandleTileLogic()
     {
-        TileData data = GameManager.Instance.boardTiles[currentTile].GetComponent<TileData>();
+        var data = GameManager.Instance.boardTiles[currentTile].GetComponent<TileData>();
         if (data == null) return;
 
-        // === 1. Event Tile ===
+        // 1) Event Tile (pause here; Stock UI will open after resume)
         if (data.tileType == TileType.Event)
         {
             EventManager.Instance.TriggerTileEvent(this);
-            return; 
+            return;
         }
 
-        // === 2. Investment Tile ===
+        // 2) Investment Tile (show investment UI on the current client, via TargetRpc)
         if (data.tileType == TileType.Investment)
         {
             if (data.owner == null)
             {
-                InvestmentUI.Instance.ShowOptions(this, currentTile, data.description, data.companyCost, true);
+                TargetShowInvestmentUI(Owner, currentTile, data.description, data.companyCost, true);
+                return;
             }
             else if (data.owner != this && data.sharesOwned < data.maxShares)
             {
                 int sharePrice = Mathf.RoundToInt(data.companyCost * 0.5f);
-                InvestmentUI.Instance.ShowOptions(this, currentTile, $"{data.owner.playerName.Value}'s company", sharePrice, false);
+                TargetShowInvestmentUI(Owner, currentTile, $"{data.owner.playerName.Value}'s company", sharePrice, false);
+                return;
             }
         }
+
+        // 3) No event / no investment → open Stock UI (optional) then enable end turn
+        TargetOpenStockUI(Owner);
+        TargetEnableEndTurn(Owner, true);
     }
 
-    
+    /* ---------- UI RPCs ---------- */
+    [TargetRpc]
+    private void TargetShowInvestmentUI(NetworkConnection conn, int tileIndex, string companyName, int cost, bool isCompany)
+    {
+        // Client-only UI
+        InvestmentUI.Instance.ShowOptions(this, tileIndex, companyName, cost, isCompany);
+    }
+
     [TargetRpc]
     public void TargetEnableEndTurn(NetworkConnection conn, bool enable)
     {
-        TurnUI ui = FindObjectOfType<TurnUI>();
+        var ui = FindObjectOfType<TurnUI>();
         if (ui != null)
             ui.SetEndTurnInteractable(enable);
     }
-    
+
     [TargetRpc]
     public void TargetOpenStockUI(NetworkConnection conn)
     {
@@ -194,22 +194,34 @@ public class PlayerPawn : NetworkBehaviour
     [Server]
     private void ResumeAfterEvent()
     {
-        // After event ends → let stock market UI open
         TargetOpenStockUI(Owner);
         TargetEnableEndTurn(Owner, true);
     }
-    
+
+    /* ---------- Turn order tag on HUD ---------- */
     [TargetRpc]
     public void TargetSetTurnOrder(NetworkConnection conn, int turnIndex)
     {
-        var panels = FindObjectsOfType<PlayerInfoPanel>();
-        foreach (var panel in panels)
+        if (infoPanel != null)
         {
-            if (panel.nameText.text == playerName.Value) 
-            {
-                panel.turnOrderText.text = $"Turn #{turnIndex + 1}";
-            }
+            infoPanel.SetTurnOrder(turnIndex + 1);
+        }
+        else
+        {
+            // If HUD not assigned yet, wait until it's set.
+            StartCoroutine(WaitAndSetTurnOrder(turnIndex));
         }
     }
 
+    private IEnumerator WaitAndSetTurnOrder(int turnIndex)
+    {
+        float t = 2f;
+        while (t > 0f && infoPanel == null)
+        {
+            t -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+        if (infoPanel != null)
+            infoPanel.SetTurnOrder(turnIndex + 1);
+    }
 }
