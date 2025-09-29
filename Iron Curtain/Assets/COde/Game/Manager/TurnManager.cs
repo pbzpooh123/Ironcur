@@ -37,7 +37,27 @@ public class TurnManager : NetworkBehaviour
         yield return null; 
         StartGame();
     }
+    
+    private readonly Dictionary<PlayerPawn, int> _skipTurns = new();
 
+    [Server]
+    public void MarkSkipTurn(PlayerPawn pawn, int duration)
+    {
+        if (pawn == null) return;
+        _skipTurns[pawn] = Mathf.Max(duration, 1);
+    }
+
+    private bool ShouldSkip(PlayerPawn pawn)
+    {
+        if (pawn == null) return false;
+        if (_skipTurns.TryGetValue(pawn, out int left) && left > 0)
+        {
+            _skipTurns[pawn] = left - 1;
+            return true;
+        }
+        return false;
+    }
+    
     [Server]
     private void StartGame()
     {
@@ -62,22 +82,23 @@ public class TurnManager : NetworkBehaviour
 
     private void StartTurn()
     {
-        if (!IsServer) return;
-        if (turnOrder.Count == 0) return;
+        if (!IsServer || turnOrder.Count == 0) return;
 
         if (currentPlayerIndex.Value >= turnOrder.Count)
             currentPlayerIndex.Value = 0;
 
         PlayerPawn currentPlayer = turnOrder[currentPlayerIndex.Value];
-        if (currentPlayer != null)
+
+        // === Check skip turn ===
+        if (ShouldSkip(currentPlayer))
         {
-            currentPlayer.TargetStartTurn(currentPlayer.Owner);
-            Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value}");
+            Debug.Log($"[TurnManager] Skipping {currentPlayer.playerName.Value}'s turn");
+            EndTurn(); // immediately move to next player
+            return;
         }
-        else
-        {
-            Debug.LogWarning("[TurnManager] Current player is null.");
-        }
+
+        currentPlayer.TargetStartTurn(currentPlayer.Owner);
+        Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value}");
     }
 
     [Server]
