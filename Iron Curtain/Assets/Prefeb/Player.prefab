@@ -32,7 +32,7 @@ Transform:
   m_GameObject: {fileID: 8782355087910685909}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -586, y: 71.500786, z: -368}
+  m_LocalPosition: {x: 579.365, y: 16, z: -372}
   m_LocalScale: {x: 50, y: 50, z: 50}
   m_ConstrainProportionsScale: 1
   m_Children: []
@@ -150,6 +150,7 @@ MonoBehaviour:
   NetworkBehaviours:
   - {fileID: 180536817828784201}
   - {fileID: 5476489429418639918}
+  - {fileID: -552023009267915526}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}
@@ -157,7 +158,7 @@ MonoBehaviour:
   _isNetworked: 1
   _isSpawnable: 1
   _isGlobal: 1
-  _initializeOrder: 0
+  _initializeOrder: -128
   _preventDespawnOnDisconnect: 0
   _defaultDespawnType: 0
   NetworkObserver: {fileID: 0}
@@ -210,9 +211,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a2836e36774ca1c4bbbee976e17b649c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _componentIndexCache: 255
+  _componentIndexCache: 2
   _addedNetworkObject: {fileID: 8113397077836019727}
-  _networkObjectCache: {fileID: 0}
+  _networkObjectCache: {fileID: 8113397077836019727}
   _componentConfiguration: 2
   _synchronizeParent: 0
   _packing:

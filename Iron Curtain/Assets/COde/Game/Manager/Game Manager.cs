@@ -85,12 +85,23 @@ public class GameManager : NetworkBehaviour
 
         if (conn.FirstObject != null && conn.FirstObject.TryGetComponent(out PlayerPawn pawn))
         {
+            // IMPORTANT: assign ownership to the client
+            if (pawn.Owner != conn)
+            {
+                pawn.GiveOwnership(conn);
+                Debug.Log($"[Server] Ownership of {pawn.playerName.Value} pawn given to connection {connectionId}");
+            }
+
+            // Place pawn at tile 0
             pawn.transform.position = GetTilePosition(0);
 
+            // Set sync vars
             pawn.playerName.Value = lobbyPlayer.playerName.Value;
 
+            // Store references
             playerPawns[connectionId] = pawn;
 
+            // Assign HUD slot
             if (!playerSlots.TryGetValue(connectionId, out int assignedSlot))
             {
                 assignedSlot = nextSlotIndex % 4;
@@ -104,13 +115,20 @@ public class GameManager : NetworkBehaviour
                 pawn.playerName.Value,
                 0
             );
-            
-            Debug.Log($"[Server] Assigning HUD slot {assignedSlot} to {pawn.playerName.Value}");
         }
         else
         {
             Debug.LogWarning($"[Server] No pawn found for connection {connectionId}.");
         }
-       
+    }
+
+    
+    [ObserversRpc]
+    private void RpcPlacePawnAtStart(int connId, Vector3 pos)
+    {
+        if (playerPawns.TryGetValue(connId, out PlayerPawn pawn))
+        {
+            pawn.transform.position = pos;
+        }
     }
 }

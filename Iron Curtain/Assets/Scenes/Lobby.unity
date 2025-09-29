@@ -5838,17 +5838,13 @@ MonoBehaviour:
   mainMenuPanel: {fileID: 474351973}
   startPanel: {fileID: 1249245314}
   nameCountryPanel: {fileID: 1572087327}
-  businessPanel: {fileID: 1236663099}
   hostClientPanel: {fileID: 930070182}
   lobbyPanel: {fileID: 1464092817}
   settingsPanel: {fileID: 1811367950}
   soundPanel: {fileID: 706783200}
   languagePanel: {fileID: 1261417379}
   nameInput: {fileID: 23536026}
-  businessDropdown: {fileID: 12115760}
-  countryDropdown: {fileID: 1936539936}
   roomCodeInput: {fileID: 519926008}
-  businessDescriptionText: {fileID: 881540511}
   lobbyUI: {fileID: 1464092821}
   hostButton: {fileID: 674318867}
 --- !u!114 &1356706737
@@ -8965,6 +8961,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 934570884, guid: 0b650fca685f2eb41a86538aa883e4c1, type: 3}
+      propertyPath: _updateHostVisibility
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 934570884, guid: 0b650fca685f2eb41a86538aa883e4c1, type: 3}
       propertyPath: _defaultConditions.Array.size
       value: 1

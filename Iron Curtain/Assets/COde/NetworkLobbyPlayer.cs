@@ -94,21 +94,30 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         lobbyUI?.UpdatePlayerList(NetworkManagerLobby.Instance.GetPlayerList());
     }
    
-    [TargetRpc]
+    [ObserversRpc]
     public void TargetSetHUD(NetworkConnection conn, int slotIndex, string name, int profit)
     {
+        StartCoroutine(WaitForHUD(slotIndex, name, profit));
+    }
+
+    private System.Collections.IEnumerator WaitForHUD(int slotIndex, string name, int profit)
+    {
+        // Wait until GameHUD is present
+        while (GameHUD.Instance == null)
+            yield return null;
+
         var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, profit);
 
-        // Instead of using conn.FirstObject, find pawn locally
-        PlayerPawn pawn = FindObjectOfType<PlayerPawn>();
-        if (pawn != null)
+        // Find the local pawn instead of using conn.FirstObject
+        PlayerPawn[] pawns = FindObjectsOfType<PlayerPawn>();
+        foreach (var pawn in pawns)
         {
-            pawn.infoPanel = panel;
-            pawn.AddMoney(500); // starting money
-        }
-        else
-        {
-            Debug.LogWarning("TargetSetHUD: No PlayerPawn found on client.");
+            if (pawn.playerName.Value == name)
+            {
+                pawn.infoPanel = panel;
+                pawn.AddMoney(500);
+                break;
+            }
         }
     }
 }
