@@ -5,40 +5,32 @@ using System.Collections;
 using System.Collections.Generic;
 using FishNet.Object.Synchronizing;
 
-[System.Serializable]
-public class BusinessData
-{
-    public string businessType;
-    public int baseIncome;
-    public float incomeMultiplier = 1f;
-    public int ownedShares = 0;
-}
-
 public class PlayerPawn : NetworkBehaviour
 {
     public float moveSpeed = 4f;
     private int currentTile = 0;
 
+    // === Sync Data ===
     public readonly SyncVar<string> playerName = new();
     public readonly SyncVar<string> business   = new();
     public readonly SyncVar<string> country    = new();
     public readonly SyncVar<int>    lastRoll   = new();
     public readonly SyncVar<int>    money      = new();
 
-    public Dictionary<string, ShareRecord> stockPortfolio   = new();
+    // === Legacy "share record" kept only for multipliers ===
     public Dictionary<string, ShareRecord> factoryPortfolio = new();
 
     public bool isMyTurn = false;
     public PlayerInfoPanel infoPanel;
 
-    
+    // =================== Init ===================
     public override void OnStartServer()
     {
         base.OnStartServer();
-        
+
         if (Owner != null)
             GiveOwnership(Owner);
-        
+
         if (money.Value == 0)
             money.Value = 1000;
     }
@@ -62,7 +54,7 @@ public class PlayerPawn : NetworkBehaviour
             infoPanel.UpdateMoney(newValue);
     }
 
-    /* ---------- Server-side money helpers ---------- */
+    // =================== Money ===================
     [Server]
     public void AddMoney(int amount) => money.Value += amount;
 
@@ -74,7 +66,7 @@ public class PlayerPawn : NetworkBehaviour
         return true;
     }
 
-    /* ---------- Turn buttons ---------- */
+    // =================== Turn UI ===================
     public void OnRollDiceButton()
     {
         if (!IsOwner || !isMyTurn) return;
@@ -94,7 +86,6 @@ public class PlayerPawn : NetworkBehaviour
         lastRoll.Value = roll;
         RpcMoveSteps(roll);
         Debug.Log($"{playerName.Value} rolled {roll}");
-        // End turn UI is handled after tile logic.
     }
 
     [ServerRpc]
@@ -112,11 +103,10 @@ public class PlayerPawn : NetworkBehaviour
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null) ui.BindPawn(this);
 
-        // Disable EndTurn initially; re-enable after tile + optional stock UI.
         TargetEnableEndTurn(conn, false);
     }
 
-    /* ---------- Movement ---------- */
+    // =================== Movement ===================
     [ObserversRpc]
     private void RpcMoveSteps(int steps)
     {
@@ -147,45 +137,35 @@ public class PlayerPawn : NetworkBehaviour
             HandleTileLogic();
     }
 
+    // =================== Tile Logic ===================
     [Server]
     private void HandleTileLogic()
     {
         var data = GameManager.Instance.boardTiles[currentTile].GetComponent<TileData>();
         if (data == null) return;
 
-        // 1) Event Tile (pause here; Stock UI will open after resume)
+        // Event Tile
         if (data.tileType == TileType.Event)
         {
             EventManager.Instance.TriggerTileEvent(this);
             return;
         }
 
-        // 2) Investment Tile (show investment UI on the current client, via TargetRpc)
-        if (data.tileType == TileType.Investment)
+        // Investment Tile → Found company only
+        if (data.tileType == TileType.Investment && data.owner == null)
         {
-            if (data.owner == null)
-            {
-                TargetShowInvestmentUI(Owner, currentTile, data.description, data.companyCost, true);
-                return;
-            }
-            else if (data.owner != this && data.sharesOwned < data.maxShares)
-            {
-                int sharePrice = Mathf.RoundToInt(data.companyCost * 0.5f);
-                TargetShowInvestmentUI(Owner, currentTile, $"{data.owner.playerName.Value}'s company", sharePrice, false);
-                return;
-            }
+            TargetShowInvestmentUI(Owner, currentTile, data.companyName, data.companyCost, true);
+            return;
         }
 
-        // 3) No event / no investment → open Stock UI (optional) then enable end turn
-        TargetOpenStockUI(Owner);
+        // Otherwise → just allow end turn
         TargetEnableEndTurn(Owner, true);
     }
 
-    /* ---------- UI RPCs ---------- */
+    // =================== UI RPCs ===================
     [TargetRpc]
     private void TargetShowInvestmentUI(NetworkConnection conn, int tileIndex, string companyName, int cost, bool isCompany)
     {
-        // Client-only UI
         InvestmentUI.Instance.ShowOptions(this, tileIndex, companyName, cost, isCompany);
     }
 
@@ -198,20 +178,6 @@ public class PlayerPawn : NetworkBehaviour
     }
 
     [TargetRpc]
-    public void TargetOpenStockUI(NetworkConnection conn)
-    {
-        StockMarketUI.Instance.Show(this);
-    }
-
-    [Server]
-    private void ResumeAfterEvent()
-    {
-        TargetOpenStockUI(Owner);
-        TargetEnableEndTurn(Owner, true);
-    }
-
-    /* ---------- Turn order tag on HUD ---------- */
-    [TargetRpc]
     public void TargetSetTurnOrder(NetworkConnection conn, int turnIndex)
     {
         if (infoPanel != null)
@@ -220,7 +186,6 @@ public class PlayerPawn : NetworkBehaviour
         }
         else
         {
-            // If HUD not assigned yet, wait until it's set.
             StartCoroutine(WaitAndSetTurnOrder(turnIndex));
         }
     }
@@ -236,10 +201,42 @@ public class PlayerPawn : NetworkBehaviour
         if (infoPanel != null)
             infoPanel.SetTurnOrder(turnIndex + 1);
     }
-    
+
     [ObserversRpc(BufferLast = true)]
     public void RpcTeleportTo(Vector3 pos)
     {
         transform.position = pos;
+    }
+
+    // =================== Ownership Helpers ===================
+    public bool HasCompanies()
+    {
+        foreach (var kvp in factoryPortfolio)
+        {
+            if (kvp.Value.sharePercent > 0)
+                return true;
+        }
+        return false;
+    }
+
+    public bool HasMajorityCompany()
+    {
+        foreach (var kvp in factoryPortfolio)
+        {
+            if (kvp.Value.sharePercent > 60)
+                return true;
+        }
+        return false;
+    }
+
+    public List<string> GetOwnedCompanies()
+    {
+        var owned = new List<string>();
+        foreach (var kvp in factoryPortfolio)
+        {
+            if (kvp.Value.sharePercent > 0)
+                owned.Add(kvp.Key);
+        }
+        return owned;
     }
 }

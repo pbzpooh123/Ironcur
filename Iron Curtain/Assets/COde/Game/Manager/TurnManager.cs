@@ -104,8 +104,21 @@ public class TurnManager : NetworkBehaviour
             return;
         }
 
+        // Always start turn for the current player
         currentPlayer.TargetStartTurn(currentPlayer.Owner);
         Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value}");
+
+        // === New logic for proposals/reviews ===
+        if (currentPlayer.HasCompanies())
+        {
+            // Owner reviews incoming offers
+            MarketManager.Instance.TargetShowReviewUI(currentPlayer.Owner);
+        }
+        else
+        {
+            // Non-owners can propose to buy shares
+            MarketManager.Instance.TargetShowProposalUI(currentPlayer.Owner);
+        }
     }
 
     [Server]

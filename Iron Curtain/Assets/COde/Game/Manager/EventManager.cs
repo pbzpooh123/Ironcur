@@ -113,7 +113,6 @@ public class EventManager : NetworkBehaviour
         var pawn = TurnManager.Instance.GetCurrentPawn();
         if (pawn != null)
         {
-            pawn.TargetOpenStockUI(pawn.Owner);
             pawn.TargetEnableEndTurn(pawn.Owner, true);
         }
     }
