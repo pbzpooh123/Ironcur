@@ -1,8 +1,9 @@
 [System.Serializable]
-public class ShareRecord
+public struct ShareRecord
 {
-    public int count;
+    public int count;                  
     public int roundBought;
-    public float multiplier = 1f;       // optional
-    public int multiplierExpiresAt = 0; // optional end round
+    public float multiplier;           // stacking payout multiplier
+    public int multiplierExpiresAt;    // round when multiplier resets
+    public int sharePercent;           // 0-100, for company ownership
 }

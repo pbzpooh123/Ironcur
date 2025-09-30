@@ -74,9 +74,16 @@ public class TurnManager : NetworkBehaviour
         for (int i = 0; i < turnOrder.Count; i++)
         {
             var pawn = turnOrder[i];
-            pawn.TargetSetTurnOrder(pawn.Owner, i); 
+            pawn.TargetSetTurnOrder(pawn.Owner, i);
         }
 
+        // Delay first turn to give clients time to spawn their UI
+        StartCoroutine(DelayedFirstTurn());
+    }
+
+    private System.Collections.IEnumerator DelayedFirstTurn()
+    {
+        yield return new WaitForSeconds(1.5f); // wait half a second
         StartTurn();
     }
 

@@ -2,19 +2,27 @@ using UnityEngine;
 using System.Collections.Generic;
 
 public enum EventType { Tile, Main }
-public enum TargetType { None, Stock, Factory, Global }
+public enum TargetType
+{
+    None,
+    Factory,    // covers factories + their stock entry 
+    Ownership,  // directly manipulates % shares or control
+    Global      // affects all players equally
+}
+
 
 [System.Serializable]
 public class EventEffect
 {
-    public TargetType targetType;     // Stock / Factory / Global
-    public string targetName;         // เช่น "Steel & Iron" หรือ "Banking"
-    public int moneyDelta;            // เงินทันที (อาจจะเป็นค่าปรับ / โบนัส)
-    public float multiplier = 1f;     // ตัวคูณรายได้
-    public int duration = 0;          // ระยะเวลาที่มีผล (round)
-    public bool skipTurn;             // true = ผู้เล่นต้องข้าม turn
-    public int randomMoneyMin;        // สำหรับ event ที่แจกเงินสุ่ม
-    public int randomMoneyMax;
+    public TargetType targetType;       // Factory / Ownership / Global
+    public string targetName;           // "Steel & Iron", "Banking", etc.
+    public int moneyDelta;              // instant money bonus/penalty
+    public float multiplier = 1f;       // revenue multiplier
+    public int duration = 0;            // how many rounds the effect lasts
+    public bool skipTurn;               // player must skip their turn
+    public int randomMoneyMin;          // optional: random payout lower bound
+    public int randomMoneyMax;          // optional: random payout upper bound
+    public int ownershipDelta;          // % of shares gained/lost (only for Ownership type)
 }
 
 [CreateAssetMenu(fileName = "NewGameEvent", menuName = "Game/Event", order = 1)]
