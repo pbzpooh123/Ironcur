@@ -112,7 +112,7 @@ public class TurnManager : NetworkBehaviour
         if (currentPlayer.HasCompanies())
         {
             // Owner reviews incoming offers
-            MarketManager.Instance.CmdRequestReviewUI(currentPlayer);
+            MarketManager.Instance.CmdRequestReviewUI();
         }
     }
 

@@ -347,85 +347,126 @@ public class MarketManager : NetworkBehaviour
         Debug.Log($"[ClientSync] {pawn.playerName.Value} now has {newPercent}% of {companyName}");
     }
     
-    [ServerRpc(RequireOwnership=false)]
+
+    // Server side: don't send pawnName anymore
+    [ServerRpc(RequireOwnership = false)]
     public void CmdRequestProposalUI(NetworkConnection conn = null)
     {
-        if (conn == null) return;
-        var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
-        if (pawn == null) { Debug.LogWarning("No pawn for conn"); return; }
-        TargetShowProposalUI(conn, pawn.playerName.Value);
+        if (conn == null)
+        {
+            Debug.LogWarning("[MarketManager] CmdRequestProposalUI: conn is null!");
+            return;
+        }
+
+        TargetShowProposalUI(conn); // no pawnName
     }
 
     [TargetRpc]
-    private void TargetShowProposalUI(NetworkConnection conn, string pawnName)
+    private void TargetShowProposalUI(NetworkConnection conn)
     {
-        TryOpenProposalUI(pawnName);
+        StartCoroutine(WaitAndOpenProposalUI());
     }
 
-    private void TryOpenProposalUI(string pawnName)
+    private System.Collections.IEnumerator WaitAndOpenProposalUI()
     {
-        var ui = ProposalUI.Instance;
-        var pawn = GameManager.Instance != null 
-            ? GameManager.Instance.Players.Find(p => p.playerName.Value == pawnName)
-            : null;
+        float timeout = 3f;
+        PlayerPawn localPawn = null;
 
-        if (ui != null && pawn != null)
+        while (timeout > 0f)
         {
-            ui.Show(pawn);
-            Debug.Log($"[MarketManager] ProposalUI opened for {pawn.playerName.Value}");
-        }
-        else
-        {
-            Debug.LogWarning("[MarketManager] ProposalUI not ready or pawn not found yet. Retrying...");
-            StartCoroutine(WaitAndOpenProposalUI(pawnName));
-        }
-    }
-
-    private System.Collections.IEnumerator WaitAndOpenProposalUI(string pawnName)
-    {
-        float t = 3f;
-        while (t > 0f)
-        {
-            var ui = ProposalUI.Instance;
-            var pawn = GameManager.Instance != null
-                ? GameManager.Instance.Players.Find(p => p.playerName.Value == pawnName)
-                : null;
-
-            if (ui != null && pawn != null)
+            // Find local player's pawn (robust)
+            if (localPawn == null)
             {
-                ui.Show(pawn);
-                Debug.Log($"[MarketManager] ProposalUI opened after defer for {pawnName}");
-                yield break;
+                foreach (var p in FindObjectsOfType<PlayerPawn>())
+                {
+                    if (p != null && p.IsOwner)
+                    {
+                        localPawn = p;
+                        break;
+                    }
+                }
             }
-            t -= Time.unscaledDeltaTime;
+
+            // Wait until UI and local pawn exist
+            if (ProposalUI.Instance != null && localPawn != null)
+                break;
+
+            timeout -= Time.unscaledDeltaTime;
             yield return null;
         }
-        Debug.LogWarning($"[MarketManager] Failed to open ProposalUI for {pawnName} after waiting.");
-    }
 
-
-// Ask server to open ReviewUI for this requester
-    [ServerRpc(RequireOwnership = false)]
-    public void CmdRequestReviewUI(PlayerPawn requester)
-    {
-        if (requester == null) return;
-        TargetShowReviewUI(requester.Owner, requester.playerName.Value);
-    }
-
-    [TargetRpc]
-    private void TargetShowReviewUI(NetworkConnection conn, string pawnName)
-    {
-        var pawn = GameManager.Instance.Players.Find(p => p.playerName.Value == pawnName);
-        if (pawn != null && ReviewUI.Instance != null)
+        if (ProposalUI.Instance != null && localPawn != null)
         {
-            ReviewUI.Instance.Show(pawn);
-            Debug.Log($"[MarketManager] ReviewUI opened for {pawn.playerName.Value}");
+            ProposalUI.Instance.Show(localPawn);
+            Debug.Log($"[MarketManager] ProposalUI opened for {localPawn.playerName.Value}");
         }
         else
         {
-            Debug.LogWarning("[MarketManager] ReviewUI not found or pawn not found.");
+            Debug.LogWarning($"[MarketManager] Failed to open ProposalUI on client. " +
+                             $"UI={(ProposalUI.Instance != null)}, pawn={(localPawn != null)}");
         }
     }
+
+
+
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdRequestReviewUI(NetworkConnection conn = null)
+    {
+        if (conn == null)
+        {
+            Debug.LogWarning("[MarketManager] CmdRequestReviewUI: conn is null!");
+            return;
+        }
+
+        TargetShowReviewUI(conn);
+    }
+
+    [TargetRpc]
+    private void TargetShowReviewUI(NetworkConnection conn)
+    {
+        StartCoroutine(WaitAndOpenReviewUI());
+    }
+
+    private System.Collections.IEnumerator WaitAndOpenReviewUI()
+    {
+        float timeout = 3f;
+        PlayerPawn localPawn = null;
+
+        while (timeout > 0f)
+        {
+            // Find local player's pawn
+            if (localPawn == null)
+            {
+                foreach (var p in FindObjectsOfType<PlayerPawn>())
+                {
+                    if (p != null && p.IsOwner)
+                    {
+                        localPawn = p;
+                        break;
+                    }
+                }
+            }
+
+            // Wait until UI and local pawn exist
+            if (ReviewUI.Instance != null && localPawn != null)
+                break;
+
+            timeout -= Time.unscaledDeltaTime;
+            yield return null;
+        }
+
+        if (ReviewUI.Instance != null && localPawn != null)
+        {
+            ReviewUI.Instance.Show(localPawn);
+            Debug.Log($"[MarketManager] ReviewUI opened for {localPawn.playerName.Value}");
+        }
+        else
+        {
+            Debug.LogWarning($"[MarketManager] Failed to open ReviewUI on client. " +
+                             $"UI={(ReviewUI.Instance != null)}, pawn={(localPawn != null)}");
+        }
+    }
+
     
 
 }
