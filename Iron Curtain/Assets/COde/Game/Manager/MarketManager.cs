@@ -68,14 +68,6 @@ public class MarketManager : NetworkBehaviour
     {
         Instance = this;
 
-        // Example stock setup
-        stocks.Add(new StockData("Steel & Iron", 100));
-        stocks.Add(new StockData("Oil & Gas", 120));
-        stocks.Add(new StockData("Food & Beverage", 80));
-        stocks.Add(new StockData("Electronics", 90));
-        stocks.Add(new StockData("Weapons", 150));
-        stocks.Add(new StockData("Real Estate", 110));
-        stocks.Add(new StockData("Banking", 130));
     }
 
     // === Investment Tiles ===
