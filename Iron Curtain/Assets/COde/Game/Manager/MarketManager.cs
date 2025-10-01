@@ -92,6 +92,7 @@ public class MarketManager : NetworkBehaviour
             var record = new CompanyRecord(key, tile.companyCost, pawn);
             companies[key] = record;
             tile.owner = pawn;
+            RpcSyncOwnership(key, pawn.playerName.Value, 100);
             Debug.Log($"[Market] {pawn.playerName.Value} founded company {key}");
         }
     }
@@ -133,6 +134,8 @@ public class MarketManager : NetworkBehaviour
             company.SetOwnership(company.owner, oldOwnerShare - transferPercent);
             int newShare = company.GetOwnership(proposal.proposer) + transferPercent;
             company.SetOwnership(proposal.proposer, newShare);
+            RpcSyncOwnership(companyName, proposal.proposer.playerName.Value, newShare);
+            RpcSyncOwnership(companyName, company.owner.playerName.Value, company.GetOwnership(company.owner));
 
             // Check majority
             var majority = company.GetMajorityOwner();
@@ -181,33 +184,9 @@ public class MarketManager : NetworkBehaviour
         if (proposalIndex < 0 || proposalIndex >= company.proposals.Count) return;
 
         var proposal = company.proposals[proposalIndex];
-
-        if (accepted)
-        {
-            if (!proposal.proposer.TrySpendMoney(proposal.price)) return;
-            company.owner.AddMoney(proposal.price);
-
-            int oldOwnerShare = company.GetOwnership(company.owner);
-            int transferPercent = Mathf.Min(proposal.percent, oldOwnerShare);
-
-            company.SetOwnership(company.owner, oldOwnerShare - transferPercent);
-            int newShare = company.GetOwnership(proposal.proposer) + transferPercent;
-            company.SetOwnership(proposal.proposer, newShare);
-
-            var majority = company.GetMajorityOwner();
-            company.owner = majority;
-
-            Debug.Log($"[Market] Proposal accepted: {proposal.proposer.playerName.Value} now owns {newShare}% of {companyName}");
-        }
-        else
-        {
-            Debug.Log($"[Market] Proposal rejected for {companyName}");
-        }
-
-        company.proposals.RemoveAt(proposalIndex);
+        ResolveProposal(companyName, proposal, accepted);
     }
-
-
+    
 
     // === Payout Logic ===
     [Server]
@@ -262,15 +241,54 @@ public class MarketManager : NetworkBehaviour
 
 
     [TargetRpc]
-    public void TargetShowProposalUI(NetworkConnection conn)
+    public void TargetShowProposalUI(NetworkConnection conn, PlayerPawn pawn)
     {
-        Debug.Log("[MarketManager] Show proposal UI (not implemented yet).");
+        if (ProposalUI.Instance != null)
+            ProposalUI.Instance.Show(pawn);
+        else
+            Debug.LogWarning("[MarketManager] ProposalUI.Instance not found!");
     }
 
     [TargetRpc]
-    public void TargetShowReviewUI(NetworkConnection conn)
+    public void TargetShowReviewUI(NetworkConnection conn, PlayerPawn pawn)
     {
-        Debug.Log("[MarketManager] Show proposal UI (not implemented yet).");
+        if (ReviewUI.Instance != null)
+            ReviewUI.Instance.Show(pawn);
+        else
+            Debug.LogWarning("[MarketManager] ReviewUI.Instance not found!");
+    }
+    
+    [ObserversRpc]
+    private void RpcSyncOwnership(string companyName, string playerName, int newPercent)
+    {
+        // Find the pawn for this player
+        var pawn = GameManager.Instance.Players.Find(p => p.playerName.Value == playerName);
+        if (pawn == null) return;
+
+        // Update local portfolio
+        if (!pawn.factoryPortfolio.ContainsKey(companyName))
+        {
+            pawn.factoryPortfolio[companyName] = new ShareRecord
+            {
+                count = 0,
+                roundBought = TurnManager.Instance.roundCount.Value,
+                multiplier = 1f,
+                multiplierExpiresAt = 0,
+                sharePercent = newPercent
+            };
+        }
+        else
+        {
+            var rec = pawn.factoryPortfolio[companyName];
+            rec.sharePercent = newPercent;
+            pawn.factoryPortfolio[companyName] = rec;
+        }
+
+        // Optional: update HUD panel
+        if (pawn.infoPanel != null)
+            pawn.infoPanel.UpdateCompanyOwnership(companyName, newPercent);
+
+        Debug.Log($"[ClientSync] {pawn.playerName.Value} now has {newPercent}% of {companyName}");
     }
 
 }

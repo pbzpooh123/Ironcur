@@ -95,6 +95,8 @@ MonoBehaviour:
   nameText: {fileID: 8373539576515487660}
   profitText: {fileID: 8247013670169860833}
   turnOrderText: {fileID: 7933157853146841130}
+  ownershipListParent: {fileID: 0}
+  ownershipEntryPrefab: {fileID: 0}
 --- !u!114 &5923547694135254486
 MonoBehaviour:
   m_ObjectHideFlags: 0

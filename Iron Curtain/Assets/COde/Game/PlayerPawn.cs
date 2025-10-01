@@ -39,6 +39,11 @@ public class PlayerPawn : NetworkBehaviour
     {
         base.OnStartClient();
         money.OnChange += OnMoneyChanged;
+        foreach (var kv in factoryPortfolio)
+        {
+            if (infoPanel != null)
+                infoPanel.UpdateCompanyOwnership(kv.Key, kv.Value.sharePercent);
+        }
     }
 
     public override void OnStopClient()

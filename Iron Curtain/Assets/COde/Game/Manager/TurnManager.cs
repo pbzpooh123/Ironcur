@@ -112,12 +112,12 @@ public class TurnManager : NetworkBehaviour
         if (currentPlayer.HasCompanies())
         {
             // Owner reviews incoming offers
-            MarketManager.Instance.TargetShowReviewUI(currentPlayer.Owner);
+            MarketManager.Instance.TargetShowReviewUI(currentPlayer.Owner, currentPlayer);
         }
         else
         {
             // Non-owners can propose to buy shares
-            MarketManager.Instance.TargetShowProposalUI(currentPlayer.Owner);
+            MarketManager.Instance.TargetShowProposalUI(currentPlayer.Owner, currentPlayer);
         }
     }
 

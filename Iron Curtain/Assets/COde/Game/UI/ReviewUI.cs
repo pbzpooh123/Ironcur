@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class ReviewUI : MonoBehaviour
 {
@@ -11,7 +12,14 @@ public class ReviewUI : MonoBehaviour
 
     private PlayerPawn currentPawn;
 
-    private void Awake() => Instance = this;
+    public Button closeButton; // assign in inspector
+
+    private void Awake()
+    {
+        Instance = this;
+        if (closeButton != null)
+            closeButton.onClick.AddListener(Hide);
+    }
 
     public void Show(PlayerPawn pawn)
     {
@@ -40,5 +48,8 @@ public class ReviewUI : MonoBehaviour
     public void Hide()
     {
         panel.SetActive(false);
+        var ui = FindObjectOfType<TurnUI>();
+        if (ui != null)
+            ui.SetEndTurnInteractable(true);
     }
 }
