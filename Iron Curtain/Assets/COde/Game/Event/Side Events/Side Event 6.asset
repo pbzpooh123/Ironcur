@@ -19,4 +19,13 @@ MonoBehaviour:
     Effect: Choose 1 player.
     They must pay 10% ransom to you to restore normal operations'
   type: 0
-  effects: []
+  effects:
+  - targetType: 0
+    targetName: 
+    moneyDelta: -1000
+    multiplier: 0
+    duration: 0
+    skipTurn: 0
+    randomMoneyMin: 0
+    randomMoneyMax: 0
+    ownershipDelta: 0

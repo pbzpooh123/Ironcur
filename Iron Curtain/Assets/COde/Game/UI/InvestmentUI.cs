@@ -59,7 +59,9 @@ public class InvestmentUI : MonoBehaviour
 
         if (currentPawn != null)
         {
-            currentPawn.TargetEnableEndTurn(currentPawn.Owner, true);
+            // After tile action → show ProposalUI for this pawn
+            MarketManager.Instance.CmdRequestProposalUI();
         }
     }
+
 }

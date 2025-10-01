@@ -12,8 +12,6 @@ public class PlayerPawn : NetworkBehaviour
 
     // === Sync Data ===
     public readonly SyncVar<string> playerName = new();
-    public readonly SyncVar<string> business   = new();
-    public readonly SyncVar<string> country    = new();
     public readonly SyncVar<int>    lastRoll   = new();
     public readonly SyncVar<int>    money      = new();
 
@@ -43,6 +41,27 @@ public class PlayerPawn : NetworkBehaviour
         {
             if (infoPanel != null)
                 infoPanel.UpdateCompanyOwnership(kv.Key, kv.Value.sharePercent);
+        }
+        StartCoroutine(AutoBindInfoPanel());
+    }
+    
+    private IEnumerator AutoBindInfoPanel()
+    {
+        float t = 2f;
+        while (t > 0f && infoPanel == null)
+        {
+            if (GameHUD.Instance != null && !string.IsNullOrEmpty(playerName.Value))
+            {
+                var maybe = GameHUD.Instance.FindPanelByName(playerName.Value); // implement below
+                if (maybe != null)
+                {
+                    infoPanel = maybe;
+                    infoPanel.SetInfo(playerName.Value, money.Value); // initial sync
+                    break;
+                }
+            }
+            t -= Time.unscaledDeltaTime;
+            yield return null;
         }
     }
 
@@ -162,8 +181,8 @@ public class PlayerPawn : NetworkBehaviour
             TargetShowInvestmentUI(Owner, currentTile, data.companyName, data.companyCost, true);
             return;
         }
-
-        // Otherwise → just allow end turn
+        
+        MarketManager.Instance.CmdRequestProposalUI();
         TargetEnableEndTurn(Owner, true);
     }
 
@@ -243,5 +262,12 @@ public class PlayerPawn : NetworkBehaviour
                 owned.Add(kvp.Key);
         }
         return owned;
+    }
+    
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdRequestEnableEndTurn(NetworkConnection conn = null)
+    {
+        if (conn == null) conn = Owner;
+        TargetEnableEndTurn(conn, true);
     }
 }

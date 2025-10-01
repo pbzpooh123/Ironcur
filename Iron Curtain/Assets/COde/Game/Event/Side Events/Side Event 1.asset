@@ -20,11 +20,12 @@ MonoBehaviour:
     moving'
   type: 0
   effects:
-  - targetType: 2
+  - targetType: 0
     targetName: 
-    moneyDelta: 0
+    moneyDelta: 1000
     multiplier: 0
     duration: 0
     skipTurn: 0
     randomMoneyMin: 0
     randomMoneyMax: 0
+    ownershipDelta: 0

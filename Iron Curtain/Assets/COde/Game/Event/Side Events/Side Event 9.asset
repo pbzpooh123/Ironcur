@@ -16,4 +16,13 @@ MonoBehaviour:
   description: "Accident at Your Factory Causes Production Halt\n\nEffect: Pay a
     random amount of $100\u2013$1000 to the player who lands on this event"
   type: 0
-  effects: []
+  effects:
+  - targetType: 0
+    targetName: 
+    moneyDelta: -1000
+    multiplier: 0
+    duration: 0
+    skipTurn: 0
+    randomMoneyMin: 0
+    randomMoneyMax: 0
+    ownershipDelta: 0

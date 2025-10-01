@@ -19,10 +19,7 @@ public class ProposalEntry : MonoBehaviour
         proposer = pawn;
 
         companyNameText.text = company.companyName;
-        ownerNameText.text = $"Owner: {company.owner.playerName.Value}";
-
-        bool isSelfOwned = (company.owner == pawn);
-        submitButton.interactable = !isSelfOwned;
+        ownerNameText.text = $"Owner: {(company.owner != null ? company.owner.playerName.Value : "—")}";
 
         submitButton.onClick.RemoveAllListeners();
         submitButton.onClick.AddListener(OnSubmitClicked);
@@ -33,16 +30,14 @@ public class ProposalEntry : MonoBehaviour
     {
         if (!int.TryParse(percentInput.text, out int percent))
         {
-            Debug.LogWarning("[ProposalEntry] Invalid percent input");
+            Debug.LogWarning("Invalid percent");
             return;
         }
         if (!int.TryParse(priceInput.text, out int price))
         {
-            Debug.LogWarning("[ProposalEntry] Invalid price input");
+            Debug.LogWarning("Invalid price");
             return;
         }
-
-        percent = Mathf.Clamp(percent, 1, 100);
 
         MarketManager.Instance.CmdSubmitProposal(proposer, companyName, percent, price);
         Debug.Log($"[UI] Proposal sent for {percent}% of {companyName} @ ${price}");

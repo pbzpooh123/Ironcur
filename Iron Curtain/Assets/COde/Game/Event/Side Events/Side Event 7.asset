@@ -19,4 +19,13 @@ MonoBehaviour:
     Effect: All players, except
     the one who triggered this event, pay $100M to you'
   type: 0
-  effects: []
+  effects:
+  - targetType: 3
+    targetName: 
+    moneyDelta: 1000
+    multiplier: 0
+    duration: 0
+    skipTurn: 0
+    randomMoneyMin: 0
+    randomMoneyMax: 0
+    ownershipDelta: 0

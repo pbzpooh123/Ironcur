@@ -40,10 +40,12 @@ public class EventUI : MonoBehaviour
         if (ui != null) ui.ForceDisableEndTurn();
     }
     
-    public void SideeventShow(string msg)
+    public void SideeventShow(string msg,bool pauseAll)
     {
-        Mainpanel.SetActive(true);
+        Sidepanel.SetActive(true);
         SideeventText.text = msg;
+        waitingForAll = pauseAll;
+        readyCount = 0;
 
         SideokButton.onClick.RemoveAllListeners();
         SideokButton.onClick.AddListener(OnSideOk);
@@ -65,7 +67,11 @@ public class EventUI : MonoBehaviour
     
     private void OnSideOk()
     {
-        Mainpanel.SetActive(false);
-        
+        Sidepanel.SetActive(false);
+        if (waitingForAll)
+        {
+            // Send "ready" to server
+            EventManager.Instance.CmdPlayerReady();
+        }
     }
 }

@@ -35,7 +35,7 @@ public class EventManager : NetworkBehaviour
         playersReady = 0;
         requiredReady = 1; // only the triggering pawn must ack
 
-        TargetShowSideEvent(pawn.Owner, $"{e.eventName}\n\n{e.description}");
+        TargetShowSideEvent(pawn.Owner, $"{e.eventName}\n\n{e.description}",true);
         ApplyEventToPawn(e, pawn);
     }
 
@@ -82,10 +82,10 @@ public class EventManager : NetworkBehaviour
     }
 
     [TargetRpc]
-    private void TargetShowSideEvent(NetworkConnection conn, string message)
+    private void TargetShowSideEvent(NetworkConnection conn, string message, bool pauseAll)
     {
         if (EventUI.Instance != null)
-            EventUI.Instance.SideeventShow(message);
+            EventUI.Instance.SideeventShow(message, pauseAll);
     }
 
     /* ============ Player clicked OK on popup ============ */
@@ -108,12 +108,12 @@ public class EventManager : NetworkBehaviour
     /* ================= Resume game flow ================= */
 
     [Server]
-    private void ResumeAfterEvent()
+    public void ResumeAfterEvent()
     {
         var pawn = TurnManager.Instance.GetCurrentPawn();
         if (pawn != null)
         {
-            pawn.TargetEnableEndTurn(pawn.Owner, true);
+            MarketManager.Instance.CmdRequestProposalUI();
         }
     }
 

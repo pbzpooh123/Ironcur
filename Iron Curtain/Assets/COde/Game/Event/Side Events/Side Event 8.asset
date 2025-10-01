@@ -19,4 +19,13 @@ MonoBehaviour:
     Effect: Lose 1
     turn (cannot roll the dice next turn)'
   type: 0
-  effects: []
+  effects:
+  - targetType: 0
+    targetName: 
+    moneyDelta: 0
+    multiplier: 0
+    duration: 0
+    skipTurn: 1
+    randomMoneyMin: 0
+    randomMoneyMax: 0
+    ownershipDelta: 0

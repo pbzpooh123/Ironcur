@@ -1,58 +1,76 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class ProposalUI : MonoBehaviour
 {
     public static ProposalUI Instance;
+
+    [Header("Refs")]
     public GameObject panel;
     public Transform listParent;
     public GameObject proposalEntryPrefab;
+    public Button closeButton; 
 
     private PlayerPawn currentPawn;
-
-    public Button closeButton; // assign in inspector
 
     private void Awake()
     {
         Instance = this;
+        
         if (closeButton != null)
-            closeButton.onClick.AddListener(Hide);
+        {
+            closeButton.onClick.RemoveAllListeners();
+            closeButton.onClick.AddListener(CloseAndResume);
+        }
     }
-
+    
     public void Show(PlayerPawn pawn)
     {
         currentPawn = pawn;
         panel.SetActive(true);
+        Refresh();
+        
+        var ui = FindObjectOfType<TurnUI>();
+        if (ui != null) ui.ForceDisableEndTurn();
+    }
+    
+    public void Refresh()
+    {
+        if (panel == null || !panel.activeSelf) return;
 
+        // Clear old entries
         foreach (Transform child in listParent)
             Destroy(child.gameObject);
-        
 
+        if (MarketManager.Instance == null || currentPawn == null)
+            return;
+        
         foreach (var kv in MarketManager.Instance.companies)
         {
             var company = kv.Value;
-            if (company.owner == pawn) continue;
-            if (company.GetOwnership(pawn) >= 100) continue;
+            if (company == null) continue;
+            if (company.owner == currentPawn) continue;
             
+            if (company.GetOwnership(currentPawn) >= 100) continue;
+
             var entry = Instantiate(proposalEntryPrefab, listParent);
             var ui = entry.GetComponent<ProposalEntry>();
-            
-            ui.Setup(company, pawn);
-            
+            if (ui != null)
+                ui.Setup(company, currentPawn);
         }
-        
-        var uii = FindObjectOfType<TurnUI>();
-        if (uii != null) uii.ForceDisableEndTurn();
-        
+    }
+
+    private void CloseAndResume()
+    {
+        panel.SetActive(false);
+
+        // Re-enable EndTurn
+        var ui = FindObjectOfType<TurnUI>();
+        if (ui != null) ui.SetEndTurnInteractable(true);
     }
 
     public void Hide()
     {
-        panel.SetActive(false);
-        if (currentPawn != null)
-            currentPawn.TargetEnableEndTurn(currentPawn.Owner, true);
+        CloseAndResume();
     }
 }
-

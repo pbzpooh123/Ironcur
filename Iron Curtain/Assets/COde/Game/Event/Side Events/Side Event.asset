@@ -17,7 +17,7 @@ MonoBehaviour:
     Players receive $100\u2013$1000"
   type: 0
   effects:
-  - targetType: 2
+  - targetType: 0
     targetName: 
     moneyDelta: 0
     multiplier: 0
@@ -25,3 +25,4 @@ MonoBehaviour:
     skipTurn: 0
     randomMoneyMin: 100
     randomMoneyMax: 1000
+    ownershipDelta: 0

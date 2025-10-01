@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 540935159818054347}
   - component: {fileID: 4422354718289736661}
   - component: {fileID: 1498389182421337685}
-  - component: {fileID: 1043292973287702383}
   - component: {fileID: 5195282429402389053}
   m_Layer: 0
   m_Name: Game Manager
@@ -153,25 +152,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 38d741ce483b37a4e88ea6e17661bddf, type: 2}
   - {fileID: 11400000, guid: 983b31752790d7b4cae047354e9a50a6, type: 2}
   - {fileID: 11400000, guid: 23eb33fafbb05da488d580ceb02a0ae3, type: 2}
---- !u!114 &1043292973287702383
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8924475397208095649}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1ce878a6b822b4c45a4a647bcd6d2891, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _componentIndexCache: 3
-  _addedNetworkObject: {fileID: 5195282429402389053}
-  _networkObjectCache: {fileID: 5195282429402389053}
-  stocks:
-  - stockName: 
-    basePrice: 0
-    priceMultiplier: 0
 --- !u!114 &5195282429402389053
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -194,7 +174,7 @@ MonoBehaviour:
   - {fileID: 540935159818054347}
   - {fileID: 4422354718289736661}
   - {fileID: 1498389182421337685}
-  - {fileID: 1043292973287702383}
+  - {fileID: 0}
   InitializedParentNetworkBehaviour: {fileID: 0}
   InitializedNestedNetworkObjects: []
   RuntimeParentNetworkBehaviour: {fileID: 0}

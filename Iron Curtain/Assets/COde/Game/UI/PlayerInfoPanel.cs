@@ -34,18 +34,22 @@ public class PlayerInfoPanel : MonoBehaviour
     
     public void UpdateCompanyOwnership(string companyName, int percent)
     {
-        
-        if (!ownershipEntries.TryGetValue(companyName, out TMP_Text txt))
+        if (!ownershipEntries.TryGetValue(companyName, out TMP_Text txt) || txt == null)
         {
             var entryObj = Instantiate(ownershipEntryPrefab, ownershipListParent);
-            txt = entryObj.GetComponent<TMP_Text>();
+            txt = entryObj.GetComponentInChildren<TMP_Text>();
             ownershipEntries[companyName] = txt;
         }
 
-        txt.text = $"{companyName}: {percent}%";
-
-        // Hide if 0% (optional)
-        txt.gameObject.SetActive(percent > 0);
+        if (txt != null)
+        {
+            txt.text = $"{companyName}: {percent}%";
+            txt.gameObject.SetActive(percent > 0); // hide if 0%
+        }
+        else
+        {
+            Debug.LogError($"[PlayerInfoPanel] Prefab {ownershipEntryPrefab.name} has no TMP_Text!");
+        }
     }
 
 }
