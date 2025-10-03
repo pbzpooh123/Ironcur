@@ -14,6 +14,7 @@ public class PlayerPawn : NetworkBehaviour
     public readonly SyncVar<string> playerName = new();
     public readonly SyncVar<int>    lastRoll   = new();
     public readonly SyncVar<int>    money      = new();
+    public readonly SyncVar<int> bailoutMarks = new();
 
     // === Legacy "share record" kept only for multipliers ===
     public Dictionary<string, ShareRecord> factoryPortfolio = new();
@@ -80,7 +81,11 @@ public class PlayerPawn : NetworkBehaviour
 
     // =================== Money ===================
     [Server]
-    public void AddMoney(int amount) => money.Value += amount;
+    public void AddMoney(int amount)
+    {
+        money.Value += amount;
+        CheckBailout();
+    }
 
     [Server]
     public bool TrySpendMoney(int amount)
@@ -88,6 +93,26 @@ public class PlayerPawn : NetworkBehaviour
         if (money.Value < amount) return false;
         money.Value -= amount;
         return true;
+    }
+    
+    [Server]
+    private void CheckBailout()
+    {
+        if (money.Value < 0)
+        {
+            bailoutMarks.Value += 1;
+            money.Value = 100;
+
+            TargetNotifyBailout(Owner, bailoutMarks.Value, money.Value);
+            Debug.LogWarning($"[Bailout] {playerName.Value} went negative. Reset to $100. Marks={bailoutMarks.Value}");
+        }
+    }
+    
+    [TargetRpc]
+    private void TargetNotifyBailout(NetworkConnection conn, int marks, int currentMoney)
+    {
+        // Replace with popup/FX if you have one
+        Debug.Log($"Bailout! You now have ${currentMoney} and {marks} bailout mark(s).");
     }
 
     // =================== Turn UI ===================

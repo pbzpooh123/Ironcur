@@ -51,5 +51,14 @@ public class PlayerInfoPanel : MonoBehaviour
             Debug.LogError($"[PlayerInfoPanel] Prefab {ownershipEntryPrefab.name} has no TMP_Text!");
         }
     }
+    
+    public TMP_Text bailoutText;
+
+    public void UpdateBailoutMarks(int marks)
+    {
+        if (bailoutText != null)
+            bailoutText.text = $"Bailouts: {marks}";
+    }
+
 
 }
