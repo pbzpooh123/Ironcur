@@ -295,4 +295,18 @@ public class PlayerPawn : NetworkBehaviour
         if (conn == null) conn = Owner;
         TargetEnableEndTurn(conn, true);
     }
+    
+    [TargetRpc]
+    public void TargetGrantExtraRoll(NetworkConnection conn)
+    {
+        Debug.Log("[Extra Roll] You get to roll again!");
+        var ui = FindObjectOfType<TurnUI>();
+        if (ui != null)
+        {
+            ui.SetEndTurnInteractable(false); // disable end turn
+            ui.BindPawn(this);
+        }
+        isMyTurn = true; // allow immediate roll again
+    }
+
 }

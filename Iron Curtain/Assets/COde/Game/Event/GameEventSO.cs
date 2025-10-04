@@ -45,6 +45,9 @@ public class EventEffect
 
     [Header("Ownership (only if targetType = Ownership)")]
     public int ownershipDelta = 0;    // Changes sharePercent for targetName (clamped 0..100)
+    
+    [Header("Extra Turn / Movement")]
+    public bool grantExtraRoll = false;
 }
 
 [CreateAssetMenu(fileName = "NewGameEvent", menuName = "Game/Event", order = 1)]

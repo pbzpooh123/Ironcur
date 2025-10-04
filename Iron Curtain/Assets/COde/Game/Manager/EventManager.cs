@@ -167,6 +167,8 @@ public class EventManager : NetworkBehaviour
     private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
     {
         if (e == null || pawn == null) return;
+        
+        bool extraRoll = false;
 
         foreach (var effect in e.effects)
         {
@@ -180,6 +182,9 @@ public class EventManager : NetworkBehaviour
             // 2) Skip turn
             if (effect.skipTurn)
                 TurnManager.Instance.MarkSkipTurn(pawn, Mathf.Max(1, effect.duration));
+            
+            if (effect.grantExtraRoll)
+                extraRoll = true;
 
             // 3) Per-type logic
             switch (effect.targetType)
@@ -219,8 +224,14 @@ public class EventManager : NetworkBehaviour
                             pawn.factoryPortfolio[key] = g; // write-back
                         }
                     }
+                    // === After all effects ===
+                    if (extraRoll)
+                    {
+                        Debug.Log($"[Event] {pawn.playerName.Value} gains an extra roll!");
+                        pawn.TargetGrantExtraRoll(pawn.Owner);
+                    }
                     break;
-
+                
                 default:
                     break;
             }
