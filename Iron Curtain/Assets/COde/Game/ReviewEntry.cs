@@ -1,6 +1,7 @@
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using FishNet;
 
 public class ReviewEntry : MonoBehaviour
 {
@@ -19,31 +20,20 @@ public class ReviewEntry : MonoBehaviour
         companyName = compName;
         proposalIndex = index;
 
-        if (companyNameText != null)
-            companyNameText.text = compName;
-        if (proposerNameText != null)
-            proposerNameText.text = proposal.proposer.playerName.Value;
-        if (percentText != null)
-            percentText.text = $"{proposal.percent}%";
-        if (priceText != null)
-            priceText.text = $"${proposal.price}";
+        if (companyNameText) companyNameText.text = compName;
+        if (proposerNameText) proposerNameText.text = proposal.proposer != null ? proposal.proposer.playerName.Value : "???";
+        if (percentText) percentText.text = $"{proposal.percent}%";
+        if (priceText) priceText.text = $"${proposal.price}";
 
-        // Hook up buttons
         acceptButton.onClick.RemoveAllListeners();
         rejectButton.onClick.RemoveAllListeners();
-        acceptButton.onClick.AddListener(OnAccept);
-        rejectButton.onClick.AddListener(OnReject);
-    }
-
-    private void OnAccept()
-    {
-        MarketManager.Instance.CmdResolveProposal(companyName, proposalIndex, true);
-        Destroy(gameObject);
-    }
-
-    private void OnReject()
-    {
-        MarketManager.Instance.CmdResolveProposal(companyName, proposalIndex, false);
-        Destroy(gameObject);
+        acceptButton.onClick.AddListener(() =>
+        {
+            MarketManager.Instance.CmdResolveProposal(InstanceFinder.ClientManager.Connection, companyName, proposalIndex, true);
+        });
+        rejectButton.onClick.AddListener(() =>
+        {
+            MarketManager.Instance.CmdResolveProposal(InstanceFinder.ClientManager.Connection, companyName, proposalIndex, false);
+        });
     }
 }

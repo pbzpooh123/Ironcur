@@ -19,9 +19,6 @@ public class InvestmentUI : MonoBehaviour
 
     private void Awake() => Instance = this;
 
-    /// <summary>
-    /// Show company purchase option when landing on a factory tile.
-    /// </summary>
     public void ShowOptions(PlayerPawn pawn, int tileIndex, string companyName, int cost, bool isCompany)
     {
         currentPawn = pawn;
@@ -59,9 +56,11 @@ public class InvestmentUI : MonoBehaviour
 
         if (currentPawn != null)
         {
-            // After tile action → show ProposalUI for this pawn
+            // Tell server: tile action finished → TurnManager will switch to Proposal or ExtraRoll
+            currentPawn.CmdTileActionComplete();
+
+            // Ask server to open ProposalUI (allowed only if phase is Proposal)
             MarketManager.Instance.CmdRequestProposalUI();
         }
     }
-
 }

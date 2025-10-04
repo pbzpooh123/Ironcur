@@ -10,19 +10,16 @@ public class PlayerPawn : NetworkBehaviour
     public float moveSpeed = 4f;
     private int currentTile = 0;
 
-    // === Sync Data ===
     public readonly SyncVar<string> playerName = new();
     public readonly SyncVar<int>    lastRoll   = new();
     public readonly SyncVar<int>    money      = new();
-    public readonly SyncVar<int> bailoutMarks = new();
+    public readonly SyncVar<int>    bailoutMarks = new();
 
-    // === Legacy "share record" kept only for multipliers ===
     public Dictionary<string, ShareRecord> factoryPortfolio = new();
 
     public bool isMyTurn = false;
     public PlayerInfoPanel infoPanel;
 
-    // =================== Init ===================
     public override void OnStartServer()
     {
         base.OnStartServer();
@@ -38,14 +35,9 @@ public class PlayerPawn : NetworkBehaviour
     {
         base.OnStartClient();
         money.OnChange += OnMoneyChanged;
-        foreach (var kv in factoryPortfolio)
-        {
-            if (infoPanel != null)
-                infoPanel.UpdateCompanyOwnership(kv.Key, kv.Value.sharePercent);
-        }
         StartCoroutine(AutoBindInfoPanel());
     }
-    
+
     private IEnumerator AutoBindInfoPanel()
     {
         float t = 2f;
@@ -53,11 +45,11 @@ public class PlayerPawn : NetworkBehaviour
         {
             if (GameHUD.Instance != null && !string.IsNullOrEmpty(playerName.Value))
             {
-                var maybe = GameHUD.Instance.FindPanelByName(playerName.Value); // implement below
+                var maybe = GameHUD.Instance.FindPanelByName(playerName.Value);
                 if (maybe != null)
                 {
                     infoPanel = maybe;
-                    infoPanel.SetInfo(playerName.Value, money.Value); // initial sync
+                    infoPanel.SetInfo(playerName.Value, money.Value);
                     break;
                 }
             }
@@ -74,12 +66,9 @@ public class PlayerPawn : NetworkBehaviour
 
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
     {
-        Debug.Log($"{playerName.Value} money changed {oldValue} -> {newValue}");
-        if (infoPanel != null)
-            infoPanel.UpdateMoney(newValue);
+        infoPanel?.UpdateMoney(newValue);
     }
 
-    // =================== Money ===================
     [Server]
     public void AddMoney(int amount)
     {
@@ -94,7 +83,7 @@ public class PlayerPawn : NetworkBehaviour
         money.Value -= amount;
         return true;
     }
-    
+
     [Server]
     private void CheckBailout()
     {
@@ -102,20 +91,17 @@ public class PlayerPawn : NetworkBehaviour
         {
             bailoutMarks.Value += 1;
             money.Value = 100;
-
             TargetNotifyBailout(Owner, bailoutMarks.Value, money.Value);
-            Debug.LogWarning($"[Bailout] {playerName.Value} went negative. Reset to $100. Marks={bailoutMarks.Value}");
         }
     }
-    
+
     [TargetRpc]
     private void TargetNotifyBailout(NetworkConnection conn, int marks, int currentMoney)
     {
-        // Replace with popup/FX if you have one
         Debug.Log($"Bailout! You now have ${currentMoney} and {marks} bailout mark(s).");
     }
 
-    // =================== Turn UI ===================
+    /* ---------- Turn UI ---------- */
     public void OnRollDiceButton()
     {
         if (!IsOwner || !isMyTurn) return;
@@ -131,31 +117,50 @@ public class PlayerPawn : NetworkBehaviour
     [ServerRpc]
     public void CmdRollDiceAndMove()
     {
+        if (!TurnManager.Instance.CanRoll(this)) return;
+
         int roll = Random.Range(1, 7);
         lastRoll.Value = roll;
         RpcMoveSteps(roll);
-        Debug.Log($"{playerName.Value} rolled {roll}");
     }
 
     [ServerRpc]
     public void CmdEndTurn()
     {
-        if (IsServer) TurnManager.Instance.EndTurn();
+        if (!TurnManager.Instance.CanEndTurn(this)) return;
+        TurnManager.Instance.EndTurn();
     }
 
     [TargetRpc]
     public void TargetStartTurn(NetworkConnection conn)
     {
-        Debug.Log($"{playerName.Value} it’s your turn!");
         isMyTurn = true;
-
-        var ui = FindObjectOfType<TurnUI>();
-        if (ui != null) ui.BindPawn(this);
-
-        TargetEnableEndTurn(conn, false);
+        var ui = GameObject.FindObjectOfType<TurnUI>();
+        if (ui != null)
+        {
+            ui.BindPawn(this);
+            ui.SetRollInteractable(false);
+            ui.SetEndTurnInteractable(false);
+        }
     }
 
-    // =================== Movement ===================
+    [TargetRpc]
+    public void TargetEnableEndTurn(NetworkConnection conn, bool enable)
+    {
+        var ui = GameObject.FindObjectOfType<TurnUI>();
+        if (ui != null)
+            ui.SetEndTurnInteractable(enable);
+    }
+
+    [TargetRpc]
+    public void TargetEnableRoll(NetworkConnection conn, bool enable)
+    {
+        var ui = GameObject.FindObjectOfType<TurnUI>();
+        if (ui != null)
+            ui.SetRollInteractable(enable);
+    }
+
+    /* ---------- Movement ---------- */
     [ObserversRpc]
     private void RpcMoveSteps(int steps)
     {
@@ -186,44 +191,36 @@ public class PlayerPawn : NetworkBehaviour
             HandleTileLogic();
     }
 
-    // =================== Tile Logic ===================
     [Server]
     private void HandleTileLogic()
     {
         var data = GameManager.Instance.boardTiles[currentTile].GetComponent<TileData>();
-        if (data == null) return;
+        if (data == null)
+        {
+            TurnManager.Instance.ServerOnTileActionComplete(this);
+            return;
+        }
 
-        // Event Tile
         if (data.tileType == TileType.Event)
         {
             EventManager.Instance.TriggerTileEvent(this);
-            return;
+            return; // EventManager will call ServerOnTileActionComplete when done
         }
 
-        // Investment Tile → Found company only
         if (data.tileType == TileType.Investment && data.owner == null)
         {
             TargetShowInvestmentUI(Owner, currentTile, data.companyName, data.companyCost, true);
-            return;
+            return; // InvestmentUI will call CmdTileActionComplete after Buy/Skip
         }
-        
-        MarketManager.Instance.CmdRequestProposalUI();
-        TargetEnableEndTurn(Owner, true);
+
+        // Normal tile
+        TurnManager.Instance.ServerOnTileActionComplete(this);
     }
 
-    // =================== UI RPCs ===================
     [TargetRpc]
     private void TargetShowInvestmentUI(NetworkConnection conn, int tileIndex, string companyName, int cost, bool isCompany)
     {
         InvestmentUI.Instance.ShowOptions(this, tileIndex, companyName, cost, isCompany);
-    }
-
-    [TargetRpc]
-    public void TargetEnableEndTurn(NetworkConnection conn, bool enable)
-    {
-        var ui = FindObjectOfType<TurnUI>();
-        if (ui != null)
-            ui.SetEndTurnInteractable(enable);
     }
 
     [TargetRpc]
@@ -257,7 +254,7 @@ public class PlayerPawn : NetworkBehaviour
         transform.position = pos;
     }
 
-    // =================== Ownership Helpers ===================
+    /* ---------- Ownership Helpers ---------- */
     public bool HasCompanies()
     {
         foreach (var kvp in factoryPortfolio)
@@ -289,24 +286,11 @@ public class PlayerPawn : NetworkBehaviour
         return owned;
     }
     
-    [ServerRpc(RequireOwnership = false)]
-    public void CmdRequestEnableEndTurn(NetworkConnection conn = null)
+    [ServerRpc]
+    public void CmdTileActionComplete()
     {
-        if (conn == null) conn = Owner;
-        TargetEnableEndTurn(conn, true);
-    }
-    
-    [TargetRpc]
-    public void TargetGrantExtraRoll(NetworkConnection conn)
-    {
-        Debug.Log("[Extra Roll] You get to roll again!");
-        var ui = FindObjectOfType<TurnUI>();
-        if (ui != null)
-        {
-            ui.SetEndTurnInteractable(false); // disable end turn
-            ui.BindPawn(this);
-        }
-        isMyTurn = true; // allow immediate roll again
+        if (!TurnManager.Instance.IsCurrentPawn(this)) return;
+        TurnManager.Instance.ServerOnTileActionComplete(this);
     }
 
 }

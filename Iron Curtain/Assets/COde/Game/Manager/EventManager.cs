@@ -19,14 +19,15 @@ public class EventManager : NetworkBehaviour
     private void Awake() => Instance = this;
 
     #region ================= TILE EVENTS =================
-    /// <summary>
-    /// Random tile event from database. Only the pawn sees it. Wait for 1 ack.
-    /// </summary>
     [Server]
     public void TriggerTileEvent(PlayerPawn pawn)
     {
         if (tileEvents == null || tileEvents.Count == 0 || pawn == null)
+        {
+            // nothing to do; tile flow completes immediately
+            TurnManager.Instance.ServerOnTileActionComplete(pawn);
             return;
+        }
 
         var e = tileEvents[Random.Range(0, tileEvents.Count)];
 
@@ -34,9 +35,9 @@ public class EventManager : NetworkBehaviour
         playersReady = 0;
         requiredReady = 1; // only the triggering pawn must ack
 
-        TargetShowSideEvent(pawn.Owner, $"{e.eventName}\n\n{e.description}",true);
+        TargetShowSideEvent(pawn.Owner, $"{e.eventName}\n\n{e.description}", true);
 
-        // Apply effects to the pawn only (simple semantics for tile events)
+        // Apply effects to the pawn only
         ApplyEventToPawn(e, pawn);
     }
     #endregion
@@ -58,11 +59,9 @@ public class EventManager : NetworkBehaviour
             msg = $"🌍 Main Event at Round {round}!";
         }
 
-        // Show popup to everyone
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
             TargetShowMainEvent(conn, msg, true);
 
-        // If no special mode → Simple
         if (e == null || e.mode == EventMode.Simple)
         {
             waitingForAcks = true;
@@ -75,7 +74,6 @@ public class EventManager : NetworkBehaviour
         }
         else
         {
-            // Special modes do not use 'ack all' flow; they manage themselves then call ResumeAfterEvent.
             switch (e.mode)
             {
                 case EventMode.ForcedRollAgainstOwner:
@@ -91,7 +89,6 @@ public class EventManager : NetworkBehaviour
                     break;
 
                 default:
-                    // fallback: just apply to all and continue
                     ApplyEventToAll(e);
                     ResumeAfterEvent();
                     break;
@@ -115,9 +112,6 @@ public class EventManager : NetworkBehaviour
             EventUI.Instance.SideeventShow(message, pauseAll);
     }
 
-    /// <summary>
-    /// Called by client button on popup. Closes with ack flow.
-    /// </summary>
     [ServerRpc(RequireOwnership = false)]
     public void CmdPlayerReady(NetworkConnection conn = null)
     {
@@ -133,18 +127,14 @@ public class EventManager : NetworkBehaviour
     #endregion
 
     #region =============== RESUME FLOW ===============
-    /// <summary>
-    /// After the popup or special mode finishes → allow current pawn to end turn (or open your own UI elsewhere).
-    /// </summary>
     [Server]
     private void ResumeAfterEvent()
     {
         var pawn = TurnManager.Instance?.GetCurrentPawn();
         if (pawn != null)
         {
-            // If you want to open stock UI or proposal UI here, call your MarketManager methods.
-            // We only re-enable End Turn to keep your flow unchanged.
-            pawn.TargetEnableEndTurn(pawn.Owner, true);
+            // Signal that tile/event phase completed; TurnManager decides next
+            TurnManager.Instance.ServerOnTileActionComplete(pawn);
         }
     }
     #endregion
@@ -158,16 +148,11 @@ public class EventManager : NetworkBehaviour
             ApplyEventToPawn(e, pawn);
     }
 
-    /// <summary>
-    /// Apply the event effects to a single pawn.
-    /// Supports: money, skip, Factory multiplier, Ownership delta, Global multiplier to all companies of this pawn.
-    /// Uses struct write-back pattern for ShareRecord.
-    /// </summary>
     [Server]
     private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
     {
         if (e == null || pawn == null) return;
-        
+
         bool extraRoll = false;
 
         foreach (var effect in e.effects)
@@ -182,11 +167,12 @@ public class EventManager : NetworkBehaviour
             // 2) Skip turn
             if (effect.skipTurn)
                 TurnManager.Instance.MarkSkipTurn(pawn, Mathf.Max(1, effect.duration));
-            
+
+            // 3) Extra roll marker
             if (effect.grantExtraRoll)
                 extraRoll = true;
 
-            // 3) Per-type logic
+            // 4) Per-type logic
             switch (effect.targetType)
             {
                 case TargetType.Factory:
@@ -197,7 +183,7 @@ public class EventManager : NetworkBehaviour
                         {
                             facRec.multiplier *= effect.multiplier;
                             facRec.multiplierExpiresAt = TurnManager.Instance.roundCount.Value + effect.duration;
-                            pawn.factoryPortfolio[effect.targetName] = facRec; // write-back
+                            pawn.factoryPortfolio[effect.targetName] = facRec;
                         }
                     }
                     break;
@@ -208,7 +194,7 @@ public class EventManager : NetworkBehaviour
                     {
                         ownRec.sharePercent += effect.ownershipDelta;
                         ownRec.sharePercent = Mathf.Clamp(ownRec.sharePercent, 0, 100);
-                        pawn.factoryPortfolio[effect.targetName] = ownRec; // write-back
+                        pawn.factoryPortfolio[effect.targetName] = ownRec;
                     }
                     break;
 
@@ -221,30 +207,25 @@ public class EventManager : NetworkBehaviour
                             var g = pawn.factoryPortfolio[key];
                             g.multiplier *= effect.multiplier;
                             g.multiplierExpiresAt = TurnManager.Instance.roundCount.Value + effect.duration;
-                            pawn.factoryPortfolio[key] = g; // write-back
+                            pawn.factoryPortfolio[key] = g;
                         }
                     }
-                    // === After all effects ===
-                    if (extraRoll)
-                    {
-                        Debug.Log($"[Event] {pawn.playerName.Value} gains an extra roll!");
-                        pawn.TargetGrantExtraRoll(pawn.Owner);
-                    }
                     break;
-                
+
                 default:
                     break;
             }
         }
+
+        if (extraRoll)
+        {
+            TurnManager.Instance.QueueExtraRoll(pawn, 1);
+            Debug.Log($"[Event] {pawn.playerName.Value} gains an extra roll!");
+        }
     }
     #endregion
 
-    /* =======================================================================================
-       MODE 1) FORCED ROLL AGAINST OWNER
-       - Find company owner of e.requiredCompanyName.
-       - All other players roll a d6; on odd → pay e.payOnOdd to owner.
-       - Sends summary to everyone.
-       ======================================================================================= */
+    // ======= Special Modes (unchanged behavior, integrated with ResumeAfterEvent) =======
 
     [Server]
     private void StartForcedRollAgainstOwner(GameEventSO e)
@@ -254,7 +235,6 @@ public class EventManager : NetworkBehaviour
         string comp = e.requiredCompanyName;
         if (string.IsNullOrEmpty(comp)) { ResumeAfterEvent(); return; }
 
-        // Who owns this company (by sharePercent > 0)?
         PlayerPawn owner = null;
         foreach (var p in GameManager.Instance.Players)
         {
@@ -267,7 +247,6 @@ public class EventManager : NetworkBehaviour
 
         if (owner == null)
         {
-            // No owner found → nothing happens
             foreach (var c in InstanceFinder.ServerManager.Clients.Values)
                 TargetShowMainEvent(c, $"No one owns {comp}; event skipped.", false);
             ResumeAfterEvent();
@@ -278,7 +257,7 @@ public class EventManager : NetworkBehaviour
         foreach (var p in GameManager.Instance.Players)
         {
             if (p == null) continue;
-            if (p == owner) continue; // don't include owner
+            if (p == owner) continue;
             targets.Add(p);
         }
 
@@ -290,7 +269,6 @@ public class EventManager : NetworkBehaviour
             return;
         }
 
-        // Each target rolls a d6. If odd → pay e.payOnOdd to owner (if they have money; else take remaining).
         int payEach = Mathf.Max(0, e.payOnOdd);
         System.Text.StringBuilder sb = new();
         sb.AppendLine($"{e.eventName} (vs owner of {comp})");
@@ -301,7 +279,6 @@ public class EventManager : NetworkBehaviour
 
             if (odd && payEach > 0)
             {
-                // Try spend
                 int before = t.money.Value;
                 if (t.TrySpendMoney(payEach))
                 {
@@ -310,7 +287,6 @@ public class EventManager : NetworkBehaviour
                 }
                 else
                 {
-                    // take what they have
                     int taken = before;
                     if (taken > 0)
                     {
@@ -337,16 +313,9 @@ public class EventManager : NetworkBehaviour
         ResumeAfterEvent();
     }
 
-    /* =======================================================================================
-       MODE 2) COMPETITION
-       - Participants pay entryFee → pot.
-       - They roll d6 once (via CompetitionUI, if available; else you can add a timeout/autoroll).
-       - Highest roll wins the pot. If tie + tieSplitPot → split equally (floor).
-       ======================================================================================= */
-
     private GameEventSO _compEvent;
     private readonly HashSet<int> _compParticipants = new();
-    private readonly Dictionary<int, int> _compRolls = new(); // connId -> roll
+    private readonly Dictionary<int, int> _compRolls = new();
     private int _compPot;
 
     [Server]
@@ -359,7 +328,6 @@ public class EventManager : NetworkBehaviour
 
         if (GameManager.Instance == null) { ResumeAfterEvent(); return; }
 
-        // For now: all players participate
         foreach (var p in GameManager.Instance.Players)
         {
             if (p?.Owner == null) continue;
@@ -369,7 +337,6 @@ public class EventManager : NetworkBehaviour
             {
                 if (!p.TrySpendMoney(e.entryFee))
                 {
-                    // take whatever they have
                     int have = p.money.Value;
                     if (have > 0) p.TrySpendMoney(have);
                     _compPot += have;
@@ -388,7 +355,6 @@ public class EventManager : NetworkBehaviour
             return;
         }
 
-        // Ask each participant to roll (via optional CompetitionUI)
         string title = $"{e.eventName}\nEntry Pot = ${_compPot}\nRoll a d6. Highest wins!";
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
         {
@@ -402,7 +368,6 @@ public class EventManager : NetworkBehaviour
     {
         if (CompetitionUI.Instance != null)
             CompetitionUI.Instance.Show(title);
-        // If UI missing, you can implement an autoroll fallback on a timeout if you like.
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -448,12 +413,10 @@ public class EventManager : NetworkBehaviour
             return;
         }
 
-        // Find max roll
         int maxRoll = 0;
         foreach (var r in _compRolls.Values)
             if (r > maxRoll) maxRoll = r;
 
-        // Find winners
         List<PlayerPawn> winners = new();
         foreach (var kv in _compRolls)
         {
@@ -477,7 +440,6 @@ public class EventManager : NetworkBehaviour
                 winners[0].AddMoney(each);
         }
 
-        // Show summary
         string summary = $"{_compEvent.eventName}\nResult: Max Roll={maxRoll}, Winners={winners.Count}, Pot=${_compPot}.";
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
             TargetShowMainEvent(c, summary, false);
@@ -501,15 +463,8 @@ public class EventManager : NetworkBehaviour
             CompetitionUI.Instance.Hide();
     }
 
-    /* =======================================================================================
-       MODE 3) TARGET SELECT
-       - The current pawn chooses a target from eligible players.
-       - Apply event effects only to that target.
-       - If no UI → auto-pick random target on server.
-       ======================================================================================= */
-
     private GameEventSO _tsEvent;
-    private PlayerPawn _tsChooser; // the pawn who picks the target
+    private PlayerPawn _tsChooser;
 
     [Server]
     private void StartTargetSelect(GameEventSO e)
@@ -539,17 +494,15 @@ public class EventManager : NetworkBehaviour
     [TargetRpc]
     private void TargetShowTargetSelect(NetworkConnection conn, string serializedNames)
     {
-        // serializedNames = "name1|name2|name3"
         if (TargetSelectUI.Instance != null)
         {
             TargetSelectUI.Instance.Show(serializedNames);
         }
         else
         {
-            // If the UI is not present, auto-pick on client (or do nothing and rely on timeout).
             var names = serializedNames.Split('|');
             int idx = Random.Range(0, names.Length);
-            CmdSubmitTargetSelect(names[idx]); // fallback
+            CmdSubmitTargetSelect(names[idx]);
         }
     }
 
@@ -560,7 +513,7 @@ public class EventManager : NetworkBehaviour
 
         var chooser = _tsChooser;
         if (chooser == null) { _tsEvent = null; ResumeAfterEvent(); return; }
-        if (conn == null || chooser.Owner != conn) return; // only the chooser can confirm
+        if (conn == null || chooser.Owner != conn) return;
 
         var target = GameManager.Instance.Players.Find(p => p.playerName.Value == targetPlayerName);
         if (target == null)
@@ -576,7 +529,6 @@ public class EventManager : NetworkBehaviour
     [Server]
     private void ApplyTargetSelectTo(PlayerPawn target)
     {
-        // Apply event effects ONLY to 'target'
         ApplyEventToPawn(_tsEvent, target);
 
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
@@ -595,11 +547,9 @@ public class EventManager : NetworkBehaviour
         {
             if (p == null) continue;
 
-            // restrict to opponents
             if (e.restrictToOpponents && p == chooser)
                 continue;
 
-            // require owner of the factory named in effects (first Factory effect with targetName)
             if (e.requireCompanyOwner)
             {
                 string targetCompany = null;

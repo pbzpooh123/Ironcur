@@ -99,7 +99,7 @@ MonoBehaviour:
   turnOrderText: {fileID: 7933157853146841130}
   ownershipListParent: {fileID: 8249794165648671014}
   ownershipEntryPrefab: {fileID: 3455336774626206117, guid: 68fa9a376f8d4b545bdb737375454c0a, type: 3}
-  bailoutText: {fileID: 0}
+  bailoutText: {fileID: 3870340549746616997}
 --- !u!114 &5923547694135254486
 MonoBehaviour:
   m_ObjectHideFlags: 0

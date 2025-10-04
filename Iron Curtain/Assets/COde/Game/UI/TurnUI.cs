@@ -1,14 +1,10 @@
 using UnityEngine;
 using UnityEngine.UI;
-using FishNet.Object;
-using TMPro;
 
 public class TurnUI : MonoBehaviour
 {
     public Button rollDiceButton;
     public Button endTurnButton;
-    
-    
 
     private PlayerPawn myPawn;
 
@@ -18,11 +14,10 @@ public class TurnUI : MonoBehaviour
         endTurnButton.onClick.AddListener(OnEndTurnClicked);
     }
 
-    // Called by PlayerPawn when it becomes my turn
     public void BindPawn(PlayerPawn pawn)
     {
         myPawn = pawn;
-        rollDiceButton.interactable = true;
+        rollDiceButton.interactable = false;
         endTurnButton.interactable = false;
     }
 
@@ -30,9 +25,7 @@ public class TurnUI : MonoBehaviour
     {
         if (myPawn != null && myPawn.IsOwner)
         {
-            myPawn.CmdRollDiceAndMove();   // client → server
-            rollDiceButton.interactable = false;
-            endTurnButton.interactable = true;
+            myPawn.OnRollDiceButton();
         }
     }
 
@@ -40,20 +33,22 @@ public class TurnUI : MonoBehaviour
     {
         if (myPawn != null && myPawn.IsOwner)
         {
-            myPawn.CmdEndTurn();          // client → server
-            endTurnButton.interactable = false;
+            myPawn.OnEndTurnButton();
         }
     }
-    
+
     public void SetEndTurnInteractable(bool enable)
     {
         endTurnButton.interactable = enable;
     }
-    
+
+    public void SetRollInteractable(bool enable)
+    {
+        rollDiceButton.interactable = enable;
+    }
+
     public void ForceDisableEndTurn()
     {
         SetEndTurnInteractable(false);
     }
-
-
 }

@@ -9,49 +9,48 @@ public class ProposalUI : MonoBehaviour
     public GameObject panel;
     public Transform listParent;
     public GameObject proposalEntryPrefab;
-    public Button closeButton; 
+    public Button closeButton;
 
     private PlayerPawn currentPawn;
 
     private void Awake()
     {
         Instance = this;
-        
+
         if (closeButton != null)
         {
             closeButton.onClick.RemoveAllListeners();
-            closeButton.onClick.AddListener(CloseAndResume);
+            closeButton.onClick.AddListener(CloseAndNotifyServer);
         }
     }
-    
+
     public void Show(PlayerPawn pawn)
     {
         currentPawn = pawn;
         panel.SetActive(true);
         Refresh();
-        
+
         var ui = FindObjectOfType<TurnUI>();
-        if (ui != null) ui.ForceDisableEndTurn();
+        if (ui != null) ui.SetEndTurnInteractable(false);
+        if (ui != null) ui.SetRollInteractable(false);
     }
-    
+
     public void Refresh()
     {
         if (panel == null || !panel.activeSelf) return;
 
-        // Clear old entries
         foreach (Transform child in listParent)
             Destroy(child.gameObject);
 
         if (MarketManager.Instance == null || currentPawn == null)
             return;
-        
+
         foreach (var kv in MarketManager.Instance.companies)
         {
             var company = kv.Value;
             if (company == null) continue;
-            if (company.owner == currentPawn) continue;
-            
-            if (company.GetOwnership(currentPawn) >= 100) continue;
+            if (company.owner == currentPawn) continue; // cannot propose to self
+            if (company.GetOwnership(currentPawn) >= 100) continue; // already max
 
             var entry = Instantiate(proposalEntryPrefab, listParent);
             var ui = entry.GetComponent<ProposalEntry>();
@@ -60,17 +59,16 @@ public class ProposalUI : MonoBehaviour
         }
     }
 
-    private void CloseAndResume()
+    private void CloseAndNotifyServer()
     {
         panel.SetActive(false);
 
-        // Re-enable EndTurn
-        var ui = FindObjectOfType<TurnUI>();
-        if (ui != null) ui.SetEndTurnInteractable(true);
+        // Server-authoritative: notify MarketManager so it can advance phase
+        MarketManager.Instance.CmdNotifyProposalClosed();
     }
 
     public void Hide()
     {
-        CloseAndResume();
+        CloseAndNotifyServer();
     }
 }

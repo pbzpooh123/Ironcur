@@ -9,7 +9,7 @@ public class ReviewUI : MonoBehaviour
     public GameObject panel;
     public Transform listParent;
     public GameObject reviewEntryPrefab;
-    public Button closeButton; 
+    public Button closeButton;
 
     private PlayerPawn currentPawn;
 
@@ -20,10 +20,10 @@ public class ReviewUI : MonoBehaviour
         if (closeButton != null)
         {
             closeButton.onClick.RemoveAllListeners();
-            closeButton.onClick.AddListener(CloseAndResume);
+            closeButton.onClick.AddListener(CloseAndNotifyServer);
         }
     }
-    
+
     public void Show(PlayerPawn pawn)
     {
         currentPawn = pawn;
@@ -31,7 +31,8 @@ public class ReviewUI : MonoBehaviour
         Refresh();
 
         var ui = FindObjectOfType<TurnUI>();
-        if (ui != null) ui.ForceDisableEndTurn();
+        if (ui != null) ui.SetEndTurnInteractable(false);
+        if (ui != null) ui.SetRollInteractable(false);
     }
 
     public void Refresh()
@@ -47,31 +48,27 @@ public class ReviewUI : MonoBehaviour
         foreach (var company in MarketManager.Instance.companies.Values)
         {
             if (company == null) continue;
-            if (company.owner != currentPawn) continue;   
+            if (company.owner != currentPawn) continue;
             if (company.proposals == null || company.proposals.Count == 0) continue;
 
             for (int i = 0; i < company.proposals.Count; i++)
             {
-                var proposal = company.proposals[i];
-                var entryGO = Instantiate(reviewEntryPrefab, listParent);
-                var entry = entryGO.GetComponent<ReviewEntry>();
-                if (entry != null)
-                    entry.Setup(company.companyName, i, proposal);
+                var p = company.proposals[i];
+                var go = Instantiate(reviewEntryPrefab, listParent);
+                var entry = go.GetComponent<ReviewEntry>();
+                entry.Setup(company.companyName, i, p);
             }
         }
     }
 
-    private void CloseAndResume()
+    private void CloseAndNotifyServer()
     {
         panel.SetActive(false);
-
-        // Re-enable EndTurn
-        var ui = FindObjectOfType<TurnUI>();
-        if (ui != null) ui.SetEndTurnInteractable(true);
+        MarketManager.Instance.CmdNotifyReviewClosed();
     }
 
     public void Hide()
     {
-        CloseAndResume();
+        CloseAndNotifyServer();
     }
 }

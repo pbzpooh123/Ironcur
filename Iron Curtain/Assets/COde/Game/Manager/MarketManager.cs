@@ -16,25 +16,22 @@ public class CompanyRecord
 {
     public string companyName;
     public int baseCost;
-
     public PlayerPawn owner;
-    public string pendingOwnerName; // used when owner pawn is not yet resolved
 
+    // Ownership distribution: Player → %
     public Dictionary<PlayerPawn, int> ownershipPercents = new Dictionary<PlayerPawn, int>();
+
+    // Pending proposals this turn
     public List<Proposal> proposals = new List<Proposal>();
 
-    public CompanyRecord(string name, int cost)
+    public CompanyRecord(string name, int cost, PlayerPawn creator)
     {
         companyName = name;
         baseCost = cost;
-    }
+        owner = creator;
 
-    public void SetOwner(PlayerPawn newOwner)
-    {
-        owner = newOwner;
-        ownershipPercents.Clear();
-        if (newOwner != null)
-            ownershipPercents[newOwner] = 100;
+        if (creator != null)
+            ownershipPercents[creator] = 100;
     }
 
     public int GetOwnership(PlayerPawn pawn)
@@ -44,16 +41,17 @@ public class CompanyRecord
 
     public void SetOwnership(PlayerPawn pawn, int newPercent)
     {
-        if (pawn == null) return;
         ownershipPercents[pawn] = Mathf.Clamp(newPercent, 0, 100);
     }
 
     public PlayerPawn GetMajorityOwner()
     {
         foreach (var kv in ownershipPercents)
+        {
             if (kv.Value > 60)
                 return kv.Key;
-        return owner;
+        }
+        return owner; // fallback
     }
 }
 
@@ -61,267 +59,302 @@ public class MarketManager : NetworkBehaviour
 {
     public static MarketManager Instance;
 
-    public List<StockData> stocks = new List<StockData>();
     public Dictionary<string, CompanyRecord> companies = new Dictionary<string, CompanyRecord>();
 
+    // Track proposals made this TURN by the current pawn → prevent duplicate proposals for same company
+    private readonly Dictionary<PlayerPawn, HashSet<string>> _submittedThisTurn = new();
 
     private void Awake()
     {
         Instance = this;
-        Debug.Log(NetworkObject.IsSpawned);
     }
 
-    // === Investment Tiles ===
+    /* ================= Turn Hooks ================= */
+
+    [Server]
+    public void BeginTurnFor(PlayerPawn pawn)
+    {
+        // Reset the "submitted this turn" set for this pawn
+        if (pawn == null) return;
+        _submittedThisTurn[pawn] = new HashSet<string>();
+    }
+
+    [Server]
+    public void OnRoundAdvanced(int newRound)
+    {
+        // No-op for now; could clear cross-round data here if needed.
+    }
+
+    [Server]
+    public bool HasProposalsForOwner(PlayerPawn owner)
+    {
+        if (owner == null) return false;
+        foreach (var c in companies.Values)
+        {
+            if (c == null) continue;
+            if (c.owner == owner && c.proposals != null && c.proposals.Count > 0)
+                return true;
+        }
+        return false;
+    }
+
+    /* ================= Buy Company ================= */
+
     [ServerRpc(RequireOwnership = false)]
     public void CmdBuyCompany(PlayerPawn pawn, int tileIndex)
     {
+        // Strict validation: must be that pawn's turn and tile must be unowned
+        if (!TurnManager.Instance.IsCurrentPawn(pawn)) return;
+
         var tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
         if (pawn == null || tile == null) return;
+        if (tile.owner != null) return; // already owned
 
-        // Optional: prevent double-buy, or buying if already owned.
-        if (tile.owner != null) return; 
         if (!pawn.TrySpendMoney(tile.companyCost)) return;
-        if (string.IsNullOrWhiteSpace(tile.companyName)) return;
 
         string key = tile.companyName;
         if (!companies.ContainsKey(key))
         {
-            var record = new CompanyRecord(key, tile.companyCost);
-            record.SetOwner(pawn);
+            var record = new CompanyRecord(key, tile.companyCost, pawn);
             companies[key] = record;
-
             tile.owner = pawn;
 
-            Debug.Log("[Server] Calling RpcAddCompany");
+            // Spawn to all clients
             RpcAddCompany(key, tile.companyCost, pawn.playerName.Value);
-            
-            RpcSyncOwnership(key, pawn.playerName.Value, 100);
-
-            // Optional: initialize server-side portfolio for multipliers support later.
-            if (!pawn.factoryPortfolio.ContainsKey(key))
-            {
-                pawn.factoryPortfolio[key] = new ShareRecord
-                {
-                    count = 0,
-                    roundBought = TurnManager.Instance.roundCount.Value,
-                    multiplier = 1f,
-                    multiplierExpiresAt = 0,
-                    sharePercent = 100
-                };
-            }
-            else
-            {
-                var rec = pawn.factoryPortfolio[key];
-                rec.sharePercent = 100;
-                pawn.factoryPortfolio[key] = rec;
-            }
-
             Debug.Log($"[Market] {pawn.playerName.Value} founded company {key}");
         }
+
+        // after a tile purchase, TurnManager will switch to Proposal phase via PlayerPawn/HandleTileLogic
     }
 
     [ObserversRpc]
     private void RpcAddCompany(string companyName, int baseCost, string ownerName)
     {
-        Debug.Log("[ClientSync] RpcAddCompany REACHED CLIENT");
-
+        var ownerPawn = GameManager.Instance.Players.Find(p => p.playerName.Value == ownerName);
         if (!companies.ContainsKey(companyName))
         {
-            var record = new CompanyRecord(companyName, baseCost);
+            var record = new CompanyRecord(companyName, baseCost, ownerPawn);
             companies[companyName] = record;
-
-            // Try to bind owner now
-            var ownerPawn = GameManager.Instance.Players.Find(p => p.playerName.Value == ownerName);
-            if (ownerPawn != null)
-            {
-                record.SetOwner(ownerPawn);
-                Debug.Log($"[ClientSync] Company {companyName} added with owner {ownerName}, total={companies.Count}");
-            }
-            else
-            {
-                // Store for later binding
-                record.pendingOwnerName = ownerName;
-                StartCoroutine(RebindOwnerLater(companyName, ownerName));
-                Debug.Log($"[ClientSync] Company {companyName} added; owner pending {ownerName}");
-            }
         }
 
-        // Refresh Proposal UI if open
+        // Refresh proposal UI if needed
         if (ProposalUI.Instance != null && ProposalUI.Instance.panel.activeSelf)
             ProposalUI.Instance.Refresh();
     }
 
-// Rebind coroutine unchanged, but call SetOwner once found
-    private System.Collections.IEnumerator RebindOwnerLater(string companyName, string ownerName)
-    {
-        PlayerPawn found = null;
-        while (found == null)
-        {
-            if (GameManager.Instance != null)
-                found = GameManager.Instance.Players.Find(p => p.playerName.Value == ownerName);
-            yield return null;
-        }
+    /* ================= Proposal Flow ================= */
 
-        if (companies.TryGetValue(companyName, out var rec))
+    /// <summary>
+    /// Server decides whether to open Proposal UI for the current pawn.
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdRequestProposalUI(NetworkConnection conn = null)
+    {
+        if (conn == null) return;
+
+        var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
+        if (pawn == null) return;
+        if (!TurnManager.Instance.InProposalPhaseFor(pawn)) return; // only during proposal phase & current pawn
+
+        TargetShowProposalUI(conn, pawn.playerName.Value);
+    }
+
+    [TargetRpc]
+    private void TargetShowProposalUI(NetworkConnection conn, string pawnName)
+    {
+        var pawn = GameManager.Instance.Players.Find(p => p.playerName.Value == pawnName);
+        if (pawn != null && ProposalUI.Instance != null)
         {
-            rec.SetOwner(found);
-            rec.pendingOwnerName = null;
-            Debug.Log($"[ClientSync] Rebound owner for {companyName} -> {ownerName}");
+            ProposalUI.Instance.Show(pawn);
         }
     }
-    
-    [ServerRpc(RequireOwnership = false)]
-    public void CmdSubmitProposal(PlayerPawn proposer, string companyName, int percent, int price)
-    {
-        if (!companies.TryGetValue(companyName, out var company)) return;
-        if (proposer == null || company.owner == proposer) return; // can't propose to self
 
-        Proposal p = new Proposal
+    /// <summary>
+    /// Current owner at start of owner’s turn reviews proposals only during Review phase.
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdRequestReviewUI(NetworkConnection conn = null)
+    {
+        if (conn == null) return;
+
+        var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
+        if (pawn == null) return;
+        if (!TurnManager.Instance.InReviewPhaseFor(pawn)) return;
+        if (!HasProposalsForOwner(pawn)) 
+        {
+            // If none, proceed to roll
+            TurnManager.Instance.OnOwnerFinishedReview();
+            return;
+        }
+
+        TargetShowReviewUI(conn, pawn.playerName.Value);
+    }
+
+    [TargetRpc]
+    private void TargetShowReviewUI(NetworkConnection conn, string pawnName)
+    {
+        var pawn = GameManager.Instance.Players.Find(p => p.playerName.Value == pawnName);
+        if (pawn != null && ReviewUI.Instance != null)
+        {
+            ReviewUI.Instance.Show(pawn);
+        }
+    }
+
+    /// <summary>
+    /// Called from ReviewUI close → move to Rolling.
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdNotifyReviewClosed(NetworkConnection conn = null)
+    {
+        if (conn == null) return;
+        var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
+        if (pawn == null) return;
+        if (!TurnManager.Instance.InReviewPhaseFor(pawn)) return;
+
+        TurnManager.Instance.OnOwnerFinishedReview();
+    }
+
+    /// <summary>
+    /// Called from ProposalUI close → move to EndReady.
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdNotifyProposalClosed(NetworkConnection conn = null)
+    {
+        if (conn == null) return;
+        var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
+        if (pawn == null) return;
+        if (!TurnManager.Instance.InProposalPhaseFor(pawn)) return;
+
+        TurnManager.Instance.OnPlayerFinishedProposal();
+    }
+
+    /// <summary>
+    /// The current pawn may submit exactly one proposal per company this turn.
+    /// Enforced only while TurnPhase == Proposal and they are the current pawn.
+    /// </summary>
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdSubmitProposal(NetworkConnection conn, string companyName, int percent, int price)
+    {
+        if (conn == null) return;
+
+        var proposer = GameManager.Instance.Players.Find(p => p.Owner == conn);
+        if (proposer == null) return;
+        if (!TurnManager.Instance.InProposalPhaseFor(proposer)) return;
+
+        if (!companies.TryGetValue(companyName, out var company)) return;
+        if (company.owner == proposer) return; // cannot propose to self
+
+        // Bound checks
+        percent = Mathf.Clamp(percent, 1, 40);
+        price   = Mathf.Max(1, price);
+
+        // Only one per company this turn
+        if (!_submittedThisTurn.TryGetValue(proposer, out var set))
+        {
+            set = new HashSet<string>();
+            _submittedThisTurn[proposer] = set;
+        }
+        if (set.Contains(companyName))
+        {
+            Debug.LogWarning($"[Market] {proposer.playerName.Value} already proposed to {companyName} this turn.");
+            return;
+        }
+
+        // Also cap by owner's available percent
+        int ownerAvailable = company.GetOwnership(company.owner);
+        if (ownerAvailable <= 0)
+        {
+            Debug.LogWarning($"[Market] No owner share left to sell in {companyName}.");
+            return;
+        }
+        percent = Mathf.Min(percent, ownerAvailable);
+
+        company.proposals.Add(new Proposal
         {
             proposer = proposer,
             percent = percent,
             price = price
-        };
-        company.proposals.Add(p);
+        });
 
+        set.Add(companyName);
         Debug.Log($"[Market] {proposer.playerName.Value} proposed {percent}% of {companyName} for ${price}");
     }
 
+    /* ================= Accept/Reject Proposal ================= */
+
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdResolveProposal(NetworkConnection conn, string companyName, int proposalIndex, bool accepted)
+    {
+        // Only the current pawn (owner) during Review phase may resolve
+        if (conn == null) return;
+        var ownerPawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
+        if (ownerPawn == null) return;
+        if (!TurnManager.Instance.InReviewPhaseFor(ownerPawn)) return;
+
+        if (!companies.TryGetValue(companyName, out var company)) return;
+        if (company.owner != ownerPawn) return;
+        if (proposalIndex < 0 || proposalIndex >= company.proposals.Count) return;
+
+        var proposal = company.proposals[proposalIndex];
+        ResolveProposal(companyName, proposal, accepted);
+        company.proposals.RemoveAt(proposalIndex);
+
+        // If no more proposals remain, UI can refresh later; when UI closes, TurnManager advances
+        ReviewUI.Instance?.Refresh();
+    }
 
     [Server]
-    public void ResolveProposal(string companyName, Proposal proposal, bool accepted)
+    private void ResolveProposal(string companyName, Proposal proposal, bool accepted)
     {
         if (!companies.TryGetValue(companyName, out var company)) return;
-        if (!company.proposals.Contains(proposal)) return;
 
         if (accepted)
         {
-            // Transfer money
-            if (!proposal.proposer.TrySpendMoney(proposal.price)) return;
+            // Transfer funds (proposer must afford)
+            if (!proposal.proposer.TrySpendMoney(proposal.price))
+            {
+                Debug.LogWarning($"[Market] Proposer cannot afford ${proposal.price}.");
+                return;
+            }
             company.owner.AddMoney(proposal.price);
 
-            // Adjust ownership
-            int oldOwnerShare = company.GetOwnership(company.owner);
-            int transferPercent = Mathf.Min(proposal.percent, oldOwnerShare);
+            // Transfer ownership %
+            int fromOwner = company.GetOwnership(company.owner);
+            int transfer = Mathf.Min(proposal.percent, fromOwner);
 
-            company.SetOwnership(company.owner, oldOwnerShare - transferPercent);
-            int newShare = company.GetOwnership(proposal.proposer) + transferPercent;
+            company.SetOwnership(company.owner, fromOwner - transfer);
+            int newShare = company.GetOwnership(proposal.proposer) + transfer;
             company.SetOwnership(proposal.proposer, newShare);
+
+            // Check majority takeover
+            var prevOwner = company.owner;
+            var majority = company.GetMajorityOwner();
+            if (majority != prevOwner)
+            {
+                company.owner = majority;
+                RpcUpdateTileOwner(companyName, majority.playerName.Value);
+            }
+
+            // Sync to client HUD portfolios
             RpcSyncOwnership(companyName, proposal.proposer.playerName.Value, newShare);
             RpcSyncOwnership(companyName, company.owner.playerName.Value, company.GetOwnership(company.owner));
-
-            // Check majority
-            var majority = company.GetMajorityOwner();
-            company.owner = majority;
 
             Debug.Log($"[Market] Proposal accepted: {proposal.proposer.playerName.Value} now owns {newShare}% of {companyName}");
         }
         else
         {
+            // Just rejected
             Debug.Log($"[Market] Proposal rejected for {companyName}");
         }
-
-        company.proposals.Remove(proposal);
-        
-        // === Sync ownership into PlayerPawn.factoryPortfolio ===
-        foreach (var kv in company.ownershipPercents)
-        {
-            var p = kv.Key;
-            int percent = kv.Value;
-            if (p == null) continue;
-
-            if (!p.factoryPortfolio.ContainsKey(company.companyName))
-            {
-                p.factoryPortfolio[company.companyName] = new ShareRecord
-                {
-                    count = 0,
-                    roundBought = TurnManager.Instance.roundCount.Value,
-                    multiplier = 1f,
-                    multiplierExpiresAt = 0,
-                    sharePercent = percent
-                };
-            }
-            else
-            {
-                var rec = p.factoryPortfolio[company.companyName];
-                rec.sharePercent = percent;
-                p.factoryPortfolio[company.companyName] = rec;
-            }
-        }
     }
-    
-    [ServerRpc(RequireOwnership = false)]
-    public void CmdResolveProposal(string companyName, int proposalIndex, bool accepted)
-    {
-        if (!companies.TryGetValue(companyName, out var company)) return;
-        if (proposalIndex < 0 || proposalIndex >= company.proposals.Count) return;
 
-        var proposal = company.proposals[proposalIndex];
-        ResolveProposal(companyName, proposal, accepted);
-    }
-    
-    
-    
-    // === Payout Logic ===
-    [Server]
-    public void ProcessPayouts()
-    {
-        int currentRound = TurnManager.Instance.roundCount.Value;
-
-        foreach (var companyKvp in companies) // iterate all registered companies
-        {
-            CompanyRecord company = companyKvp.Value;
-            if (company == null) continue;
-
-            // Base income for this company this round
-            int baseIncome = Mathf.RoundToInt(company.baseCost * 0.1f);
-
-            // Distribute based on ownership %
-            foreach (var kv in company.ownershipPercents)
-            {
-                PlayerPawn pawn = kv.Key;
-                int percent = kv.Value;
-
-                if (pawn == null || percent <= 0) continue;
-
-                // Ownership share
-                float ownershipRatio = percent / 100f;
-                int payout = Mathf.RoundToInt(baseIncome * ownershipRatio);
-
-                // Apply multipliers (check expiry)
-                ShareRecord rec;
-                if (pawn.factoryPortfolio.TryGetValue(company.companyName, out rec))
-                {
-                    if (rec.multiplierExpiresAt > 0 && currentRound >= rec.multiplierExpiresAt)
-                    {
-                        rec.multiplier = 1f;
-                        rec.multiplierExpiresAt = 0;
-                        pawn.factoryPortfolio[company.companyName] = rec;
-                    }
-
-                    payout = Mathf.RoundToInt(payout * rec.multiplier);
-                }
-
-                // Pay the player
-                if (payout != 0)
-                {
-                    pawn.AddMoney(payout);
-                    Debug.Log($"[Company Payout] {pawn.playerName.Value} received ${payout} " +
-                              $"from {company.companyName} ({percent}% ownership, x{rec.multiplier})");
-                }
-            }
-        }
-    }
-    
-    
     [ObserversRpc]
     private void RpcSyncOwnership(string companyName, string playerName, int newPercent)
     {
-        // Find the pawn for this player
+        // Update local portfolio + HUD
         var pawn = GameManager.Instance.Players.Find(p => p.playerName.Value == playerName);
         if (pawn == null) return;
 
-        // Update local portfolio
         if (!pawn.factoryPortfolio.ContainsKey(companyName))
         {
             pawn.factoryPortfolio[companyName] = new ShareRecord
@@ -340,133 +373,69 @@ public class MarketManager : NetworkBehaviour
             pawn.factoryPortfolio[companyName] = rec;
         }
 
-        // Optional: update HUD panel
-        if (pawn.infoPanel != null)
-            pawn.infoPanel.UpdateCompanyOwnership(companyName, newPercent);
-
-        Debug.Log($"[ClientSync] {pawn.playerName.Value} now has {newPercent}% of {companyName}");
+        pawn.infoPanel?.UpdateCompanyOwnership(companyName, newPercent);
     }
-    
 
-    // Server side: don't send pawnName anymore
-    [ServerRpc(RequireOwnership = false)]
-    public void CmdRequestProposalUI(NetworkConnection conn = null)
+    [ObserversRpc]
+    private void RpcUpdateTileOwner(string companyName, string newOwnerName)
     {
-        if (conn == null)
+        var tile = FindTileByCompanyName(companyName);
+        var pawn = GameManager.Instance.Players.Find(p => p.playerName.Value == newOwnerName);
+        if (tile != null)
+            tile.owner = pawn;
+    }
+
+    private TileData FindTileByCompanyName(string companyName)
+    {
+        foreach (var go in GameManager.Instance.boardTiles)
         {
-            Debug.LogWarning("[MarketManager] CmdRequestProposalUI: conn is null!");
-            return;
+            var td = go.GetComponent<TileData>();
+            if (td != null && td.companyName == companyName)
+                return td;
         }
-
-        TargetShowProposalUI(conn); // no pawnName
+        return null;
     }
 
-    [TargetRpc]
-    private void TargetShowProposalUI(NetworkConnection conn)
-    {
-        StartCoroutine(WaitAndOpenProposalUI());
-    }
+    /* ================= Payouts ================= */
 
-    private System.Collections.IEnumerator WaitAndOpenProposalUI()
+    [Server]
+    public void ProcessPayouts()
     {
-        float timeout = 3f;
-        PlayerPawn localPawn = null;
+        int currentRound = TurnManager.Instance.roundCount.Value;
 
-        while (timeout > 0f)
+        foreach (var companyKvp in companies)
         {
-            // Find local player's pawn (robust)
-            if (localPawn == null)
+            CompanyRecord company = companyKvp.Value;
+            if (company == null) continue;
+
+            int baseIncome = Mathf.RoundToInt(company.baseCost * 0.1f);
+
+            foreach (var kv in company.ownershipPercents)
             {
-                foreach (var p in FindObjectsOfType<PlayerPawn>())
+                PlayerPawn pawn = kv.Key;
+                int percent = kv.Value;
+                if (pawn == null || percent <= 0) continue;
+
+                float ownershipRatio = percent / 100f;
+                int payout = Mathf.RoundToInt(baseIncome * ownershipRatio);
+
+                if (pawn.factoryPortfolio.TryGetValue(company.companyName, out var rec))
                 {
-                    if (p != null && p.IsOwner)
+                    if (rec.multiplierExpiresAt > 0 && currentRound >= rec.multiplierExpiresAt)
                     {
-                        localPawn = p;
-                        break;
+                        rec.multiplier = 1f;
+                        rec.multiplierExpiresAt = 0;
+                        pawn.factoryPortfolio[company.companyName] = rec;
                     }
+
+                    payout = Mathf.RoundToInt(payout * rec.multiplier);
+                }
+
+                if (payout != 0)
+                {
+                    pawn.AddMoney(payout);
                 }
             }
-
-            // Wait until UI and local pawn exist
-            if (ProposalUI.Instance != null && localPawn != null)
-                break;
-
-            timeout -= Time.unscaledDeltaTime;
-            yield return null;
-        }
-
-        if (ProposalUI.Instance != null && localPawn != null)
-        {
-            ProposalUI.Instance.Show(localPawn);
-            Debug.Log($"[MarketManager] ProposalUI opened for {localPawn.playerName.Value}");
-        }
-        else
-        {
-            Debug.LogWarning($"[MarketManager] Failed to open ProposalUI on client. " +
-                             $"UI={(ProposalUI.Instance != null)}, pawn={(localPawn != null)}");
         }
     }
-
-
-
-    [ServerRpc(RequireOwnership = false)]
-    public void CmdRequestReviewUI(NetworkConnection conn = null)
-    {
-        if (conn == null)
-        {
-            Debug.LogWarning("[MarketManager] CmdRequestReviewUI: conn is null!");
-            return;
-        }
-
-        TargetShowReviewUI(conn);
-    }
-
-    [TargetRpc]
-    private void TargetShowReviewUI(NetworkConnection conn)
-    {
-        StartCoroutine(WaitAndOpenReviewUI());
-    }
-
-    private System.Collections.IEnumerator WaitAndOpenReviewUI()
-    {
-        float timeout = 3f;
-        PlayerPawn localPawn = null;
-
-        while (timeout > 0f)
-        {
-            // Find local player's pawn
-            if (localPawn == null)
-            {
-                foreach (var p in FindObjectsOfType<PlayerPawn>())
-                {
-                    if (p != null && p.IsOwner)
-                    {
-                        localPawn = p;
-                        break;
-                    }
-                }
-            }
-
-            // Wait until UI and local pawn exist
-            if (ReviewUI.Instance != null && localPawn != null)
-                break;
-
-            timeout -= Time.unscaledDeltaTime;
-            yield return null;
-        }
-
-        if (ReviewUI.Instance != null && localPawn != null)
-        {
-            ReviewUI.Instance.Show(localPawn);
-            Debug.Log($"[MarketManager] ReviewUI opened for {localPawn.playerName.Value}");
-        }
-        else
-        {
-            Debug.LogWarning($"[MarketManager] Failed to open ReviewUI on client. " +
-                             $"UI={(ReviewUI.Instance != null)}, pawn={(localPawn != null)}");
-        }
-    }
-
-    
-
 }
