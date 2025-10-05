@@ -29,7 +29,8 @@ public class ProposalUI : MonoBehaviour
         currentPawn = pawn;
         panel.SetActive(true);
         Refresh();
-
+        
+        TurnManager.Instance.InProposalPhaseFor(pawn);
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null) ui.SetEndTurnInteractable(false);
         if (ui != null) ui.SetRollInteractable(false);
@@ -49,8 +50,11 @@ public class ProposalUI : MonoBehaviour
         {
             var company = kv.Value;
             if (company == null) continue;
-            if (company.owner == currentPawn) continue; // cannot propose to self
-            if (company.GetOwnership(currentPawn) >= 100) continue; // already max
+            
+            if (company.owner == currentPawn) continue;
+            if (!string.IsNullOrEmpty(company.ownerName) &&
+                company.ownerName == currentPawn.playerName.Value) continue;
+            if (company.GetOwnership(currentPawn) >= 100) continue;
 
             var entry = Instantiate(proposalEntryPrefab, listParent);
             var ui = entry.GetComponent<ProposalEntry>();

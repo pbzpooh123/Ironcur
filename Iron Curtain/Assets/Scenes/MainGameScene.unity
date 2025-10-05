@@ -4888,7 +4888,6 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 1113485078}
   _networkObjectCache: {fileID: 0}
-  stocks: []
 --- !u!4 &1113485080
 Transform:
   m_ObjectHideFlags: 0

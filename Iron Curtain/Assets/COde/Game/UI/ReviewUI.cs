@@ -30,9 +30,13 @@ public class ReviewUI : MonoBehaviour
         panel.SetActive(true);
         Refresh();
 
+        // Disable Roll + EndTurn locally while the review is open.
         var ui = FindObjectOfType<TurnUI>();
-        if (ui != null) ui.SetEndTurnInteractable(false);
-        if (ui != null) ui.SetRollInteractable(false);
+        if (ui != null)
+        {
+            ui.SetEndTurnInteractable(false);
+            ui.SetRollInteractable(false);   // requires TurnUI update below
+        }
     }
 
     public void Refresh()
@@ -45,6 +49,7 @@ public class ReviewUI : MonoBehaviour
         if (MarketManager.Instance == null || currentPawn == null)
             return;
 
+        // Show only proposals for companies owned by this pawn
         foreach (var company in MarketManager.Instance.companies.Values)
         {
             if (company == null) continue;
@@ -56,7 +61,8 @@ public class ReviewUI : MonoBehaviour
                 var p = company.proposals[i];
                 var go = Instantiate(reviewEntryPrefab, listParent);
                 var entry = go.GetComponent<ReviewEntry>();
-                entry.Setup(company.companyName, i, p);
+                if (entry != null)
+                    entry.Setup(company.companyName, i, p);
             }
         }
     }
@@ -64,11 +70,12 @@ public class ReviewUI : MonoBehaviour
     private void CloseAndNotifyServer()
     {
         panel.SetActive(false);
-        MarketManager.Instance.CmdNotifyReviewClosed();
+
+        // Tell server we finished review → TurnManager will phase → Rolling.
+        MarketManager.Instance?.CmdNotifyReviewClosed();
+
+        // Do NOT re-enable roll/endTurn here. The server will send the correct UI state.
     }
 
-    public void Hide()
-    {
-        CloseAndNotifyServer();
-    }
+    public void Hide() => CloseAndNotifyServer();
 }

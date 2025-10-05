@@ -39,6 +39,7 @@ public class TurnManager : NetworkBehaviour
     private void Awake()
     {
         Instance = this;
+        roundCount.Value = 1;
     }
 
     public override void OnStartServer()
@@ -83,7 +84,7 @@ public class TurnManager : NetworkBehaviour
     private void SetPhase(TurnPhase phase)
     {
         _phase = phase;
-        // Debug.Log($"[TurnManager] Phase -> {_phase}");
+       Debug.Log($"[TurnManager] Phase -> {_phase}");
     }
 
     [Server]
@@ -169,27 +170,27 @@ public class TurnManager : NetworkBehaviour
             return;
         }
 
-        // Reset "extra rolls" for safety if missing key
+        // Reset per-turn market state (proposals made by this pawn this turn, etc.)
+        MarketManager.Instance.BeginTurnFor(currentPlayer);
+
+        // Ensure extra roll bucket exists for this pawn
         if (!_extraRolls.ContainsKey(currentPlayer))
             _extraRolls[currentPlayer] = 0;
 
-        // Reset "submitted this turn" per MarketManager
-        MarketManager.Instance.BeginTurnFor(currentPlayer);
-
-        // UI → it's your turn
+        // Tell the client it's their turn
         currentPlayer.TargetStartTurn(currentPlayer.Owner);
         Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value}");
 
-        // If owner has pending proposals → review phase
-        if (MarketManager.Instance.HasProposalsForOwner(currentPlayer))
+        // === REVIEW PHASE if owner has proposals ===
+        if (MarketManager.Instance.ServerHasAnyCompany(currentPlayer))
         {
             SetPhase(TurnPhase.Review);
-            MarketManager.Instance.CmdRequestReviewUI(currentPlayer.Owner);
+            Debug.Log($"[TurnManager] Phase -> Review (owner={currentPlayer.playerName.Value})");
+            MarketManager.Instance.ShowReviewForPawn(currentPlayer);
+            return;
         }
-        else
-        {
-            ProceedToRoll();
-        }
+        
+        ProceedToRoll();
     }
 
     [Server]
@@ -234,7 +235,7 @@ public class TurnManager : NetworkBehaviour
 
         SetPhase(TurnPhase.Proposal);
         // Ask client to open Proposal UI for current pawn
-        MarketManager.Instance.CmdRequestProposalUI(pawn.Owner);
+        MarketManager.Instance.ShowProposalForPawn(pawn);
     }
 
     [Server]

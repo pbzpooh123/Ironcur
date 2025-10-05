@@ -129,6 +129,7 @@ public class PlayerPawn : NetworkBehaviour
     {
         if (!TurnManager.Instance.CanEndTurn(this)) return;
         TurnManager.Instance.EndTurn();
+        TargetEnableEndTurn(Owner, false);
     }
 
     [TargetRpc]
