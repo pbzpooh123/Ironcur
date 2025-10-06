@@ -67,6 +67,7 @@ public class PlayerPawn : NetworkBehaviour
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
     {
         infoPanel?.UpdateMoney(newValue);
+        
     }
 
     [Server]
@@ -123,14 +124,18 @@ public class PlayerPawn : NetworkBehaviour
         lastRoll.Value = roll;
         RpcMoveSteps(roll);
     }
-
+    
     [ServerRpc]
     public void CmdEndTurn()
     {
-        if (!TurnManager.Instance.CanEndTurn(this)) return;
+        if (!TurnManager.Instance.CanEndTurn(this))
+        {
+            Debug.LogWarning("[Turn] EndTurn blocked; not in EndReady phase.");
+            return;
+        }
         TurnManager.Instance.EndTurn();
-        TargetEnableEndTurn(Owner, false);
     }
+
 
     [TargetRpc]
     public void TargetStartTurn(NetworkConnection conn)

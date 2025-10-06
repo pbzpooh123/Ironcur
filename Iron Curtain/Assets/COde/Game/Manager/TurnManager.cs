@@ -33,13 +33,16 @@ public class TurnManager : NetworkBehaviour
     // Skip turn tracking
     private readonly Dictionary<PlayerPawn, int> _skipTurns = new();
 
-    // NEW: Extra rolls per pawn this turn
+    // Extra rolls per pawn this turn
     private readonly Dictionary<PlayerPawn, int> _extraRolls = new();
+
+    // Main-event single-fire guard
+    private int _lastMainEventRoundFired = -1;
 
     private void Awake()
     {
         Instance = this;
-        roundCount.Value = 1;
+        roundCount.Value = 0; // start at 0, will increment after first full cycle
     }
 
     public override void OnStartServer()
@@ -84,26 +87,20 @@ public class TurnManager : NetworkBehaviour
     private void SetPhase(TurnPhase phase)
     {
         _phase = phase;
-       Debug.Log($"[TurnManager] Phase -> {_phase}");
+        Debug.Log($"[TurnManager] Phase -> {_phase}");
     }
 
     [Server]
     public bool IsCurrentPawn(PlayerPawn pawn)
     {
-        return pawn != null && turnOrder.Count > 0 && turnOrder[Mathf.Clamp(currentPlayerIndex.Value,0,turnOrder.Count-1)] == pawn;
+        return pawn != null && turnOrder.Count > 0
+               && turnOrder[Mathf.Clamp(currentPlayerIndex.Value, 0, turnOrder.Count - 1)] == pawn;
     }
 
-    [Server]
-    public bool CanRoll(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.Rolling;
-
-    [Server]
-    public bool CanEndTurn(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.EndReady;
-
-    [Server]
-    public bool InProposalPhaseFor(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.Proposal;
-
-    [Server]
-    public bool InReviewPhaseFor(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.Review;
+    [Server] public bool CanRoll(PlayerPawn pawn)    => IsCurrentPawn(pawn) && _phase == TurnPhase.Rolling;
+    [Server] public bool CanEndTurn(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.EndReady;
+    [Server] public bool InProposalPhaseFor(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.Proposal;
+    [Server] public bool InReviewPhaseFor(PlayerPawn pawn)   => IsCurrentPawn(pawn) && _phase == TurnPhase.Review;
 
     [Server]
     private bool ShouldSkip(PlayerPawn pawn)
@@ -133,23 +130,10 @@ public class TurnManager : NetworkBehaviour
         if (!_extraRolls.ContainsKey(pawn))
             _extraRolls[pawn] = 0;
         _extraRolls[pawn] += Mathf.Max(1, count);
-        // Debug.Log($"[TurnManager] Extra rolls for {pawn.playerName.Value} now = {_extraRolls[pawn]}");
     }
 
-    [Server]
-    private int GetExtraRolls(PlayerPawn pawn)
-    {
-        if (pawn == null) return 0;
-        return _extraRolls.TryGetValue(pawn, out int v) ? v : 0;
-    }
-
-    [Server]
-    private void ConsumeOneExtraRoll(PlayerPawn pawn)
-    {
-        if (pawn == null) return;
-        if (_extraRolls.TryGetValue(pawn, out int v) && v > 0)
-            _extraRolls[pawn] = v - 1;
-    }
+    [Server] private int  GetExtraRolls(PlayerPawn pawn)       => (pawn != null && _extraRolls.TryGetValue(pawn, out int v)) ? v : 0;
+    [Server] private void ConsumeOneExtraRoll(PlayerPawn pawn)  { if (pawn != null && _extraRolls.TryGetValue(pawn, out int v) && v > 0) _extraRolls[pawn] = v - 1; }
 
     /* -------------------- Turn lifecycle -------------------- */
 
@@ -170,7 +154,7 @@ public class TurnManager : NetworkBehaviour
             return;
         }
 
-        // Reset per-turn market state (proposals made by this pawn this turn, etc.)
+        // Reset per-turn MarketManager state
         MarketManager.Instance.BeginTurnFor(currentPlayer);
 
         // Ensure extra roll bucket exists for this pawn
@@ -181,15 +165,14 @@ public class TurnManager : NetworkBehaviour
         currentPlayer.TargetStartTurn(currentPlayer.Owner);
         Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value}");
 
-        // === REVIEW PHASE if owner has proposals ===
-        if (MarketManager.Instance.ServerHasAnyCompany(currentPlayer))
+        // REVIEW phase only when there are actual proposals for this owner
+        if (MarketManager.Instance.HasProposalsForOwner(currentPlayer))
         {
             SetPhase(TurnPhase.Review);
-            Debug.Log($"[TurnManager] Phase -> Review (owner={currentPlayer.playerName.Value})");
             MarketManager.Instance.ShowReviewForPawn(currentPlayer);
             return;
         }
-        
+
         ProceedToRoll();
     }
 
@@ -217,12 +200,10 @@ public class TurnManager : NetworkBehaviour
         if (extra > 0)
         {
             ConsumeOneExtraRoll(pawn);
-            // Go back to Rolling
             ProceedToRoll();
         }
         else
         {
-            // No extra roll → Proposal phase
             ProceedToProposal();
         }
     }
@@ -234,15 +215,10 @@ public class TurnManager : NetworkBehaviour
         if (pawn == null) return;
 
         SetPhase(TurnPhase.Proposal);
-        // Ask client to open Proposal UI for current pawn
         MarketManager.Instance.ShowProposalForPawn(pawn);
     }
 
-    [Server]
-    public void OnOwnerFinishedReview()
-    {
-        ProceedToRoll();
-    }
+    [Server] public void OnOwnerFinishedReview() => ProceedToRoll();
 
     [Server]
     public void OnPlayerFinishedProposal()
@@ -269,6 +245,7 @@ public class TurnManager : NetworkBehaviour
 
             Debug.Log($"[TurnManager] Completed a full cycle. TurnCount={turnCount.Value}");
 
+            // A round completes only when everyone has taken a turn
             if (turnCount.Value % turnOrder.Count == 0)
             {
                 roundCount.Value++;
@@ -282,15 +259,29 @@ public class TurnManager : NetworkBehaviour
 
         currentPlayerIndex.Value = nextIndex;
 
-        if (roundCount.Value > 0 && (roundCount.Value % 3 == 0))
-            EventManager.Instance?.TriggerMainEvent(roundCount.Value);
-
-        if (roundCount.Value >= 15)
+        // Main Event: fire only once per round
+        if (roundCount.Value > 0 &&
+            (roundCount.Value % 3 == 0) &&
+            _lastMainEventRoundFired != roundCount.Value)
         {
-            Debug.Log("Game Over! Count money and decide winner.");
+            _lastMainEventRoundFired = roundCount.Value;
+
+            // Do NOT start the next turn now; EventManager will call back when it’s done.
+            EventManager.Instance?.TriggerMainEvent(roundCount.Value);
+            SetPhase(TurnPhase.None);
             return;
         }
 
+        SetPhase(TurnPhase.None);
+        StartTurn();
+    }
+
+    /// <summary>
+    /// Called by EventManager AFTER main event finishes acknowledging on all clients.
+    /// </summary>
+    [Server]
+    public void ServerStartTurnAfterMainEvent()
+    {
         SetPhase(TurnPhase.None);
         StartTurn();
     }

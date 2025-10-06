@@ -27,13 +27,19 @@ public class ReviewEntry : MonoBehaviour
 
         acceptButton.onClick.RemoveAllListeners();
         rejectButton.onClick.RemoveAllListeners();
-        acceptButton.onClick.AddListener(() =>
-        {
-            MarketManager.Instance.CmdResolveProposal(InstanceFinder.ClientManager.Connection, companyName, proposalIndex, true);
-        });
-        rejectButton.onClick.AddListener(() =>
-        {
-            MarketManager.Instance.CmdResolveProposal(InstanceFinder.ClientManager.Connection, companyName, proposalIndex, false);
-        });
+        
+        acceptButton.onClick.AddListener(OnAccept);
+        rejectButton.onClick.AddListener(OnReject);
     }
+    
+    public void OnAccept()
+    {
+        MarketManager.Instance.CmdResolveProposal(default, companyName, proposalIndex, true);
+    }
+
+    public void OnReject()
+    {
+        MarketManager.Instance.CmdResolveProposal(default, companyName, proposalIndex, false);
+    }
+
 }

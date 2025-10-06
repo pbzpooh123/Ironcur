@@ -414,7 +414,12 @@ public class MarketManager : NetworkBehaviour
                 company.owner = majority;
                 RpcUpdateTileOwner(companyName, majority.playerName.Value);
             }
-
+            
+            if (company.GetOwnership(prevOwner) <= 0)
+            {
+                TransferOwnershipFull(companyName, proposal.proposer);
+            }
+            
             // Sync to all clients: proposer, prevOwner, and (if changed) new owner (though prevOwner covers most cases)
             RpcSyncOwnership(companyName, proposal.proposer.playerName.Value, company.GetOwnership(proposal.proposer));
             RpcSyncOwnership(companyName, prevOwner.playerName.Value, company.GetOwnership(prevOwner));
@@ -602,4 +607,37 @@ public class MarketManager : NetworkBehaviour
         return false;
     }
 
+    [Server]
+    private void TransferOwnershipFull(string companyName, PlayerPawn newOwner)
+    {
+        if (!companies.TryGetValue(companyName, out var c)) return;
+        var oldOwner = c.owner;
+        if (oldOwner == newOwner) return;
+
+        c.owner = newOwner;
+        c.ownershipPercents.Clear();
+        c.ownershipPercents[newOwner] = 100;
+
+        // Remove company from old owner's portfolio
+        oldOwner?.factoryPortfolio.Remove(companyName);
+
+        // Add to new owner's portfolio
+        if (!newOwner.factoryPortfolio.ContainsKey(companyName))
+            newOwner.factoryPortfolio[companyName] = new ShareRecord
+            {
+                sharePercent = 100,
+                multiplier = 1f,
+                multiplierExpiresAt = 0,
+                roundBought = TurnManager.Instance.roundCount.Value
+            };
+
+        RpcSyncOwnership(companyName, newOwner.playerName.Value, 100);
+    }
+
+    [Server]
+    public bool HasSubmittedThisTurn(PlayerPawn pawn, string companyName)
+    {
+        if (pawn == null) return false;
+        return _submittedThisTurn.TryGetValue(pawn, out var set) && set.Contains(companyName);
+    }
 }

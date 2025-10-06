@@ -473,7 +473,7 @@ MonoBehaviour:
   tileType: 2
   companyName: 7
   owner: {fileID: 0}
-  companyCost: 100
+  companyCost: 500
   baseFactoryIncome: 50
 --- !u!1 &69321817
 GameObject:
@@ -2766,7 +2766,7 @@ MonoBehaviour:
   tileType: 2
   companyName: 2
   owner: {fileID: 0}
-  companyCost: 100
+  companyCost: 500
   baseFactoryIncome: 50
 --- !u!1 &847709261
 GameObject:
@@ -5899,7 +5899,7 @@ MonoBehaviour:
   tileType: 2
   companyName: 1
   owner: {fileID: 0}
-  companyCost: 100
+  companyCost: 500
   baseFactoryIncome: 50
 --- !u!1 &1352702746
 GameObject:
@@ -5948,7 +5948,7 @@ MonoBehaviour:
   tileType: 2
   companyName: 8
   owner: {fileID: 0}
-  companyCost: 100
+  companyCost: 500
   baseFactoryIncome: 50
 --- !u!1 &1403265752
 GameObject:

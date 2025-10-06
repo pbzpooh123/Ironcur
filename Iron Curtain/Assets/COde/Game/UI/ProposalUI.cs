@@ -30,7 +30,8 @@ public class ProposalUI : MonoBehaviour
         panel.SetActive(true);
         Refresh();
         
-        TurnManager.Instance.InProposalPhaseFor(pawn);
+        if (TurnManager.Instance != null && TurnManager.Instance.IsServer)
+            TurnManager.Instance.InProposalPhaseFor(pawn);
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null) ui.SetEndTurnInteractable(false);
         if (ui != null) ui.SetRollInteractable(false);
@@ -50,11 +51,13 @@ public class ProposalUI : MonoBehaviour
         {
             var company = kv.Value;
             if (company == null) continue;
-            
             if (company.owner == currentPawn) continue;
-            if (!string.IsNullOrEmpty(company.ownerName) &&
-                company.ownerName == currentPawn.playerName.Value) continue;
+            if (company.ownerName == currentPawn.playerName.Value) continue;
             if (company.GetOwnership(currentPawn) >= 100) continue;
+
+            // Skip if already proposed this turn
+            if (MarketManager.Instance.HasSubmittedThisTurn(currentPawn, company.companyName))
+                continue;
 
             var entry = Instantiate(proposalEntryPrefab, listParent);
             var ui = entry.GetComponent<ProposalEntry>();
@@ -62,6 +65,7 @@ public class ProposalUI : MonoBehaviour
                 ui.Setup(company, currentPawn);
         }
     }
+
 
     private void CloseAndNotifyServer()
     {

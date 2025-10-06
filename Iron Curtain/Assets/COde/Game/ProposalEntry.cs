@@ -1,38 +1,59 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-using FishNet;
 
 public class ProposalEntry : MonoBehaviour
 {
+    [Header("Refs")]
     public TMP_Text companyNameText;
-    public TMP_Text ownerNameText;
     public TMP_InputField percentInput;
     public TMP_InputField priceInput;
     public Button submitButton;
 
-    private string companyName;
+    private CompanyRecord company;
+    private PlayerPawn currentPawn;
 
-    public void Setup(CompanyRecord company, PlayerPawn pawn)
+    public void Setup(CompanyRecord record, PlayerPawn pawn)
     {
-        companyName = company.companyName;
+        company = record;
+        currentPawn = pawn;
 
-        if (companyNameText) companyNameText.text = company.companyName;
-        if (ownerNameText) ownerNameText.text = $"Owner: {(company.owner != null ? company.owner.playerName.Value : "N/A")}";
+        companyNameText.text = record.companyName;
+
+        // Clear input and set up listeners
+        percentInput.text = "";
+        priceInput.text = "";
+
+        submitButton.interactable = false; // start disabled
+
+        percentInput.onValueChanged.AddListener(_ => ValidateInputs());
+        priceInput.onValueChanged.AddListener(_ => ValidateInputs());
 
         submitButton.onClick.RemoveAllListeners();
-        submitButton.onClick.AddListener(OnSubmit);
+        submitButton.onClick.AddListener(OnSubmitClicked);
     }
 
-    private void OnSubmit()
+    private void ValidateInputs()
     {
-        int percent = 0;
-        int price = 0;
+        bool validPercent = int.TryParse(percentInput.text, out int p) && p > 0;
+        bool validPrice   = int.TryParse(priceInput.text, out int pr) && pr > 0;
 
-        int.TryParse(percentInput?.text, out percent);
-        int.TryParse(priceInput?.text, out price);
+        // Enable only if both valid
+        submitButton.interactable = validPercent && validPrice;
+    }
 
-        // Call server with current connection
-        MarketManager.Instance.CmdSubmitProposal(InstanceFinder.ClientManager.Connection, companyName, percent, price);
+    private void OnSubmitClicked()
+    {
+        if (company == null || currentPawn == null) return;
+
+        if (!int.TryParse(percentInput.text, out int percent)) percent = 0;
+        if (!int.TryParse(priceInput.text, out int price)) price = 0;
+
+        if (percent <= 0 || price <= 0) return;
+
+        MarketManager.Instance.CmdSubmitProposal(currentPawn.Owner, company.companyName, percent, price);
+
+        // Disable to prevent double click
+        submitButton.interactable = false;
     }
 }

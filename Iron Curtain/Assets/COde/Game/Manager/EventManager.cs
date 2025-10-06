@@ -12,6 +12,11 @@ public class EventManager : NetworkBehaviour
     private int requiredReady = 0;
     private bool waitingForAcks = false;
 
+    // Resume context to differentiate Tile vs Main
+    private enum ResumeContext { None, Tile, Main }
+    private ResumeContext _resume = ResumeContext.None;
+    private PlayerPawn _resumeTilePawn = null;
+
     [Header("Event Databases (Optional)")]
     public List<GameEventSO> tileEvents = new();
     public List<GameEventSO> mainEvents = new();
@@ -30,6 +35,9 @@ public class EventManager : NetworkBehaviour
         }
 
         var e = tileEvents[Random.Range(0, tileEvents.Count)];
+
+        _resume = ResumeContext.Tile;
+        _resumeTilePawn = pawn;
 
         waitingForAcks = true;
         playersReady = 0;
@@ -62,6 +70,9 @@ public class EventManager : NetworkBehaviour
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
             TargetShowMainEvent(conn, msg, true);
 
+        _resume = ResumeContext.Main;
+        _resumeTilePawn = null;
+
         if (e == null || e.mode == EventMode.Simple)
         {
             waitingForAcks = true;
@@ -74,6 +85,7 @@ public class EventManager : NetworkBehaviour
         }
         else
         {
+            // Special modes manage their own flow and then call ResumeAfterEvent().
             switch (e.mode)
             {
                 case EventMode.ForcedRollAgainstOwner:
@@ -130,12 +142,20 @@ public class EventManager : NetworkBehaviour
     [Server]
     private void ResumeAfterEvent()
     {
-        var pawn = TurnManager.Instance?.GetCurrentPawn();
-        if (pawn != null)
+        switch (_resume)
         {
-            // Signal that tile/event phase completed; TurnManager decides next
-            TurnManager.Instance.ServerOnTileActionComplete(pawn);
+            case ResumeContext.Tile:
+                if (_resumeTilePawn != null)
+                    TurnManager.Instance.ServerOnTileActionComplete(_resumeTilePawn);
+                break;
+
+            case ResumeContext.Main:
+                // Instead of manually starting next turn, let TurnManager handle normal progression
+                TurnManager.Instance.ServerStartTurnAfterMainEvent();
+                break;
         }
+        _resume = ResumeContext.None;
+        _resumeTilePawn = null;
     }
     #endregion
 

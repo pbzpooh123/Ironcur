@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,7 +29,7 @@ public class ReviewUI : MonoBehaviour
     {
         currentPawn = pawn;
         panel.SetActive(true);
-        Refresh();
+        StartCoroutine(DelayedRefresh());
 
         // Disable Roll + EndTurn locally while the review is open.
         var ui = FindObjectOfType<TurnUI>();
@@ -37,6 +38,12 @@ public class ReviewUI : MonoBehaviour
             ui.SetEndTurnInteractable(false);
             ui.SetRollInteractable(false);   // requires TurnUI update below
         }
+    }
+    
+    private IEnumerator DelayedRefresh()
+    {
+        yield return null; // wait one frame
+        Refresh();
     }
 
     public void Refresh()
@@ -58,6 +65,7 @@ public class ReviewUI : MonoBehaviour
 
             for (int i = 0; i < company.proposals.Count; i++)
             {
+                Debug.Log("Review this");
                 var p = company.proposals[i];
                 var go = Instantiate(reviewEntryPrefab, listParent);
                 var entry = go.GetComponent<ReviewEntry>();

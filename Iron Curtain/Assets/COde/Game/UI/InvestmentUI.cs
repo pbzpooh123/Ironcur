@@ -34,10 +34,36 @@ public class InvestmentUI : MonoBehaviour
         buyButton.onClick.AddListener(OnBuyCompanyClicked);
         skipButton.onClick.AddListener(OnSkipClicked);
 
-        // Disable End Turn while popup is active
+        // Initial state
+        buyButton.interactable = pawn.money.Value >= cost;
+
+        // Auto-update on money change
+        pawn.money.OnChange += OnMoneyChanged;
+
+        // Disable End Turn while popup active
         TurnUI ui = FindObjectOfType<TurnUI>();
         if (ui != null) ui.ForceDisableEndTurn();
     }
+
+    private void OnMoneyChanged(int oldVal, int newVal, bool asServer)
+    {
+        var tile = GameManager.Instance.boardTiles[currentTileIndex].GetComponent<TileData>();
+        if (tile != null && currentPawn != null)
+            buyButton.interactable = newVal >= tile.companyCost;
+    }
+
+    private void CloseAndContinue()
+    {
+        panel.SetActive(false);
+        if (currentPawn != null)
+        {
+            currentPawn.money.OnChange -= OnMoneyChanged; // clean up listener
+
+            currentPawn.CmdTileActionComplete();
+            MarketManager.Instance.CmdRequestProposalUI();
+        }
+    }
+
 
     public void OnBuyCompanyClicked()
     {
@@ -49,18 +75,5 @@ public class InvestmentUI : MonoBehaviour
     {
         CloseAndContinue();
     }
-
-    private void CloseAndContinue()
-    {
-        panel.SetActive(false);
-
-        if (currentPawn != null)
-        {
-            // Tell server: tile action finished → TurnManager will switch to Proposal or ExtraRoll
-            currentPawn.CmdTileActionComplete();
-
-            // Ask server to open ProposalUI (allowed only if phase is Proposal)
-            MarketManager.Instance.CmdRequestProposalUI();
-        }
-    }
+    
 }
