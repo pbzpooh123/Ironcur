@@ -12,20 +12,26 @@ public class TurnUI : MonoBehaviour
     {
         rollDiceButton.onClick.AddListener(OnRollDiceClicked);
         endTurnButton.onClick.AddListener(OnEndTurnClicked);
+
+        // Make sure they start disabled. Server will enable via RpcSetTurnState.
+        SetRollInteractable(false);
+        SetEndTurnInteractable(false);
     }
 
     public void BindPawn(PlayerPawn pawn)
     {
         myPawn = pawn;
-        rollDiceButton.interactable = false;
-        endTurnButton.interactable = false;
+        // Do not enable anything here; server will broadcast.
+        SetRollInteractable(false);
+        SetEndTurnInteractable(false);
     }
 
     private void OnRollDiceClicked()
     {
         if (myPawn != null && myPawn.IsOwner)
         {
-            myPawn.OnRollDiceButton();
+            myPawn.OnRollDiceButton();  // calls CmdRollDiceAndMove (server validates CanRoll)
+            SetRollInteractable(false); // prevent double-click
         }
     }
 
@@ -33,22 +39,13 @@ public class TurnUI : MonoBehaviour
     {
         if (myPawn != null && myPawn.IsOwner)
         {
-            myPawn.OnEndTurnButton();
+            myPawn.OnEndTurnButton();   // calls CmdEndTurn (server validates CanEndTurn)
+            SetEndTurnInteractable(false); // prevent double-click
         }
     }
 
-    public void SetEndTurnInteractable(bool enable)
-    {
-        endTurnButton.interactable = enable;
-    }
+    public void SetEndTurnInteractable(bool enable) => endTurnButton.interactable = enable;
+    public void SetRollInteractable(bool enable)    => rollDiceButton.interactable = enable;
 
-    public void SetRollInteractable(bool enable)
-    {
-        rollDiceButton.interactable = enable;
-    }
-
-    public void ForceDisableEndTurn()
-    {
-        SetEndTurnInteractable(false);
-    }
+    public void ForceDisableEndTurn() => SetEndTurnInteractable(false);
 }

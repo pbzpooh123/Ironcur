@@ -101,54 +101,39 @@ public class MarketManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
 public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
 {
-    Debug.Log($"[CmdBuyCompany] Called by conn={conn?.ClientId}, tileIndex={tileIndex}");
-
-    if (!IsServer)
+    if (conn == null)
     {
-        Debug.LogWarning("[CmdBuyCompany] Not running on server.");
+        Debug.LogWarning("[Market] CmdBuyCompany called with null conn.");
         return;
     }
 
-    // Who sent this?
+    // Resolve the caller's pawn on the server.
     var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
     if (pawn == null)
     {
-        Debug.LogWarning("[CmdBuyCompany] Could not resolve pawn from connection.");
+        Debug.LogWarning("[Market] CmdBuyCompany: Could not resolve pawn for caller.");
         return;
     }
 
-    // Optional but recommended: only allow current pawn
-    if (!TurnManager.Instance.IsCurrentPawn(pawn))
-    {
-        Debug.LogWarning($"[CmdBuyCompany] {pawn.playerName.Value} is not the current pawn.");
-        return;
-    }
+    Debug.Log($"[Market] CmdBuyCompany received from {pawn.playerName.Value}, tile={tileIndex}");
 
-    // Validate tile index
-    if (GameManager.Instance.boardTiles == null ||
-        tileIndex < 0 || tileIndex >= GameManager.Instance.boardTiles.Length)
-    {
-        Debug.LogWarning($"[CmdBuyCompany] Invalid tileIndex {tileIndex} or boardTiles missing on server.");
-        return;
-    }
-
-    var tile = GameManager.Instance.GetTileData(tileIndex);
+    
+    var tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
     if (tile == null)
     {
-        Debug.LogWarning($"[CmdBuyCompany] Invalid tileIndex={tileIndex} or TileData missing.");
+        Debug.LogWarning("[Market] CmdBuyCompany: TileData null.");
         return;
     }
-    
     if (tile.owner != null)
     {
-        Debug.LogWarning($"[CmdBuyCompany] Tile {tile.companyName} already owned by {tile.owner.playerName.Value}.");
+        Debug.LogWarning("[Market] CmdBuyCompany: tile already owned.");
         return;
     }
 
-    // Spend money
+    // Cost check.
     if (!pawn.TrySpendMoney(tile.companyCost))
     {
-        Debug.LogWarning($"[CmdBuyCompany] {pawn.playerName.Value} cannot afford {tile.companyCost}.");
+        Debug.LogWarning($"[Market] CmdBuyCompany: {pawn.playerName.Value} cannot afford ${tile.companyCost}.");
         return;
     }
 
@@ -156,79 +141,146 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
     if (!companies.ContainsKey(key))
     {
         var record = new CompanyRecord(key, tile.companyCost, pawn);
-        record.ownerName = pawn.playerName.Value; // keep string for clients to rebind
         companies[key] = record;
         tile.owner = pawn;
 
+        // Sync to everyone.
+        RpcAddCompany(key, tile.companyCost, pawn.playerName.Value);
         Debug.Log($"[Market] {pawn.playerName.Value} founded company {key}");
-
-        // Send to all clients
-        RpcAddCompany(key, tile.companyCost, record.ownerName);
     }
     else
     {
-        Debug.LogWarning($"[CmdBuyCompany] Company {key} already exists in server dictionary.");
+        // In case you landed on an existing company with no owner (edge case)
+        var rec = companies[key];
+        rec.owner = pawn;
+        rec.ownerName = pawn.playerName.Value;
+        rec.ownershipPercents.Clear();
+        rec.ownershipPercents[pawn] = 100;
+        tile.owner = pawn;
+        RpcAddCompany(key, rec.baseCost, pawn.playerName.Value);
+        Debug.Log($"[Market] {pawn.playerName.Value} took ownership of existing company {key}");
     }
-    
+
+    // Continue your tile flow on the server (optional; your InvestmentUI already notifies).
+    TurnManager.Instance.ServerOnTileActionComplete(pawn);
 }
 
 
     [ObserversRpc]
-    private void RpcAddCompany(string companyName, int baseCost, string ownerName)
-    {
-        var ownerPawn = GameManager.Instance.Players.Find(p => p.playerName.Value == ownerName);
+private void RpcAddCompany(string companyName, int baseCost, string ownerName)
+{
+    Debug.Log($"[RpcAddCompany] company={companyName}, ownerName={ownerName}");
 
-        if (!companies.ContainsKey(companyName))
+    if (!companies.TryGetValue(companyName, out var rec))
+    {
+        var ownerPawn = FindPawnByName(ownerName);
+        rec = new CompanyRecord(companyName, baseCost, ownerPawn);
+        rec.ownerName = ownerName;
+
+        // If owner found now, ensure ownership map has 100% for them.
+        if (ownerPawn != null)
         {
-            var record = new CompanyRecord(companyName, baseCost, ownerPawn);
-            record.ownerName = ownerName; 
-            
+            rec.owner = ownerPawn;
+            rec.ownershipPercents.Clear();
+            rec.ownershipPercents[ownerPawn] = 100;
+        }
+
+        companies[companyName] = rec;
+
+        if (ownerPawn == null)
+            StartCoroutine(RebindOwnerLater(companyName, ownerName));
+    }
+    else
+    {
+        // Company already exists (edge case). Ensure ownerName and try to assign owner.
+        rec.ownerName = ownerName;
+
+        if (rec.owner == null)
+        {
+            var ownerPawn = FindPawnByName(ownerName);
             if (ownerPawn != null)
             {
-                record.owner = ownerPawn;
-                record.ownershipPercents[ownerPawn] = 100;
+                rec.owner = ownerPawn;
+                rec.ownershipPercents.Clear();
+                rec.ownershipPercents[ownerPawn] = 100;
             }
-
-            companies[companyName] = record;
-
-            
-            if (ownerPawn == null && !string.IsNullOrEmpty(ownerName))
+            else
+            {
                 StartCoroutine(RebindOwnerLater(companyName, ownerName));
+            }
         }
-        
+    }
+
+    // If any UI is open, refresh it.
+    if (ProposalUI.Instance != null && ProposalUI.Instance.panel.activeSelf)
+        ProposalUI.Instance.Refresh();
+    if (ReviewUI.Instance != null && ReviewUI.Instance.panel.activeSelf)
+        ReviewUI.Instance.Refresh();
+}
+
+private PlayerPawn FindPawnByName(string name)
+{
+    if (string.IsNullOrEmpty(name)) return null;
+
+    // First try GameManager list (preferred).
+    var gm = GameManager.Instance;
+    if (gm != null && gm.Players != null)
+    {
+        var p = gm.Players.Find(pp => pp != null && pp.playerName.Value == name);
+        if (p != null) return p;
+    }
+
+    // Fallback: brute force the scene.
+    foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
+    {
+        if (p != null && p.playerName.Value == name)
+            return p;
+    }
+
+    return null;
+}
+
+private IEnumerator RebindOwnerLater(string companyName, string ownerName)
+{
+    Debug.Log($"[RebindOwnerLater] Waiting for owner {ownerName} for {companyName}");
+    float timeout = 5f;
+    PlayerPawn found = null;
+
+    while (timeout > 0f && (found = FindPawnByName(ownerName)) == null)
+    {
+        timeout -= Time.deltaTime;
+        yield return null;
+    }
+
+    if (found == null)
+    {
+        Debug.LogWarning($"[RebindOwnerLater] Failed to rebind owner for {companyName}");
+        yield break;
+    }
+
+    if (companies.TryGetValue(companyName, out var rec))
+    {
+        rec.owner = found;
+        rec.ownerName = ownerName;
+
+        if (rec.ownershipPercents.Count == 0 || !rec.ownershipPercents.ContainsKey(found))
+        {
+            rec.ownershipPercents.Clear();
+            rec.ownershipPercents[found] = 100;
+        }
+
+        Debug.Log($"[RebindOwnerLater] Rebound owner {ownerName} for {companyName}");
+
+        if (ReviewUI.Instance != null && ReviewUI.Instance.panel.activeSelf)
+            ReviewUI.Instance.Refresh();
         if (ProposalUI.Instance != null && ProposalUI.Instance.panel.activeSelf)
             ProposalUI.Instance.Refresh();
     }
-
-    private IEnumerator RebindOwnerLater(string companyName, string ownerName)
-    {
-        PlayerPawn found = null;
-        // keep waiting until GameManager.Players is populated
-        while (found == null)
-        {
-            if (GameManager.Instance != null && GameManager.Instance.Players.Count > 0)
-                found = GameManager.Instance.Players.Find(p => p.playerName.Value == ownerName);
-            yield return new WaitForSeconds(0.2f);
-        }
-
-        if (companies.TryGetValue(companyName, out var rec))
-        {
-            rec.owner = found;
-            rec.ownerName = ownerName;
-
-            if (!rec.ownershipPercents.ContainsKey(found))
-                rec.ownershipPercents[found] = 100;
-
-            Debug.Log($"[MarketManager] Rebound owner {ownerName} for {companyName}");
-            ReviewUI.Instance?.Refresh();
-        }
-    }
+}
 
     /* ================= Proposal Flow (server-driven UI) ================= */
-
-    /// <summary>
+    
     /// Server-only entry point to open Proposal UI for the current pawn.
-    /// </summary>
     [Server]
     public void ShowProposalForPawn(PlayerPawn pawn)
     {

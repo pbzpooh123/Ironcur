@@ -19,7 +19,7 @@ public class TurnManager : NetworkBehaviour
 {
     public static TurnManager Instance;
 
-    private List<PlayerPawn> turnOrder = new List<PlayerPawn>(); // shuffled order
+    private List<PlayerPawn> turnOrder = new List<PlayerPawn>();
 
     public readonly SyncVar<int> currentPlayerIndex = new();
     public readonly SyncVar<int> turnCount = new();
@@ -27,16 +27,12 @@ public class TurnManager : NetworkBehaviour
 
     public TMP_Text roundtext;
 
-    // Current phase (server authoritative)
     private TurnPhase _phase = TurnPhase.None;
 
-    // Skip turn tracking
     private readonly Dictionary<PlayerPawn, int> _skipTurns = new();
-
-    // Extra rolls per pawn this turn
     private readonly Dictionary<PlayerPawn, int> _extraRolls = new();
 
-    // Main-event single-fire guard
+    // Main event single-fire guard.
     private int _lastMainEventRoundFired = -1;
 
     private void Awake()
@@ -48,9 +44,6 @@ public class TurnManager : NetworkBehaviour
     public override void OnStartServer()
     {
         base.OnStartServer();
-        if (Owner != null)
-            GiveOwnership(Owner);
-
         StartCoroutine(DelayedStart());
     }
 
@@ -82,12 +75,72 @@ public class TurnManager : NetworkBehaviour
         yield return new WaitForSeconds(1.0f);
         StartTurn();
     }
+    
+    // --- Phase gate checks used by PlayerPawn ---
+    [Server] public bool CanRoll(PlayerPawn pawn)          => IsCurrentPawn(pawn) && _phase == TurnPhase.Rolling;
+    [Server] public bool CanEndTurn(PlayerPawn pawn)       => IsCurrentPawn(pawn) && _phase == TurnPhase.EndReady;
+    [Server] public bool InProposalPhaseFor(PlayerPawn p)  => IsCurrentPawn(p)    && _phase == TurnPhase.Proposal;
+    [Server] public bool InReviewPhaseFor(PlayerPawn p)    => IsCurrentPawn(p)    && _phase == TurnPhase.Review;
 
     [Server]
     private void SetPhase(TurnPhase phase)
     {
         _phase = phase;
         Debug.Log($"[TurnManager] Phase -> {_phase}");
+
+        // Broadcast to ALL clients so they can set UI properly
+        var pawn = GetCurrentPawn();
+        string currentName = (pawn != null) ? pawn.playerName.Value : "";
+        RpcSetTurnState(currentPlayerIndex.Value, _phase, currentName);
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcSetTurnState(int index, TurnPhase phase, string currentPlayerName)
+    {
+        // Optional: debug
+        // Debug.Log($"[Client] TurnState -> idx={index}, phase={phase}, current={currentPlayerName}");
+
+        var tu = GameObject.FindObjectOfType<TurnUI>();
+        if (tu == null) return;
+
+        // Find local-owned pawn
+        PlayerPawn local = null;
+        foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
+        {
+            if (p != null && p.IsOwner)
+            {
+                local = p;
+                break;
+            }
+        }
+
+        // Default lock-down
+        tu.SetRollInteractable(false);
+        tu.SetEndTurnInteractable(false);
+
+        if (local == null || string.IsNullOrEmpty(currentPlayerName))
+            return;
+
+        bool isMyTurn = (local.playerName.Value == currentPlayerName);
+
+        switch (phase)
+        {
+            case TurnPhase.Review:
+                // Only review UI for the owner. No buttons here.
+                break;
+
+            case TurnPhase.Rolling:
+                tu.SetRollInteractable(isMyTurn);
+                break;
+
+            case TurnPhase.Proposal:
+                // Proposal UI for current player. No buttons here.
+                break;
+
+            case TurnPhase.EndReady:
+                tu.SetEndTurnInteractable(isMyTurn);
+                break;
+        }
     }
 
     [Server]
@@ -96,11 +149,7 @@ public class TurnManager : NetworkBehaviour
         return pawn != null && turnOrder.Count > 0
                && turnOrder[Mathf.Clamp(currentPlayerIndex.Value, 0, turnOrder.Count - 1)] == pawn;
     }
-
-    [Server] public bool CanRoll(PlayerPawn pawn)    => IsCurrentPawn(pawn) && _phase == TurnPhase.Rolling;
-    [Server] public bool CanEndTurn(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.EndReady;
-    [Server] public bool InProposalPhaseFor(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.Proposal;
-    [Server] public bool InReviewPhaseFor(PlayerPawn pawn)   => IsCurrentPawn(pawn) && _phase == TurnPhase.Review;
+    
 
     [Server]
     private bool ShouldSkip(PlayerPawn pawn)
@@ -132,8 +181,12 @@ public class TurnManager : NetworkBehaviour
         _extraRolls[pawn] += Mathf.Max(1, count);
     }
 
-    [Server] private int  GetExtraRolls(PlayerPawn pawn)       => (pawn != null && _extraRolls.TryGetValue(pawn, out int v)) ? v : 0;
-    [Server] private void ConsumeOneExtraRoll(PlayerPawn pawn)  { if (pawn != null && _extraRolls.TryGetValue(pawn, out int v) && v > 0) _extraRolls[pawn] = v - 1; }
+    [Server] private int  GetExtraRolls(PlayerPawn pawn) => (pawn != null && _extraRolls.TryGetValue(pawn, out int v)) ? v : 0;
+    [Server] private void ConsumeOneExtraRoll(PlayerPawn pawn)
+    {
+        if (pawn != null && _extraRolls.TryGetValue(pawn, out int v) && v > 0)
+            _extraRolls[pawn] = v - 1;
+    }
 
     /* -------------------- Turn lifecycle -------------------- */
 
@@ -161,7 +214,7 @@ public class TurnManager : NetworkBehaviour
         if (!_extraRolls.ContainsKey(currentPlayer))
             _extraRolls[currentPlayer] = 0;
 
-        // Tell the client it's their turn
+        // Let only the current player bind UI
         currentPlayer.TargetStartTurn(currentPlayer.Owner);
         Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value}");
 
@@ -183,14 +236,11 @@ public class TurnManager : NetworkBehaviour
         if (pawn == null) return;
 
         SetPhase(TurnPhase.Rolling);
+        // Still okay to hint current pawn UI directly
         pawn.TargetEnableRoll(pawn.Owner, true);
         pawn.TargetEnableEndTurn(pawn.Owner, false);
     }
 
-    /// <summary>
-    /// Called by EventManager or PlayerPawn/InvestmentUI when the tile action (including events) is fully done.
-    /// Decides whether to give an extra roll or go to Proposal phase.
-    /// </summary>
     [Server]
     public void ServerOnTileActionComplete(PlayerPawn pawn)
     {
@@ -245,7 +295,7 @@ public class TurnManager : NetworkBehaviour
 
             Debug.Log($"[TurnManager] Completed a full cycle. TurnCount={turnCount.Value}");
 
-            // A round completes only when everyone has taken a turn
+            // A round completes when everyone has taken a turn
             if (turnCount.Value % turnOrder.Count == 0)
             {
                 roundCount.Value++;
@@ -259,17 +309,16 @@ public class TurnManager : NetworkBehaviour
 
         currentPlayerIndex.Value = nextIndex;
 
-        // Main Event: fire only once per round
+        // Fire Main Event once per eligible round
         if (roundCount.Value > 0 &&
             (roundCount.Value % 3 == 0) &&
             _lastMainEventRoundFired != roundCount.Value)
         {
             _lastMainEventRoundFired = roundCount.Value;
-
-            // Do NOT start the next turn now; EventManager will call back when it’s done.
             EventManager.Instance?.TriggerMainEvent(roundCount.Value);
+
             SetPhase(TurnPhase.None);
-            return;
+            return; // EventManager will call ServerStartTurnAfterMainEvent()
         }
 
         SetPhase(TurnPhase.None);
@@ -277,7 +326,7 @@ public class TurnManager : NetworkBehaviour
     }
 
     /// <summary>
-    /// Called by EventManager AFTER main event finishes acknowledging on all clients.
+    /// Called by EventManager AFTER main event finishes.
     /// </summary>
     [Server]
     public void ServerStartTurnAfterMainEvent()

@@ -68,10 +68,10 @@ public class InvestmentUI : MonoBehaviour
     public void OnBuyCompanyClicked()
     {
         Debug.Log($"[InvestmentUI] Buy clicked by {currentPawn?.playerName.Value}, tile={currentTileIndex}");
-        buyButton.interactable = false;  // prevent double click
-
-        // Call RPC with just tileIndex; server will resolve pawn via conn
+        buyButton.interactable = false;  
+        
         MarketManager.Instance.CmdBuyCompany(currentTileIndex);
+
 
         CloseAndContinue();
     }

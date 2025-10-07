@@ -149,6 +149,18 @@ public class PlayerPawn : NetworkBehaviour
             ui.SetEndTurnInteractable(false);
         }
     }
+    
+    [TargetRpc]
+    public void TargetEndTurn(NetworkConnection conn)
+    {
+        isMyTurn = false;
+        var ui = GameObject.FindObjectOfType<TurnUI>();
+        if (ui != null)
+        {
+            ui.SetRollInteractable(false);
+            ui.SetEndTurnInteractable(false);
+        }
+    }
 
     [TargetRpc]
     public void TargetEnableEndTurn(NetworkConnection conn, bool enable)
