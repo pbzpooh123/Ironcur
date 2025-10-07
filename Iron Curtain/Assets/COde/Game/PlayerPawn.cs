@@ -193,14 +193,14 @@ public class PlayerPawn : NetworkBehaviour
             yield return new WaitForSeconds(0.1f);
         }
 
-        if (IsServer)
+        if (IsServerInitialized)
             HandleTileLogic();
     }
 
     [Server]
     private void HandleTileLogic()
     {
-        var data = GameManager.Instance.boardTiles[currentTile].GetComponent<TileData>();
+        var data = GameManager.Instance.GetTileData(currentTile);
         if (data == null)
         {
             TurnManager.Instance.ServerOnTileActionComplete(this);

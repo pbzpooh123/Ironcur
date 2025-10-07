@@ -30,7 +30,7 @@ public class ProposalUI : MonoBehaviour
         panel.SetActive(true);
         Refresh();
         
-        if (TurnManager.Instance != null && TurnManager.Instance.IsServer)
+        if (TurnManager.Instance != null && TurnManager.Instance.IsServerInitialized)
             TurnManager.Instance.InProposalPhaseFor(pawn);
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null) ui.SetEndTurnInteractable(false);

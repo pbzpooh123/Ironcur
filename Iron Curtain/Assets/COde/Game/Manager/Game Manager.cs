@@ -19,6 +19,7 @@ public class GameManager : NetworkBehaviour
     
     public List<PlayerPawn> Players => new List<PlayerPawn>(playerPawns.Values);
     
+    
     private void Awake()
     {
         if (Instance == null) Instance = this;
@@ -118,4 +119,32 @@ public class GameManager : NetworkBehaviour
             pawn.transform.position = pos;
         }
     }
+    
+    public TileData GetTileData(int index)
+    {
+        if (boardTiles == null || index < 0 || index >= boardTiles.Length)
+            return null;
+
+        var tf = boardTiles[index];
+        if (tf == null) return null;
+        return tf.GetComponent<TileData>();
+    }
+
+    public TileData FindTileByCompanyName(string companyName)
+    {
+        if (boardTiles == null || string.IsNullOrEmpty(companyName))
+            return null;
+
+        for (int i = 0; i < boardTiles.Length; i++)
+        {
+            var tf = boardTiles[i];
+            if (tf == null) continue;
+
+            var td = tf.GetComponent<TileData>();
+            if (td != null && td.companyName == companyName)
+                return td;
+        }
+        return null;
+    }
+
 }

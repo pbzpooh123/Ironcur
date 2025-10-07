@@ -42,30 +42,85 @@ public class ReviewUI : MonoBehaviour
     
     private IEnumerator DelayedRefresh()
     {
-        yield return null; // wait one frame
+        float timeout = 3f;
+        while (timeout > 0f)
+        {
+            timeout -= Time.deltaTime;
+            // Wait until we actually have proposals for this pawn
+            bool found = false;
+            if (MarketManager.Instance != null && currentPawn != null)
+            {
+                foreach (var c in MarketManager.Instance.companies.Values)
+                {
+                    if (c != null && c.owner == currentPawn && c.proposals != null && c.proposals.Count > 0)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (found) break;
+            yield return null;
+        }
+
         Refresh();
     }
 
+
     public void Refresh()
     {
-        if (panel == null || !panel.activeSelf) return;
+        foreach (var c in MarketManager.Instance.companies.Values)
+        {
+            if (c.owner == null && !string.IsNullOrEmpty(c.ownerName))
+            {
+                var tryOwner = GameManager.Instance.Players.Find(p => p.playerName.Value == c.ownerName);
+                if (tryOwner != null)
+                {
+                    c.owner = tryOwner;
+                    Debug.Log($"[ReviewUI] Late rebind: {c.companyName} → {tryOwner.playerName.Value}");
+                }
+            }
+        }
+        if (panel == null || !panel.activeSelf)
+            return;
+        if (MarketManager.Instance == null)
+        {
+            Debug.LogWarning("[ReviewUI] MarketManager not ready yet.");
+            return;
+        }
+        if (currentPawn == null)
+        {
+            Debug.LogWarning("[ReviewUI] currentPawn is null; skipping refresh.");
+            return;
+        }
 
         foreach (Transform child in listParent)
             Destroy(child.gameObject);
+        
+        Debug.Log($"[ReviewUI] Checking {MarketManager.Instance.companies.Count} companies for {currentPawn.playerName.Value}");
 
-        if (MarketManager.Instance == null || currentPawn == null)
-            return;
+        foreach (var kv in MarketManager.Instance.companies)
+        {
+            var c = kv.Value;
+            if (c == null)
+            {
+                Debug.Log($"[ReviewUI] {kv.Key} is null");
+                continue;
+            }
 
-        // Show only proposals for companies owned by this pawn
+            Debug.Log($"[ReviewUI] {kv.Key} owner={c.owner?.playerName.Value ?? "null"} proposals={(c.proposals?.Count ?? 0)}");
+        }
+
         foreach (var company in MarketManager.Instance.companies.Values)
         {
             if (company == null) continue;
+            if (company.owner == null) continue; // new null check
             if (company.owner != currentPawn) continue;
             if (company.proposals == null || company.proposals.Count == 0) continue;
 
             for (int i = 0; i < company.proposals.Count; i++)
             {
-                Debug.Log("Review this");
+                Debug.Log($"[ReviewUI] Adding review entry for {company.companyName}");
                 var p = company.proposals[i];
                 var go = Instantiate(reviewEntryPrefab, listParent);
                 var entry = go.GetComponent<ReviewEntry>();
@@ -74,6 +129,7 @@ public class ReviewUI : MonoBehaviour
             }
         }
     }
+
 
     private void CloseAndNotifyServer()
     {

@@ -63,7 +63,7 @@ public class LobbyUI : MonoBehaviour
         }
 
         // Only the host (server) can start the game
-        if (InstanceFinder.IsServer)
+        if (InstanceFinder.IsServerStarted)
         {
             startGameButton.interactable = NetworkManagerLobby.Instance.AllPlayersReady();
         }
@@ -85,7 +85,7 @@ public class LobbyUI : MonoBehaviour
 
     private void OnStartClicked()
     {
-        if (InstanceFinder.IsServer && NetworkManagerLobby.Instance.AllPlayersReady())
+        if (InstanceFinder.IsServerStarted && NetworkManagerLobby.Instance.AllPlayersReady())
         {
             Debug.Log("All players ready. Switching to game scene...");
 
