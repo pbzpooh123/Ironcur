@@ -64,7 +64,7 @@ public class EventManager : NetworkBehaviour
         }
         else
         {
-            msg = $"🌍 Main Event at Round {round}!";
+            msg = $"Main Event at Round {round}!";
         }
 
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
@@ -130,18 +130,22 @@ public class EventManager : NetworkBehaviour
         if (!waitingForAcks) return;
 
         playersReady++;
+        Debug.Log($"[EventManager] Ack received {playersReady}/{requiredReady}");
+
         if (playersReady >= requiredReady)
         {
             waitingForAcks = false;
+            Debug.Log("[EventManager] All acks received → ResumeAfterEvent()");
             ResumeAfterEvent();
         }
     }
     #endregion
-
+    
     #region =============== RESUME FLOW ===============
     [Server]
     private void ResumeAfterEvent()
     {
+        Debug.Log($"[EventManager] ResumeAfterEvent: {_resume}");
         switch (_resume)
         {
             case ResumeContext.Tile:
@@ -150,7 +154,6 @@ public class EventManager : NetworkBehaviour
                 break;
 
             case ResumeContext.Main:
-                // Instead of manually starting next turn, let TurnManager handle normal progression
                 TurnManager.Instance.ServerStartTurnAfterMainEvent();
                 break;
         }
@@ -188,7 +191,7 @@ public class EventManager : NetworkBehaviour
             if (effect.skipTurn)
                 TurnManager.Instance.MarkSkipTurn(pawn, Mathf.Max(1, effect.duration));
 
-            // 3) Extra roll marker
+            // 3) EXTRA ROLL: mark the flag regardless of targetType
             if (effect.grantExtraRoll)
                 extraRoll = true;
 
@@ -234,6 +237,11 @@ public class EventManager : NetworkBehaviour
 
                 default:
                     break;
+            }
+            if (extraRoll)
+            {
+                TurnManager.Instance.QueueExtraRoll(pawn, 1);
+                Debug.Log($"[Event] Extra roll queued for {pawn.playerName.Value}");
             }
         }
 

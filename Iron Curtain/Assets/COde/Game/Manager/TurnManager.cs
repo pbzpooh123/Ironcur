@@ -244,19 +244,28 @@ public class TurnManager : NetworkBehaviour
     [Server]
     public void ServerOnTileActionComplete(PlayerPawn pawn)
     {
-        if (!IsCurrentPawn(pawn)) return;
+        if (!IsCurrentPawn(pawn))
+        {
+            Debug.LogWarning("[TurnManager] ServerOnTileActionComplete called for non-current pawn.");
+            return;
+        }
 
         int extra = GetExtraRolls(pawn);
+        Debug.Log($"[TurnManager] Tile action complete for {pawn.playerName.Value}. ExtraRolls={extra}");
+
         if (extra > 0)
         {
             ConsumeOneExtraRoll(pawn);
-            ProceedToRoll();
+            Debug.Log($"[TurnManager] Consumed one extra roll. Remaining={GetExtraRolls(pawn)} → ProceedToRoll()");
+            ProceedToRoll();  // This will SetPhase(Rolling) and enable Roll, disable EndTurn
         }
         else
         {
-            ProceedToProposal();
+            Debug.Log("[TurnManager] No extra roll → ProceedToProposal()");
+            ProceedToProposal(); // This opens ProposalUI and eventually enables EndTurn
         }
     }
+
 
     [Server]
     public void ProceedToProposal()

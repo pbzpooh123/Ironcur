@@ -35,12 +35,16 @@ public class EventUI : MonoBehaviour
 
         okButton.onClick.RemoveAllListeners();
         okButton.onClick.AddListener(OnOk);
-        // Disable End Turn while popup open
-        TurnUI ui = FindObjectOfType<TurnUI>();
-        if (ui != null) ui.ForceDisableEndTurn();
+
+        var ui = FindObjectOfType<TurnUI>();
+        if (ui != null)
+        {
+            ui.SetRollInteractable(false);   // block roll while popup visible
+            ui.ForceDisableEndTurn();        // keep EndTurn off too
+        }
     }
-    
-    public void SideeventShow(string msg,bool pauseAll)
+
+    public void SideeventShow(string msg, bool pauseAll)
     {
         Sidepanel.SetActive(true);
         SideeventText.text = msg;
@@ -49,9 +53,13 @@ public class EventUI : MonoBehaviour
 
         SideokButton.onClick.RemoveAllListeners();
         SideokButton.onClick.AddListener(OnSideOk);
-        // Disable End Turn while popup open
-        TurnUI ui = FindObjectOfType<TurnUI>();
-        if (ui != null) ui.ForceDisableEndTurn();
+
+        var ui = FindObjectOfType<TurnUI>();
+        if (ui != null)
+        {
+            ui.SetRollInteractable(false);
+            ui.ForceDisableEndTurn();
+        }
     }
 
     private void OnOk()
