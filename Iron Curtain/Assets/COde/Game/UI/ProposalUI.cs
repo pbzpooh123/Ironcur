@@ -75,6 +75,18 @@ public class ProposalUI : MonoBehaviour
         MarketManager.Instance.CmdNotifyProposalClosed();
     }
 
+    public ProposalEntry FindEntryForCompany(string companyName)
+    {
+        foreach (Transform t in listParent)
+        {
+            var e = t.GetComponent<ProposalEntry>();
+            if (e != null && e.CompanyKey == companyName)
+                return e;
+        }
+        return null;
+    }
+
+    
     public void Hide()
     {
         CloseAndNotifyServer();

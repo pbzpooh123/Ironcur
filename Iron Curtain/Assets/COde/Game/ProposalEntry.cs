@@ -1,59 +1,91 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class ProposalEntry : MonoBehaviour
 {
-    [Header("Refs")]
     public TMP_Text companyNameText;
     public TMP_InputField percentInput;
     public TMP_InputField priceInput;
     public Button submitButton;
+    public TMP_Text warningText; // optional for feedback
 
-    private CompanyRecord company;
-    private PlayerPawn currentPawn;
+    public string CompanyKey { get; private set; }
 
-    public void Setup(CompanyRecord record, PlayerPawn pawn)
+    private CompanyRecord _company;
+    private PlayerPawn _pawn;
+    private bool _submittedThisEntry = false;
+
+    public void Setup(CompanyRecord company, PlayerPawn pawn)
     {
-        company = record;
-        currentPawn = pawn;
+        _company = company;
+        _pawn = pawn;
+        CompanyKey = company.companyName;
 
-        companyNameText.text = record.companyName;
+        companyNameText.text = company.companyName;
 
-        // Clear input and set up listeners
-        percentInput.text = "";
-        priceInput.text = "";
-
-        submitButton.interactable = false; // start disabled
-
-        percentInput.onValueChanged.AddListener(_ => ValidateInputs());
-        priceInput.onValueChanged.AddListener(_ => ValidateInputs());
+        percentInput.onValueChanged.AddListener(_ => Validate());
+        priceInput.onValueChanged.AddListener(_ => Validate());
 
         submitButton.onClick.RemoveAllListeners();
         submitButton.onClick.AddListener(OnSubmitClicked);
+
+        _submittedThisEntry = false;
+        if (warningText != null) warningText.text = "";
+
+        Validate();
     }
 
-    private void ValidateInputs()
+    private void Validate()
     {
-        bool validPercent = int.TryParse(percentInput.text, out int p) && p > 0;
-        bool validPrice   = int.TryParse(priceInput.text, out int pr) && pr > 0;
+        if (_submittedThisEntry) { submitButton.interactable = false; return; }
+        if (_company == null || _pawn == null) { submitButton.interactable = false; return; }
 
-        // Enable only if both valid
-        submitButton.interactable = validPercent && validPrice;
+        if (!int.TryParse(percentInput.text, out int pct)) { submitButton.interactable = false; return; }
+        if (!int.TryParse(priceInput.text, out int price))  { submitButton.interactable = false; return; }
+
+        if (pct < 1 || pct > 40) { submitButton.interactable = false; return; }
+        if (price < 1) { submitButton.interactable = false; return; }
+
+        // Cannot propose on your own company
+        if (!string.IsNullOrEmpty(_company.ownerName) &&
+            _company.ownerName == _pawn.playerName.Value)
+        {
+            submitButton.interactable = false; 
+            if (warningText != null) warningText.text = "Can't propose to your own company.";
+            return;
+        }
+
+        // Must be able to afford at SUBMIT time
+        if (_pawn.money.Value < price)
+        {
+            submitButton.interactable = false;
+            if (warningText != null) warningText.text = "Not enough money to submit.";
+            return;
+        }
+
+        submitButton.interactable = true;
+        if (warningText != null) warningText.text = "";
     }
 
     private void OnSubmitClicked()
     {
-        if (company == null || currentPawn == null) return;
+        if (_company == null || _pawn == null) return;
+        if (!int.TryParse(percentInput.text, out int pct)) return;
+        if (!int.TryParse(priceInput.text, out int price)) return;
 
-        if (!int.TryParse(percentInput.text, out int percent)) percent = 0;
-        if (!int.TryParse(priceInput.text, out int price)) price = 0;
-
-        if (percent <= 0 || price <= 0) return;
-
-        MarketManager.Instance.CmdSubmitProposal(currentPawn.Owner, company.companyName, percent, price);
-
-        // Disable to prevent double click
+        // Prevent double press locally.
         submitButton.interactable = false;
+        _submittedThisEntry = true;
+
+        // ✅ New signature: (string companyName, int percent, int price)
+        MarketManager.Instance.CmdSubmitProposal(_company.companyName, pct, price);
+    }
+    
+    public void OnServerRejected(string reason)
+    {
+        _submittedThisEntry = false;
+        if (warningText != null) warningText.text = reason;
+        Validate();
     }
 }

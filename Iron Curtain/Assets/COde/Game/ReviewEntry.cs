@@ -1,45 +1,95 @@
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
-using FishNet;
 
 public class ReviewEntry : MonoBehaviour
 {
-    public TMP_Text companyNameText;
-    public TMP_Text proposerNameText;
-    public TMP_Text percentText;
-    public TMP_Text priceText;
+    [Header("UI Refs (assign in prefab if possible)")]
+    public TMP_Text infoText;
     public Button acceptButton;
     public Button rejectButton;
 
-    private string companyName;
-    private int proposalIndex;
+    private string _companyName;
+    private int _index;
+    private Proposal _proposal;
 
-    public void Setup(string compName, int index, Proposal proposal)
+    private void Awake()
     {
-        companyName = compName;
-        proposalIndex = index;
+        // Auto-wire if not assigned (helps during iteration).
+        if (infoText == null)
+            infoText = GetComponentInChildren<TMP_Text>();
+        if (acceptButton == null || rejectButton == null)
+        {
+            var buttons = GetComponentsInChildren<Button>(true);
+            foreach (var b in buttons)
+            {
+                if (b.name.ToLower().Contains("accept") && acceptButton == null)
+                    acceptButton = b;
+                else if (b.name.ToLower().Contains("reject") && rejectButton == null)
+                    rejectButton = b;
+            }
+        }
 
-        if (companyNameText) companyNameText.text = compName;
-        if (proposerNameText) proposerNameText.text = proposal.proposer != null ? proposal.proposer.playerName.Value : "???";
-        if (percentText) percentText.text = $"{proposal.percent}%";
-        if (priceText) priceText.text = $"${proposal.price}";
+        if (infoText == null)
+            Debug.LogError($"[ReviewEntry] infoText is not assigned on {name}.");
+        if (acceptButton == null)
+            Debug.LogError($"[ReviewEntry] acceptButton is not assigned on {name}.");
+        if (rejectButton == null)
+            Debug.LogError($"[ReviewEntry] rejectButton is not assigned on {name}.");
+    }
 
+    public void Setup(string companyName, int index, Proposal p)
+    {
+        _companyName = companyName;
+        _index = index;
+        _proposal = p;
+
+        if (_proposal == null)
+        {
+            Debug.LogError("[ReviewEntry] Setup called with null Proposal");
+            gameObject.SetActive(false);
+            return;
+        }
+
+        // ---- Defensive checks on UI ----
+        if (infoText == null || acceptButton == null || rejectButton == null)
+        {
+            Debug.LogError("[ReviewEntry] Missing UI refs; cannot setup.");
+            gameObject.SetActive(false);
+            return;
+        }
+
+        string proposerName = (_proposal.proposer != null) ? _proposal.proposer.playerName.Value : "(unknown)";
+        infoText.text = $"{proposerName} offers ${_proposal.price} for {_proposal.percent}%";
+
+        // Determine whether Accept can be clicked
+        bool allowDebt = (MarketManager.Instance != null) && MarketManager.Instance.AllowDebtOnAccept;
+
+        bool proposerKnown = (_proposal.proposer != null);
+        bool proposerCanAfford = proposerKnown && (_proposal.proposer.money.Value >= _proposal.price);
+
+        // In Debt mode we allow accept even if proposer can't currently afford (server will bail them out).
+        bool canAccept = allowDebt || proposerCanAfford;
+
+        acceptButton.interactable = canAccept;
+        rejectButton.interactable = true;
+
+        // Clear previous listeners
         acceptButton.onClick.RemoveAllListeners();
         rejectButton.onClick.RemoveAllListeners();
-        
-        acceptButton.onClick.AddListener(OnAccept);
-        rejectButton.onClick.AddListener(OnReject);
-    }
-    
-    public void OnAccept()
-    {
-        MarketManager.Instance.CmdResolveProposal(default, companyName, proposalIndex, true);
-    }
 
-    public void OnReject()
-    {
-        MarketManager.Instance.CmdResolveProposal(default, companyName, proposalIndex, false);
-    }
+        acceptButton.onClick.AddListener(() =>
+        {
+            acceptButton.interactable = false;
+            rejectButton.interactable = false;
+            MarketManager.Instance.CmdResolveProposal(_companyName, _index, true);  // no conn param
+        });
 
+        rejectButton.onClick.AddListener(() =>
+        {
+            acceptButton.interactable = false;
+            rejectButton.interactable = false;
+            MarketManager.Instance.CmdResolveProposal(_companyName, _index, false); // no conn param
+        });
+    }
 }

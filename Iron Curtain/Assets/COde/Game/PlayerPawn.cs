@@ -74,7 +74,6 @@ public class PlayerPawn : NetworkBehaviour
     public void AddMoney(int amount)
     {
         money.Value += amount;
-        CheckBailout();
     }
 
     [Server]
@@ -310,5 +309,12 @@ public class PlayerPawn : NetworkBehaviour
         if (!TurnManager.Instance.IsCurrentPawn(this)) return;
         TurnManager.Instance.ServerOnTileActionComplete(this);
     }
-
+    
+    [Server]
+    public void ForceBailoutOnce()
+    {
+        bailoutMarks.Value += 1;
+        money.Value += 100; // +$100 bailout
+        TargetNotifyBailout(Owner, bailoutMarks.Value, money.Value);
+    }
 }

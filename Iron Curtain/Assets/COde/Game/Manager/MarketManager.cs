@@ -59,9 +59,14 @@ public class MarketManager : NetworkBehaviour
     public static MarketManager Instance;
 
     public Dictionary<string, CompanyRecord> companies = new Dictionary<string, CompanyRecord>();
-
-    // Track proposals made this TURN by the current pawn → prevent duplicate proposals for same company
+    
     private readonly Dictionary<PlayerPawn, HashSet<string>> _submittedThisTurn = new();
+    [Header("Proposal Policy")]
+    [Tooltip("If true, allow accept even when proposer lacks money by triggering bailouts automatically.")]
+    public bool AllowDebtOnAccept = true;
+
+    [Tooltip("Cap how many automatic bailouts could be applied for a single accept.")]
+    public int MaxAutoBailoutsPerAccept = 10;
 
     private void Awake()
     {
@@ -326,15 +331,18 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
         ShowProposalForPawn(pawn);
     }
     
+
     [ServerRpc(RequireOwnership = false)]
-    public void CmdNotifyProposalClosed(NetworkConnection conn = null)
+    public void CmdNotifyProposalClosed(NetworkConnection caller = null)
     {
-        if (conn == null) return;
-        var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
+        if (caller == null) return;
+        var pawn = GameManager.Instance.Players.Find(p => p.Owner == caller);
         if (pawn == null) return;
+
         TurnManager.Instance.OnPlayerFinishedProposal();
-        Debug.Log($"[Market] ProposalUI closed by {pawn.playerName.Value}. EndTurn enabled.");
+        Debug.Log($"[Market] ProposalUI closed by {pawn.playerName.Value}. EndReady enabled.");
     }
+
 
     /// <summary>
     /// Server-only entry to open Review UI for the current pawn (if they have proposals).
@@ -379,16 +387,15 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
     }
     
     [ServerRpc(RequireOwnership = false)]
-    public void CmdNotifyReviewClosed(NetworkConnection conn = null)
+    public void CmdNotifyReviewClosed(NetworkConnection caller = null)
     {
-        if (conn == null) return;
-        var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
+        if (caller == null) return;
+        var pawn = GameManager.Instance.Players.Find(p => p.Owner == caller);
         if (pawn == null) return;
-        
-        TurnManager.Instance.OnOwnerFinishedReview();
-        Debug.Log($"[Market] ReviewUI closed by {pawn.playerName.Value}. EndTurn enabled.");
-    }
 
+        TurnManager.Instance.OnOwnerFinishedReview();
+        Debug.Log($"[Market] ReviewUI closed by {pawn.playerName.Value}. Proceed to Rolling.");
+    }
     // Utility: find the local-owned pawn on the client
     private PlayerPawn FindLocalOwnedPawn()
     {
@@ -402,11 +409,13 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
     /// Only use from Proposal phase and only for the current pawn.
     /// </summary>
     [ServerRpc(RequireOwnership = false)]
-    public void CmdSubmitProposal(NetworkConnection conn, string companyName, int percent, int price)
+    public void CmdSubmitProposal(string companyName, int percent, int price, NetworkConnection caller = null)
     {
-        if (conn == null) return;
-
-        var proposer = GameManager.Instance.Players.Find(p => p.Owner == conn);
+        if (caller == null)
+        {
+            return;
+        }
+        var proposer = GameManager.Instance.Players.Find(p => p.Owner == caller);
         if (proposer == null) return;
 
         // Optional if you have phase-checks:
@@ -455,27 +464,26 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
     /* ================= Accept/Reject Proposal ================= */
 
     [ServerRpc(RequireOwnership = false)]
-    public void CmdResolveProposal(NetworkConnection conn, string companyName, int proposalIndex, bool accepted)
+    public void CmdResolveProposal(string companyName, int proposalIndex, bool accepted, NetworkConnection caller = null)
     {
-        // Only owner should resolve (ideally during Review phase)
-        if (conn == null) return;
-        var ownerPawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
+        if (caller == null) return; // who pressed Accept/Reject?
+
+        var ownerPawn = GameManager.Instance.Players.Find(p => p.Owner == caller);
         if (ownerPawn == null) return;
 
         if (!companies.TryGetValue(companyName, out var company)) return;
-        if (company.owner != ownerPawn) return;
+        if (company.owner != ownerPawn) return; // only the owner can resolve their company proposals
         if (proposalIndex < 0 || proposalIndex >= company.proposals.Count) return;
 
         var proposal = company.proposals[proposalIndex];
 
-        // Keep prev owner ref to sync HUD if majority changes
-        var prevOwner = company.owner;
-
         ResolveProposal(companyName, proposal, accepted);
+
+        // Remove the processed proposal and sync to all clients
         company.proposals.RemoveAt(proposalIndex);
         SyncProposalsToClients(companyName);
 
-        // Refresh owner’s Review UI on client
+        // Refresh Review UI for the owner
         if (ownerPawn.Owner != null)
             TargetRefreshReviewUI(ownerPawn.Owner);
     }
@@ -484,20 +492,37 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
     private void ResolveProposal(string companyName, Proposal proposal, bool accepted)
     {
         if (!companies.TryGetValue(companyName, out var company)) return;
-
         var prevOwner = company.owner;
 
         if (accepted)
         {
-            // Transfer funds
-            if (!proposal.proposer.TrySpendMoney(proposal.price))
+            bool paid;
+            if (!AllowDebtOnAccept)
             {
-                Debug.LogWarning($"[Market] Proposer cannot afford ${proposal.price}.");
+                // Strict accept: proposer must afford NOW
+                if (proposal.proposer.money.Value < proposal.price)
+                {
+                    Debug.LogWarning($"[Market] Accept failed: proposer {proposal.proposer.playerName.Value} lacks funds (${proposal.price}).");
+                    return; // proposal remains pending
+                }
+                paid = proposal.proposer.TrySpendMoney(proposal.price);
+            }
+            else
+            {
+                // Debt mode: auto-bailout until proposer can pay (capped)
+                paid = TryPayWithBailouts(proposal.proposer, proposal.price);
+            }
+
+            if (!paid)
+            {
+                Debug.LogWarning($"[Market] Accept failed: proposer could not pay ${proposal.price} even after bailouts.");
                 return;
             }
+
+            // Owner gets paid
             prevOwner.AddMoney(proposal.price);
 
-            // Transfer ownership %
+            // Transfer ownership
             int fromOwner = company.GetOwnership(prevOwner);
             int transfer = Mathf.Min(proposal.percent, fromOwner);
 
@@ -505,20 +530,15 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
             int newShare = company.GetOwnership(proposal.proposer) + transfer;
             company.SetOwnership(proposal.proposer, newShare);
 
-            // Check majority takeover
+            // Majority takeover
             var majority = company.GetMajorityOwner();
             if (majority != prevOwner)
             {
                 company.owner = majority;
                 RpcUpdateTileOwner(companyName, majority.playerName.Value);
             }
-            
-            if (company.GetOwnership(prevOwner) <= 0)
-            {
-                TransferOwnershipFull(companyName, proposal.proposer);
-            }
-            
-            // Sync to all clients: proposer, prevOwner, and (if changed) new owner (though prevOwner covers most cases)
+
+            // Sync
             RpcSyncOwnership(companyName, proposal.proposer.playerName.Value, company.GetOwnership(proposal.proposer));
             RpcSyncOwnership(companyName, prevOwner.playerName.Value, company.GetOwnership(prevOwner));
             if (company.owner != prevOwner)
@@ -531,6 +551,19 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
             Debug.Log($"[Market] Proposal rejected for {companyName}");
         }
     }
+
+    [Server]
+    private bool TryPayWithBailouts(PlayerPawn p, int amount)
+    {
+        int attempts = 0;
+        while (p.money.Value < amount && attempts < MaxAutoBailoutsPerAccept)
+        {
+            p.ForceBailoutOnce(); // +$100 +1 mark
+            attempts++;
+        }
+        return p.TrySpendMoney(amount);
+    }
+
 
     [TargetRpc]
     private void TargetRefreshReviewUI(NetworkConnection conn)
