@@ -9415,7 +9415,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.size
-      value: 8
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: timelines.Array.data[0]
@@ -9430,17 +9430,25 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 11400000, guid: f94fff727b2b4574abf0cb78d4c58d00, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
-      propertyPath: tileEvents.Array.data[4]
+      propertyPath: tileEvents.Array.data[2]
+      value: 
+      objectReference: {fileID: 11400000, guid: c782f7d782a90ef4cafc62d72fe6a3ec, type: 2}
+    - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: tileEvents.Array.data[3]
       value: 
       objectReference: {fileID: 11400000, guid: 96e620c678711234bb9d0687caf85712, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
-      propertyPath: tileEvents.Array.data[5]
+      propertyPath: tileEvents.Array.data[4]
       value: 
       objectReference: {fileID: 11400000, guid: 23c1f3c51aabf9a4cbf248cf4b9fef86, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
-      propertyPath: tileEvents.Array.data[6]
+      propertyPath: tileEvents.Array.data[5]
       value: 
       objectReference: {fileID: 11400000, guid: 7064c057668b4e64cb6323ef282649d1, type: 2}
+    - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: tileEvents.Array.data[6]
+      value: 
+      objectReference: {fileID: 11400000, guid: 89e7f7d211e9e954aba032917fcb81b4, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[7]
       value: 

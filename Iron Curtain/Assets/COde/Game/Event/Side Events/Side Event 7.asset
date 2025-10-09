@@ -13,11 +13,8 @@ MonoBehaviour:
   m_Name: Side Event 7
   m_EditorClassIdentifier: 
   eventName: Fundraising for New Business Development
-  description: 'A Benefactor Donates Money to You
-
-
-    Effect: All players, except
-    the one who triggered this event, pay $100M to you'
+  description: 'Effect: All players, except the one who triggered this event, pay
+    $100M to you'
   type: 0
   mode: 0
   requiredCompanyName: 
@@ -26,14 +23,8 @@ MonoBehaviour:
   tieSplitPot: 0
   restrictToOpponents: 0
   requireCompanyOwner: 0
-  effects:
-  - targetType: 3
-    targetName: 
-    moneyDelta: 1000
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: 0
-    duration: 0
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
+  effects: []
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3

@@ -12,12 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cbe400ba1a1d1f4abe7d0e1b90b131b, type: 3}
   m_Name: Side Event 6
   m_EditorClassIdentifier: 
-  eventName: Cyber Attack
-  description: 'Your Business Is Hit by a Cyber Attack!
-
-
-    Effect: Choose 1 player.
-    They must pay 10% ransom to you to restore normal operations'
+  eventName: Your Business Is Hit by a Cyber Attack!
+  description: 'Effect: Choose 1 player. They must pay 10% ransom to you to restore
+    normal operations'
   type: 0
   mode: 0
   requiredCompanyName: 
@@ -26,14 +23,8 @@ MonoBehaviour:
   tieSplitPot: 0
   restrictToOpponents: 1
   requireCompanyOwner: 0
-  effects:
-  - targetType: 0
-    targetName: 
-    moneyDelta: -1000
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: 0
-    duration: 0
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
+  effects: []
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3

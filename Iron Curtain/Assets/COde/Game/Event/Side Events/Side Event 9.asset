@@ -16,13 +16,25 @@ MonoBehaviour:
   description: "Accident at Your Factory Causes Production Halt\n\nEffect: Pay a
     random amount of $100\u2013$1000 to the player who lands on this event"
   type: 0
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
   effects:
   - targetType: 0
     targetName: 
-    moneyDelta: -1000
+    moneyDelta: 0
+    randomMoneyMin: -100
+    randomMoneyMax: -1000
     multiplier: 0
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
     ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3

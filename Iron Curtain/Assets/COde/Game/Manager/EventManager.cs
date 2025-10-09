@@ -77,32 +77,28 @@ public class EventManager : NetworkBehaviour
         }
 
         var e = tileEvents[Random.Range(0, tileEvents.Count)];
+        // === Special named events ===
+        var chooser = TurnManager.Instance?.GetCurrentPawn(); 
 
         // === Special named tile events ===
-        if (e.eventName == "A Benefactor Donates Money to You")
+        if (e.eventName == "Fundraising for New Business Development")
         {
             _resume = ResumeContext.Tile;
             _resumeTilePawn = pawn;
-
-            // Show a popup to the pawn (optional)
+            
             TargetShowSideEvent(pawn.Owner, $"{e.eventName}\n\n{e.description}", true);
-
-            // Apply: everyone except pawn pays $100M to pawn
-            StartCoroutine(CoBenefactorDonationTile(pawn, 100)); // 100M
+            StartCoroutine(CoBenefactorDonationTile(pawn, 100)); 
+        }
+        else if (e != null && e.eventName == "Your Business Gains Media Attention!")
+        {
+            // All players roll; highest gets 1000, others 100
+            StartMediaAttentionAllRoll(winPayout: 1000, otherPayout: 100);
             return;
         }
-        else if (e.eventName == "Accident at Your Factory Causes Production Halt")
+        else if (e != null && e.eventName == "Your Business Is Hit by a Cyber Attack!")
         {
-            _resume = ResumeContext.Tile;
-            _resumeTilePawn = pawn;
-
-            TargetShowSideEvent(pawn.Owner, $"{e.eventName}\n\n{e.description}", true);
-
-            // Interpretation: bank pays the landing player a random 100–1000M.
-            // If you prefer the landing player pays the bank, swap the signs.
-            int amt = Random.Range(100, 1001);
-            pawn.AddMoney(amt);
-            ResumeAfterEvent();
+            // chooser chooses 1 target; target pays 10% to chooser
+            StartCyberAttackTargetSelect(chooser, 0.10f);
             return;
         }
 
@@ -146,29 +142,7 @@ public void TriggerMainEvent(int round)
 
     _resume = ResumeContext.Main;
     _resumeTilePawn = null;
-
-    // === Special named main events ===
-    var chooser = TurnManager.Instance?.GetCurrentPawn(); // "you" for main events
-
-    if (e != null && e.eventName == "Your Business Gains Media Attention!")
-    {
-        // All players roll; highest gets 1000, others 100
-        StartMediaAttentionAllRoll(winPayout: 1000, otherPayout: 100);
-        return;
-    }
-    else if (e != null && e.eventName == "Your Business Is Hit by a Cyber Attack!")
-    {
-        // chooser chooses 1 target; target pays 10% to chooser
-        StartCyberAttackTargetSelect(chooser, 0.10f);
-        return;
-    }
-    else if (e != null && e.eventName == "A Benefactor Donates Money to You")
-    {
-        // All players except chooser pay 100M to chooser
-        StartBenefactorDonationMain(chooser, 100);
-        return;
-    }
-
+    
     // ===== Default main-event flow (simple or special modes already supported) =====
     if (e == null || e.mode == EventMode.Simple)
     {

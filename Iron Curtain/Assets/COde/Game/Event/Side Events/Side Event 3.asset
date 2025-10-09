@@ -12,12 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cbe400ba1a1d1f4abe7d0e1b90b131b, type: 3}
   m_Name: Side Event 3
   m_EditorClassIdentifier: 
-  eventName: Business Competition
-  description: 'Your Business Gains Media Attention!
-
-
-    Effect: All players roll
-    the dice. The highest roller receives $1000M, others receive $100M'
+  eventName: Your Business Gains Media Attention!
+  description: 'Effect: All players roll the dice. The highest roller receives $1000M,
+    others receive $100M'
   type: 0
   mode: 0
   requiredCompanyName: 
@@ -26,14 +23,8 @@ MonoBehaviour:
   tieSplitPot: 1
   restrictToOpponents: 0
   requireCompanyOwner: 0
-  effects:
-  - targetType: 0
-    targetName: 
-    moneyDelta: 1000
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: 0
-    duration: 0
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
+  effects: []
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
