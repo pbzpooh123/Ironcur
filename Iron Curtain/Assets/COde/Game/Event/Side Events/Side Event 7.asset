@@ -19,13 +19,21 @@ MonoBehaviour:
     Effect: All players, except
     the one who triggered this event, pay $100M to you'
   type: 0
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 0
+  restrictToOpponents: 0
+  requireCompanyOwner: 0
   effects:
   - targetType: 3
     targetName: 
     moneyDelta: 1000
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 0
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
     ownershipDelta: 0
+    grantExtraRoll: 0

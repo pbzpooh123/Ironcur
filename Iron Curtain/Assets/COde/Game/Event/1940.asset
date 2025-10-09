@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 15c2cc496a3281a438ed4786ab005e32, type: 3}
+  m_Name: 1940
+  m_EditorClassIdentifier: 
+  timelineName: 1940 - 1960
+  mainEvents:
+  - {fileID: 11400000, guid: 0191c79e1aa2560468791fafa5d8d971, type: 2}
+  - {fileID: 11400000, guid: 70aec3bae71546e4badb421051a9b94d, type: 2}
+  - {fileID: 11400000, guid: 2d2b12ce7a6c47342a7357c6320e94e1, type: 2}
+  - {fileID: 11400000, guid: efadb967b6adf224b9ff4733c06a3ee9, type: 2}
+  - {fileID: 11400000, guid: 53acf2cb16457e949a24bd7116b756b4, type: 2}
+  - {fileID: 11400000, guid: b7b1da90e38ea1343be226b20964dd1a, type: 2}

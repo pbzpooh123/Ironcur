@@ -20,20 +20,25 @@ MonoBehaviour:
     & Finance: Players who own banks may collect a $500M fee from other players who
     roll an odd number'
   type: 1
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
   effects:
   - targetType: 0
     targetName: Oil & Gas Production
     moneyDelta: 250
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 3
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 0
-    targetName: ' Banking & Finance'
-    moneyDelta: -500
-    multiplier: 0
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 1
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3

@@ -780,4 +780,31 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
         if (pawn == null) return false;
         return _submittedThisTurn.TryGetValue(pawn, out var set) && set.Contains(companyName);
     }
+    
+    [Server]
+    public bool TryGetMajorityOwner(string companyName, out PlayerPawn majorityOwner)
+    {
+        majorityOwner = null;
+        if (!companies.TryGetValue(companyName, out var comp) || comp == null) return false;
+
+        int best = 0;
+        PlayerPawn bestPawn = null;
+        foreach (var kv in comp.ownershipPercents)
+        {
+            if (kv.Key == null) continue;
+            if (kv.Value > best)
+            {
+                best = kv.Value;
+                bestPawn = kv.Key;
+            }
+        }
+
+        if (bestPawn != null && best > 60)
+        {
+            majorityOwner = bestPawn;
+            return true;
+        }
+        return false;
+    }
+
 }

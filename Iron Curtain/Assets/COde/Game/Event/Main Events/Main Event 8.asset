@@ -17,28 +17,41 @@ MonoBehaviour:
     +50% revenue (due to panic buying and stockpiling)\n\nReal Estate: \u201350%
     revenue\n\nBanking & Finance: All players must pay a $500 penalty"
   type: 1
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
   effects:
   - targetType: 0
     targetName: Food & Beverage Production
     moneyDelta: 120
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 0.5
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
   - targetType: 0
     targetName: Real Estate
     moneyDelta: 220
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: -0.5
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 3
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  - targetType: 2
     targetName: Banking & Finance
     moneyDelta: -500
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 0
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0

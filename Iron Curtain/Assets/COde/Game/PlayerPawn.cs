@@ -121,8 +121,12 @@ public class PlayerPawn : NetworkBehaviour
 
         int roll = Random.Range(1, 7);
         lastRoll.Value = roll;
+        
+        EventManager.Instance?.OnServerPlayerRolled(this, roll);
+
         RpcMoveSteps(roll);
     }
+
     
     [ServerRpc]
     public void CmdEndTurn()

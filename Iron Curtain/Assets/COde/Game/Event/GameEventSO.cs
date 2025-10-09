@@ -76,4 +76,11 @@ public class GameEventSO : ScriptableObject
 
     [Header("Effects")]
     public List<EventEffect> effects = new List<EventEffect>();
+    
+    [Header("Rule #6: Bank Odd Fine")]
+    public bool enableBankOddFine = false;
+    public string bankCompanyName = "Bank";
+    public int oddFineAmount = 500;
+    public int oddFineDurationRounds = 3; // 0 = no expiration
+
 }

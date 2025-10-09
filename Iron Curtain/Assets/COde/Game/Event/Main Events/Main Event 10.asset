@@ -16,12 +16,25 @@ MonoBehaviour:
   description: "U.S. and Soviet Union Sign Strategic Arms Limitation Agreement\n\nWeapon
     Manufacturing: \u201375% revenue for 5 turns"
   type: 1
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 0
+  restrictToOpponents: 0
+  requireCompanyOwner: 0
   effects:
   - targetType: 0
     targetName: Weapon Manufacturing
-    moneyDelta: 500
+    moneyDelta: 0
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: -0.75
     duration: 5
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
