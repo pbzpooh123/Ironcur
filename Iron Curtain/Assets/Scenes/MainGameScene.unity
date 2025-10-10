@@ -9415,7 +9415,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.size
-      value: 7
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: timelines.Array.data[0]
@@ -9429,6 +9429,10 @@ PrefabInstance:
       propertyPath: timelines.Array.data[2]
       value: 
       objectReference: {fileID: 11400000, guid: f94fff727b2b4574abf0cb78d4c58d00, type: 2}
+    - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: tileEvents.Array.data[0]
+      value: 
+      objectReference: {fileID: 11400000, guid: 96e620c678711234bb9d0687caf85712, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[2]
       value: 

@@ -646,22 +646,38 @@ private void ResolveCompetition()
     [ServerRpc(RequireOwnership = false)]
     public void CmdSubmitTargetSelect(string targetPlayerName, NetworkConnection conn = null)
     {
-        if (_tsEvent == null || _tsEvent.mode != EventMode.TargetSelect) return;
+        bool allow =
+            (_tsEvent != null && _tsEvent.mode == EventMode.TargetSelect)
+            || _tsCyberAttackMode;
+
+        if (!allow) return;
 
         var chooser = _tsChooser;
-        if (chooser == null) { _tsEvent = null; ResumeAfterEvent(); return; }
-        if (conn == null || chooser.Owner != conn) return;
+        if (chooser == null)
+        {
+            _tsEvent = null;
+            _tsCyberAttackMode = false;
+            _tsRansomRate = 0f;
+            ResumeAfterEvent();
+            return;
+        }
+
+        if (conn == null || chooser.Owner != conn)
+            return; // only the chooser can submit
 
         var target = GameManager.Instance.Players.Find(p => p.playerName.Value == targetPlayerName);
         if (target == null)
         {
             _tsEvent = null;
+            _tsCyberAttackMode = false;
+            _tsRansomRate = 0f;
             ResumeAfterEvent();
             return;
         }
 
         ApplyTargetSelectTo(target);
     }
+
 
     [Server]
     private void ApplyTargetSelectTo(PlayerPawn target)
@@ -686,7 +702,7 @@ private void ResolveCompetition()
             }
 
             foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowMainEvent(c, $"Cyber Attack! {target.playerName.Value} pays ${ransom}M to {chooser.playerName.Value}. (Paid ${Mathf.Min(ransom, before)}M)", false);
+                TargetShowSideEvent(c, $"Cyber Attack! {target.playerName.Value} pays ${ransom}M to {chooser.playerName.Value}. (Paid ${Mathf.Min(ransom, before)}M)", false);
 
             // reset flags
             _tsCyberAttackMode = false;
@@ -699,7 +715,7 @@ private void ResolveCompetition()
         // ===== Default TargetSelect (SO-based) behaviour =====
         ApplyEventToPawn(_tsEvent, target);
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(c, $"{_tsEvent.eventName}: Target → {target.playerName.Value}", false);
+            TargetShowSideEvent(c, $"{_tsEvent.eventName}: Target → {target.playerName.Value}", false);
 
         _tsEvent = null;
         ResumeAfterEvent();
@@ -809,7 +825,7 @@ private void ResolveCompetition()
         if (targets.Count == 0)
         {
             foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowMainEvent(c, "Cyber Attack: No valid targets.", false);
+                TargetShowSideEvent(c, "Cyber Attack: No valid targets.", false);
             _tsCyberAttackMode = false;
             _tsRansomRate = 0f;
             ResumeAfterEvent();
@@ -886,7 +902,7 @@ private void ResolveCompetition()
             : -1;
 
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(conn, $"🏦 Odd Roll Fine ACTIVE: {_bankCompanyName} collects ${_bankOddFineAmount}M on odd rolls.", false);
+            TargetShowMainEvent(conn, $"Odd Roll Fine ACTIVE: {_bankCompanyName} collects ${_bankOddFineAmount}M on odd rolls.", false);
     }
 
     [Server]
