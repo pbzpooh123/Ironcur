@@ -471,10 +471,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileType: 1
-  companyName: 
+  companyName: 1
   owner: {fileID: 0}
-  companyCost: 0
-  baseFactoryIncome: 0
+  companyCost: 1000
+  baseFactoryIncome: 11
   taxFlat: 0
   taxPercent: 0
   bonusAmount: 100
@@ -747,10 +747,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileType: 4
-  companyName: 
+  companyName: 783687
   owner: {fileID: 0}
-  companyCost: 0
-  baseFactoryIncome: 0
+  companyCost: 78857
+  baseFactoryIncome: 82587
   taxFlat: 0
   taxPercent: 0
   bonusAmount: 100
@@ -1250,7 +1250,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 0
+  tileType: 2
   companyName: Real Estate III
   owner: {fileID: 0}
   companyCost: 440
@@ -1605,7 +1605,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 2
   companyName: Transportation & Logistics
   owner: {fileID: 0}
   companyCost: 400
@@ -2135,10 +2135,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileType: 4
-  companyName: 
+  companyName: 444
   owner: {fileID: 0}
-  companyCost: 0
-  baseFactoryIncome: 0
+  companyCost: 4444
+  baseFactoryIncome: 44
   taxFlat: 0
   taxPercent: 0
   bonusAmount: 100
@@ -2847,7 +2847,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileType: 4
-  companyName: 
+  companyName: 1
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
@@ -4274,7 +4274,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 0
+  tileType: 2
   companyName: Technology R&D
   owner: {fileID: 0}
   companyCost: 600
@@ -4975,7 +4975,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 2
   companyName: Real Estate
   owner: {fileID: 0}
   companyCost: 440
@@ -5254,7 +5254,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   panel: {fileID: 602629532}
   rowsParent: {fileID: 177197179}
-  rowPrefab: {fileID: 0}
+  rowPrefab: {fileID: 637477260054073605, guid: f3576dbb0c0ea82458fc30765cb3e213, type: 3}
   titleText: {fileID: 822819739}
   summaryText: {fileID: 889428449}
   cashText: {fileID: 2038788896}
@@ -6151,10 +6151,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileType: 3
-  companyName: 
+  companyName: 44444
   owner: {fileID: 0}
-  companyCost: 0
-  baseFactoryIncome: 0
+  companyCost: 444
+  baseFactoryIncome: 4444
   taxFlat: 0
   taxPercent: 10
   bonusAmount: 100
@@ -6646,10 +6646,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileType: 4
-  companyName: 
+  companyName: 25
   owner: {fileID: 0}
-  companyCost: 0
-  baseFactoryIncome: 0
+  companyCost: 522
+  baseFactoryIncome: 444
   taxFlat: 0
   taxPercent: 0
   bonusAmount: 100
@@ -7481,10 +7481,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileType: 1
-  companyName: 
+  companyName: 745287
   owner: {fileID: 0}
-  companyCost: 0
-  baseFactoryIncome: 0
+  companyCost: 78857
+  baseFactoryIncome: 758752
   taxFlat: 0
   taxPercent: 0
   bonusAmount: 0
@@ -7876,9 +7876,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileType: 1
-  companyName: 
+  companyName: 12
   owner: {fileID: 0}
-  companyCost: 0
+  companyCost: 122
   baseFactoryIncome: 0
   taxFlat: 0
   taxPercent: 0
@@ -9346,7 +9346,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 2
   companyName: Banking & Finance
   owner: {fileID: 0}
   companyCost: 560
@@ -10144,10 +10144,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   tileType: 1
-  companyName: 
+  companyName: 100
   owner: {fileID: 0}
-  companyCost: 0
-  baseFactoryIncome: 0
+  companyCost: 5222
+  baseFactoryIncome: 44
   taxFlat: 0
   taxPercent: 0
   bonusAmount: 100

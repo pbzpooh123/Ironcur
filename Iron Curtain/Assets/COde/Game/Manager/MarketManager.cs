@@ -172,120 +172,133 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
 
 
     [ObserversRpc]
-private void RpcAddCompany(string companyName, int baseCost, string ownerName)
-{
-    Debug.Log($"[RpcAddCompany] company={companyName}, ownerName={ownerName}");
-
-    if (!companies.TryGetValue(companyName, out var rec))
+    private void RpcAddCompany(string companyName, int baseCost, string ownerName)
     {
+        Debug.Log($"[RpcAddCompany] company={companyName}, ownerName={ownerName}");
+
         var ownerPawn = FindPawnByName(ownerName);
-        rec = new CompanyRecord(companyName, baseCost, ownerPawn);
-        rec.ownerName = ownerName;
 
-        // If owner found now, ensure ownership map has 100% for them.
-        if (ownerPawn != null)
+        if (!companies.TryGetValue(companyName, out var rec))
         {
-            rec.owner = ownerPawn;
-            rec.ownershipPercents.Clear();
-            rec.ownershipPercents[ownerPawn] = 100;
-        }
+            rec = new CompanyRecord(companyName, baseCost, ownerPawn);
+            rec.ownerName = ownerName;
 
-        companies[companyName] = rec;
-
-        if (ownerPawn == null)
-            StartCoroutine(RebindOwnerLater(companyName, ownerName));
-    }
-    else
-    {
-        // Company already exists (edge case). Ensure ownerName and try to assign owner.
-        rec.ownerName = ownerName;
-
-        if (rec.owner == null)
-        {
-            var ownerPawn = FindPawnByName(ownerName);
+            // If we already found the pawn, set explicit 100% and portfolio entry
             if (ownerPawn != null)
             {
                 rec.owner = ownerPawn;
                 rec.ownershipPercents.Clear();
                 rec.ownershipPercents[ownerPawn] = 100;
+
+                // NEW: silently seed portfolio
+                EnsurePortfolioEntry(ownerPawn, companyName, 100);
+            }
+
+            companies[companyName] = rec;
+
+            if (ownerPawn == null)
+                StartCoroutine(RebindOwnerLater(companyName, ownerName));
+        }
+        else
+        {
+            rec.ownerName = ownerName;
+
+            if (rec.owner == null)
+            {
+                if (ownerPawn != null)
+                {
+                    rec.owner = ownerPawn;
+                    rec.ownershipPercents.Clear();
+                    rec.ownershipPercents[ownerPawn] = 100;
+
+                    // NEW: silently seed portfolio
+                    EnsurePortfolioEntry(ownerPawn, companyName, 100);
+                }
+                else
+                {
+                    StartCoroutine(RebindOwnerLater(companyName, ownerName));
+                }
             }
             else
             {
-                StartCoroutine(RebindOwnerLater(companyName, ownerName));
+                // already has an owner, keep it consistent
+                if (ownerPawn == rec.owner)
+                    EnsurePortfolioEntry(ownerPawn, companyName, 100);
             }
         }
-    }
-
-    // If any UI is open, refresh it.
-    if (ProposalUI.Instance != null && ProposalUI.Instance.panel.activeSelf)
-        ProposalUI.Instance.Refresh();
-    if (ReviewUI.Instance != null && ReviewUI.Instance.panel.activeSelf)
-        ReviewUI.Instance.Refresh();
-}
-
-private PlayerPawn FindPawnByName(string name)
-{
-    if (string.IsNullOrEmpty(name)) return null;
-
-    // First try GameManager list (preferred).
-    var gm = GameManager.Instance;
-    if (gm != null && gm.Players != null)
-    {
-        var p = gm.Players.Find(pp => pp != null && pp.playerName.Value == name);
-        if (p != null) return p;
-    }
-
-    // Fallback: brute force the scene.
-    foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
-    {
-        if (p != null && p.playerName.Value == name)
-            return p;
-    }
-
-    return null;
-}
-
-private IEnumerator RebindOwnerLater(string companyName, string ownerName)
-{
-    Debug.Log($"[RebindOwnerLater] Waiting for owner {ownerName} for {companyName}");
-    float timeout = 5f;
-    PlayerPawn found = null;
-
-    while (timeout > 0f && (found = FindPawnByName(ownerName)) == null)
-    {
-        timeout -= Time.deltaTime;
-        yield return null;
-    }
-
-    if (found == null)
-    {
-        Debug.LogWarning($"[RebindOwnerLater] Failed to rebind owner for {companyName}");
-        yield break;
-    }
-
-    if (companies.TryGetValue(companyName, out var rec))
-    {
-        rec.owner = found;
-        rec.ownerName = ownerName;
-
-        if (rec.ownershipPercents.Count == 0 || !rec.ownershipPercents.ContainsKey(found))
-        {
-            rec.ownershipPercents.Clear();
-            rec.ownershipPercents[found] = 100;
-        }
-
-        Debug.Log($"[RebindOwnerLater] Rebound owner {ownerName} for {companyName}");
-
-        if (ReviewUI.Instance != null && ReviewUI.Instance.panel.activeSelf)
-            ReviewUI.Instance.Refresh();
+        
         if (ProposalUI.Instance != null && ProposalUI.Instance.panel.activeSelf)
             ProposalUI.Instance.Refresh();
+        if (ReviewUI.Instance != null && ReviewUI.Instance.panel.activeSelf)
+            ReviewUI.Instance.Refresh();
+        RpcRefreshLocalPortfolioUI();
     }
-}
+
+
+    private PlayerPawn FindPawnByName(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return null;
+
+        // First try GameManager list (preferred).
+        var gm = GameManager.Instance;
+        if (gm != null && gm.Players != null)
+        {
+            var p = gm.Players.Find(pp => pp != null && pp.playerName.Value == name);
+            if (p != null) return p;
+        }
+
+        // Fallback: brute force the scene.
+        foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
+        {
+            if (p != null && p.playerName.Value == name)
+                return p;
+        }
+
+        return null;
+    }
+
+    private IEnumerator RebindOwnerLater(string companyName, string ownerName)
+    {
+        Debug.Log($"[RebindOwnerLater] Waiting for owner {ownerName} for {companyName}");
+        float timeout = 5f;
+        PlayerPawn found = null;
+
+        while (timeout > 0f && (found = FindPawnByName(ownerName)) == null)
+        {
+            timeout -= Time.deltaTime;
+            yield return null;
+        }
+
+        if (found == null)
+        {
+            Debug.LogWarning($"[RebindOwnerLater] Failed to rebind owner for {companyName}");
+            yield break;
+        }
+
+        if (companies.TryGetValue(companyName, out var rec))
+        {
+            rec.owner = found;
+            rec.ownerName = ownerName;
+
+            if (rec.ownershipPercents.Count == 0 || !rec.ownershipPercents.ContainsKey(found))
+            {
+                rec.ownershipPercents.Clear();
+                rec.ownershipPercents[found] = 100;
+                EnsurePortfolioEntry(found, companyName, 100);
+
+            }
+
+            Debug.Log($"[RebindOwnerLater] Rebound owner {ownerName} for {companyName}");
+
+            if (ReviewUI.Instance != null && ReviewUI.Instance.panel.activeSelf)
+                ReviewUI.Instance.Refresh();
+            if (ProposalUI.Instance != null && ProposalUI.Instance.panel.activeSelf)
+                ProposalUI.Instance.Refresh();
+        }
+    }
 
     /* ================= Proposal Flow (server-driven UI) ================= */
     
-    /// Server-only entry point to open Proposal UI for the current pawn.
     [Server]
     public void ShowProposalForPawn(PlayerPawn pawn)
     {
@@ -591,6 +604,7 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
         }
 
         pawn.infoPanel?.UpdateCompanyOwnership(companyName, newPercent);
+        RpcRefreshLocalPortfolioUI();
         Debug.Log($"[ClientSync] {playerName} now has {newPercent}% of {companyName}");
     }
 
@@ -823,6 +837,50 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
             if (ReviewUI.Instance.panel != null)
                 ReviewUI.Instance.Hide();
         }
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcRefreshLocalPortfolioUI()
+    {
+        if (PortfolioUI.Instance == null) return;
+        
+        PlayerPawn local = null;
+        foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
+            if (p != null && p.IsOwner)
+            {
+                local = p;
+                break;
+            }
+
+        if (local == null) return;
+        if (PortfolioUI.Instance.panel != null && PortfolioUI.Instance.panel.activeInHierarchy)
+            PortfolioUI.Instance.Refresh();
+    }
+    
+    private void EnsurePortfolioEntry(PlayerPawn pawn, string company, int percent)
+    {
+        if (pawn == null) return;
+
+        if (!pawn.factoryPortfolio.ContainsKey(company))
+        {
+            pawn.factoryPortfolio[company] = new ShareRecord
+            {
+                count = 0,
+                roundBought = TurnManager.Instance.roundCount.Value,
+                multiplier = 1f,
+                multiplierExpiresAt = 0,
+                sharePercent = percent
+            };
+        }
+        else
+        {
+            var rec = pawn.factoryPortfolio[company];
+            rec.sharePercent = percent;
+            pawn.factoryPortfolio[company] = rec;
+        }
+
+        // keep UI quiet; only refresh if that UI is already open
+        pawn.infoPanel?.UpdateCompanyOwnership(company, percent);
     }
 
 }

@@ -77,6 +77,7 @@ public class PortfolioUI : MonoBehaviour
     // Build rows + totals
     int totalPercent = 0;
     int totalEstPayout = 0;
+    
 
     foreach (var it in items)
     {

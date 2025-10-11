@@ -8,11 +8,11 @@ using TMPro;
 public enum TurnPhase
 {
     None,
-    Review,           // Owner reviewing proposals at start of their turn
-    Rolling,          // Current pawn may roll dice
-    TileEventPending, // Waiting for EventManager to finish a tile event
-    Proposal,         // Current pawn may propose on others' companies
-    EndReady          // Current pawn can press EndTurn
+    Review,
+    Rolling,
+    TileEventPending,
+    Proposal,
+    EndReady
 }
 
 public class TurnManager : NetworkBehaviour
@@ -37,6 +37,7 @@ public class TurnManager : NetworkBehaviour
     
     private const int maxrounds = 13;
     private bool _gameEnded = false;
+    public readonly SyncVar<int> remainingRounds = new();
     public bool IsGameEnded => _gameEnded;
     
     [SerializeField] private bool AutoBailoutAtTurnStart = true;
@@ -44,7 +45,7 @@ public class TurnManager : NetworkBehaviour
     private int RoundsUntilNextMainEvent()
     {
         int mod = roundCount.Value % 3;
-        return (mod == 0) ? 3 : (3 - mod);
+        return (mod == 0) ? 0 : (3 - mod);
     }
 
     private void Awake()
@@ -57,6 +58,7 @@ public class TurnManager : NetworkBehaviour
     {
         base.OnStartServer();
         roundCount.Value = 1;
+        remainingRounds.Value = maxrounds;
         RpcUpdateRoundUI(RoundsRemaining(), RoundsUntilNextMainEvent());
         StartCoroutine(DelayedStart());
     }
@@ -348,34 +350,28 @@ public class TurnManager : NetworkBehaviour
 
         if (wrapped)
         {
-            // A new round begins now
             roundCount.Value++;
-            Debug.Log($"[TurnManager] New round started: {roundCount.Value}");
+            remainingRounds.Value = Mathf.Max(remainingRounds.Value - 1, 0);
+            RpcUpdateRoundUI(remainingRounds.Value, RoundsUntilNextMainEvent());
 
-            RpcUpdateRoundUI(RoundsRemaining(), RoundsUntilNextMainEvent());
-            if (RoundsRemaining() <= 0)
+            if (remainingRounds.Value <= 0)
             {
                 EndMatch($"Completed {maxrounds} rounds");
                 return;
             }
-
-            // Normal between-round processing
+            
             MarketManager.Instance?.ProcessPayouts();
             MarketManager.Instance?.OnRoundAdvanced(roundCount.Value);
-
-            // Fire Main Event only if NOT ended and round is eligible
+            
             if ((roundCount.Value % 3 == 0) && _lastMainEventRoundFired != roundCount.Value)
             {
                 _lastMainEventRoundFired = roundCount.Value;
-                currentPlayerIndex.Value = nextIndex;   // set next player before pausing for event
+                currentPlayerIndex.Value = nextIndex;
                 EventManager.Instance?.TriggerMainEvent(roundCount.Value);
                 SetPhase(TurnPhase.None);
-                return; // EventManager will call ServerStartTurnAfterMainEvent()
+                return; 
             }
         }
-        
-        
-
         currentPlayerIndex.Value = nextIndex;
         SetPhase(TurnPhase.None);
         StartTurn();
@@ -384,12 +380,6 @@ public class TurnManager : NetworkBehaviour
     [ObserversRpc(BufferLast = true)]
     private void RpcUpdateRoundUI(int roundsLeft, int eventIn)
     {
-        if (roundtext == null)
-        {
-            // Optional: lazy find if not wired via inspector
-            roundtext = GameObject.FindObjectOfType<TMP_Text>();
-        }
-
         if (roundtext != null)
             roundtext.text = $"Rounds left: {roundsLeft}   (Main event in {eventIn})";
     }
@@ -400,6 +390,8 @@ public class TurnManager : NetworkBehaviour
     [Server]
     public void ServerStartTurnAfterMainEvent()
     {
+        RpcUpdateRoundUI(RoundsRemaining(), RoundsUntilNextMainEvent());
+
         SetPhase(TurnPhase.None);
         StartTurn();
     }
@@ -454,27 +446,5 @@ public class TurnManager : NetworkBehaviour
         // EndScreen.Show(finalScores);
     }
     
-    public override void OnStartClient()
-    {
-        base.OnStartClient();
-        ClientUpdateRoundUI(roundCount.Value);
-        roundCount.OnChange += OnRoundChanged;
-    }
-
-    private void OnDestroy()
-    {
-        roundCount.OnChange -= OnRoundChanged;
-    }
-
-    private void OnRoundChanged(int oldVal, int newVal, bool asServer)
-    {
-        ClientUpdateRoundUI(newVal);
-    }
-
-    private void ClientUpdateRoundUI(int round)
-    {
-        if (roundtext != null)
-            roundtext.text = $"Round : {round}";
-    }
 
 }
