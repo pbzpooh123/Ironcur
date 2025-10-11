@@ -10,7 +10,8 @@ public class TurnUI : MonoBehaviour
     public Button endTurnButton;
 
     [Header("Optional Message/Banner (assign either)")]
-    public TMP_Text messageTMP;         // TextMeshPro (optional)
+    public TMP_Text messageTMP;      // TextMeshPro (optional)
+    public Button portfolioButton;
 
     private PlayerPawn myPawn;
 
@@ -18,6 +19,8 @@ public class TurnUI : MonoBehaviour
     {
         if (rollDiceButton != null) rollDiceButton.onClick.AddListener(OnRollDiceClicked);
         if (endTurnButton != null)  endTurnButton.onClick.AddListener(OnEndTurnClicked);
+        if (portfolioButton != null)
+            portfolioButton.onClick.AddListener(OnPortfolioClicked);
         
         SetRollInteractable(false);
         SetEndTurnInteractable(false);
@@ -53,6 +56,19 @@ public class TurnUI : MonoBehaviour
             myPawn.OnEndTurnButton();     
             SetEndTurnInteractable(false); 
         }
+    }
+    
+    private void OnPortfolioClicked()
+    {
+        // Find local pawn if not bound for any reason
+        if (myPawn == null)
+        {
+            foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
+                if (p.IsOwner) { myPawn = p; break; }
+        }
+
+        if (PortfolioUI.Instance != null && myPawn != null)
+            PortfolioUI.Instance.Show(myPawn);
     }
 
     public void SetEndTurnInteractable(bool enable)

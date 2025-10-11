@@ -38,6 +38,14 @@ public class TurnManager : NetworkBehaviour
     private const int maxrounds = 13;
     private bool _gameEnded = false;
     public bool IsGameEnded => _gameEnded;
+    
+    [SerializeField] private bool AutoBailoutAtTurnStart = true;
+    private int RoundsRemaining() => Mathf.Max(0, maxrounds - (roundCount.Value - 1));
+    private int RoundsUntilNextMainEvent()
+    {
+        int mod = roundCount.Value % 3;
+        return (mod == 0) ? 3 : (3 - mod);
+    }
 
     private void Awake()
     {
@@ -48,8 +56,9 @@ public class TurnManager : NetworkBehaviour
     public override void OnStartServer()
     {
         base.OnStartServer();
-        StartCoroutine(DelayedStart());
         roundCount.Value = 1;
+        RpcUpdateRoundUI(RoundsRemaining(), RoundsUntilNextMainEvent());
+        StartCoroutine(DelayedStart());
     }
 
     private System.Collections.IEnumerator DelayedStart()
@@ -204,6 +213,12 @@ public class TurnManager : NetworkBehaviour
             currentPlayerIndex.Value = 0;
 
         PlayerPawn currentPlayer = turnOrder[currentPlayerIndex.Value];
+        
+        if (AutoBailoutAtTurnStart && currentPlayer.money.Value <= 0)
+        {
+            currentPlayer.ForceBailoutOnce(); // your existing method (+$100 etc.)
+            Debug.Log($"[TurnManager] Auto-bailout granted to {currentPlayer.playerName.Value} at turn start.");
+        }
 
         if (ShouldSkip(currentPlayer))
         {
@@ -337,9 +352,10 @@ public class TurnManager : NetworkBehaviour
             roundCount.Value++;
             Debug.Log($"[TurnManager] New round started: {roundCount.Value}");
 
-            if (roundCount.Value > maxrounds)
+            RpcUpdateRoundUI(RoundsRemaining(), RoundsUntilNextMainEvent());
+            if (RoundsRemaining() <= 0)
             {
-                EndMatch($"Completed Round {maxrounds}");
+                EndMatch($"Completed {maxrounds} rounds");
                 return;
             }
 
@@ -357,12 +373,27 @@ public class TurnManager : NetworkBehaviour
                 return; // EventManager will call ServerStartTurnAfterMainEvent()
             }
         }
+        
+        
 
         currentPlayerIndex.Value = nextIndex;
         SetPhase(TurnPhase.None);
         StartTurn();
     }
 
+    [ObserversRpc(BufferLast = true)]
+    private void RpcUpdateRoundUI(int roundsLeft, int eventIn)
+    {
+        if (roundtext == null)
+        {
+            // Optional: lazy find if not wired via inspector
+            roundtext = GameObject.FindObjectOfType<TMP_Text>();
+        }
+
+        if (roundtext != null)
+            roundtext.text = $"Rounds left: {roundsLeft}   (Main event in {eventIn})";
+    }
+    
     /// <summary>
     /// Called by EventManager AFTER main event finishes.
     /// </summary>
