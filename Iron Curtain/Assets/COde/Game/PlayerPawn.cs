@@ -225,18 +225,52 @@ public class PlayerPawn : NetworkBehaviour
         if (data.tileType == TileType.Event)
         {
             EventManager.Instance.TriggerTileEvent(this);
-            return; // EventManager will call ServerOnTileActionComplete when done
+            return; // EventManager will resume flow
         }
 
         if (data.tileType == TileType.Investment && data.owner == null)
         {
             TargetShowInvestmentUI(Owner, currentTile, data.companyName, data.companyCost, true);
-            return; // InvestmentUI will call CmdTileActionComplete after Buy/Skip
+            return; // InvestmentUI will notify when done
+        }
+
+        // ====== NEW TILES ======
+        switch (data.tileType)
+        {
+            case TileType.Tax:
+            {
+                int percent = Mathf.Clamp(data.taxPercent, 0, 100);
+                int percentPart = Mathf.FloorToInt(money.Value * (percent / 100f));
+                int totalOwed = Mathf.Max(0, data.taxFlat + percentPart);
+
+                int paid = PayWithOptionalBailouts(totalOwed, allowBailout: true, maxBailouts: 5);
+                TargetShowToast(Owner, $"TAX: Owed ${totalOwed}M. Paid ${paid}M.");
+                TurnManager.Instance.ServerOnTileActionComplete(this);
+                return;
+            }
+
+            case TileType.Bonus:
+            {
+                int bonus = Mathf.Max(0, data.bonusAmount);
+                if (bonus > 0) AddMoney(bonus);
+                TargetShowToast(Owner, $"BONUS: You received ${bonus}M.");
+                TurnManager.Instance.ServerOnTileActionComplete(this);
+                return;
+            }
+
+            case TileType.Jail:
+            {
+                ServerSetJail(2); // e.g., 2 jailed turns
+                TurnManager.Instance.ServerOnTileActionComplete(this);
+                return;
+            }
         }
 
         // Normal tile
         TurnManager.Instance.ServerOnTileActionComplete(this);
     }
+
+
 
     [TargetRpc]
     private void TargetShowInvestmentUI(NetworkConnection conn, int tileIndex, string companyName, int cost, bool isCompany)
@@ -321,4 +355,56 @@ public class PlayerPawn : NetworkBehaviour
         money.Value += 100; // +$100 bailout
         TargetNotifyBailout(Owner, bailoutMarks.Value, money.Value);
     }
+    
+    [Server]
+    private int PayWithOptionalBailouts(int amount, bool allowBailout = true, int maxBailouts = 10)
+    {
+        if (amount <= 0) return 0;
+
+        if (!allowBailout)
+        {
+            int paid = Mathf.Min(amount, money.Value);
+            if (paid > 0) TrySpendMoney(paid);
+            return paid;
+        }
+
+        int guard = 0;
+        while (money.Value < amount && guard < maxBailouts)
+        {
+            ForceBailoutOnce(); // +$100, +1 mark (you already have this)
+            guard++;
+        }
+
+        int finalPay = Mathf.Min(amount, money.Value);
+        if (finalPay > 0) TrySpendMoney(finalPay);
+        return finalPay;
+    }
+    
+    [TargetRpc]
+    private void TargetShowToast(NetworkConnection conn, string msg)
+    {
+        // Use your Sideevent panel for small messages.
+        if (EventUI.Instance != null)
+            EventUI.Instance.SideeventShow(msg, true);
+        else
+            Debug.Log($"[Toast] {msg}");
+    }
+
+    public readonly SyncVar<int> jailTurnsLeft = new();
+
+    [Server]
+    public void ServerSetJail(int turns)
+    {
+        jailTurnsLeft.Value = Mathf.Max(1, turns);
+        // No MarkSkipTurn here—we handle jail in TurnManager (no roll, no review, no proposal).
+        TargetShowToast(Owner, $"You are jailed for {jailTurnsLeft.Value} turn(s).");
+    }
+
+    [Server]
+    public void ServerReleaseFromJail()
+    {
+        jailTurnsLeft.Value = 0;
+        TargetShowToast(Owner, "You are released from jail.");
+    }
+    
 }

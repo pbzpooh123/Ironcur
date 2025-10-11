@@ -470,11 +470,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
-  companyName: 7
+  tileType: 4
+  companyName: 
   owner: {fileID: 0}
-  companyCost: 500
-  baseFactoryIncome: 50
+  companyCost: 0
+  baseFactoryIncome: 0
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &69321817
 GameObject:
   m_ObjectHideFlags: 0
@@ -560,6 +564,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &118527604
 GameObject:
   m_ObjectHideFlags: 0
@@ -609,6 +617,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &121884037
 GameObject:
   m_ObjectHideFlags: 0
@@ -658,6 +670,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 1000
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &143938082
 GameObject:
   m_ObjectHideFlags: 0
@@ -990,6 +1006,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &274000815
 GameObject:
   m_ObjectHideFlags: 0
@@ -1341,6 +1361,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &322430028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1866,6 +1890,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 1000
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &423422742
 GameObject:
   m_ObjectHideFlags: 0
@@ -1915,6 +1943,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &475119457
 GameObject:
   m_ObjectHideFlags: 0
@@ -1964,6 +1996,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &528077567
 GameObject:
   m_ObjectHideFlags: 0
@@ -2008,11 +2044,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 6
   companyName: 
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &543362440
 GameObject:
   m_ObjectHideFlags: 0
@@ -2196,6 +2236,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &630938556
 GameObject:
   m_ObjectHideFlags: 0
@@ -2245,6 +2289,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &634894255
 GameObject:
   m_ObjectHideFlags: 0
@@ -2294,6 +2342,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &652064447
 GameObject:
   m_ObjectHideFlags: 0
@@ -2375,11 +2427,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 4
   companyName: 
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &774712083
 GameObject:
   m_ObjectHideFlags: 0
@@ -2464,6 +2520,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &807711255
 GameObject:
   m_ObjectHideFlags: 0
@@ -2763,11 +2823,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
-  companyName: 2
+  tileType: 6
+  companyName: 
   owner: {fileID: 0}
-  companyCost: 500
-  baseFactoryIncome: 50
+  companyCost: 0
+  baseFactoryIncome: 0
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &847709261
 GameObject:
   m_ObjectHideFlags: 0
@@ -2951,6 +3015,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &858165028
 GameObject:
   m_ObjectHideFlags: 0
@@ -3209,6 +3277,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &874533102
 GameObject:
   m_ObjectHideFlags: 0
@@ -3258,6 +3330,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &884825184
 GameObject:
   m_ObjectHideFlags: 0
@@ -3382,6 +3458,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &928483352
 GameObject:
   m_ObjectHideFlags: 0
@@ -4079,6 +4159,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1024428421
 GameObject:
   m_ObjectHideFlags: 0
@@ -4379,6 +4463,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 1000
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1037992359
 GameObject:
   m_ObjectHideFlags: 0
@@ -4820,6 +4908,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1113485077
 GameObject:
   m_ObjectHideFlags: 0
@@ -5331,6 +5423,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1275964216
 GameObject:
   m_ObjectHideFlags: 0
@@ -5375,11 +5471,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
-  companyName: 3
+  tileType: 3
+  companyName: 
   owner: {fileID: 0}
-  companyCost: 100
-  baseFactoryIncome: 50
+  companyCost: 0
+  baseFactoryIncome: 0
+  taxFlat: 0
+  taxPercent: 20
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1289775145
 GameObject:
   m_ObjectHideFlags: 0
@@ -5915,11 +6015,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 4
   companyName: 1
   owner: {fileID: 0}
   companyCost: 500
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1352702746
 GameObject:
   m_ObjectHideFlags: 0
@@ -5964,11 +6068,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
-  companyName: 8
+  tileType: 4
+  companyName: 
   owner: {fileID: 0}
-  companyCost: 500
-  baseFactoryIncome: 50
+  companyCost: 0
+  baseFactoryIncome: 0
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1403265752
 GameObject:
   m_ObjectHideFlags: 0
@@ -6364,6 +6472,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1470477668
 GameObject:
   m_ObjectHideFlags: 0
@@ -6503,6 +6615,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1523148270
 GameObject:
   m_ObjectHideFlags: 0
@@ -6552,6 +6668,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1542772444
 GameObject:
   m_ObjectHideFlags: 0
@@ -6735,6 +6855,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1659339365
 GameObject:
   m_ObjectHideFlags: 0
@@ -6819,6 +6943,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1698762369
 GameObject:
   m_ObjectHideFlags: 0
@@ -6989,6 +7117,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 1000
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1733418980
 GameObject:
   m_ObjectHideFlags: 0
@@ -7306,6 +7438,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 1000
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1837240889
 GameObject:
   m_ObjectHideFlags: 0
@@ -7529,6 +7665,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1880573666
 GameObject:
   m_ObjectHideFlags: 0
@@ -8262,6 +8402,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1968035974
 GameObject:
   m_ObjectHideFlags: 0
@@ -8311,6 +8455,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1968640748
 GameObject:
   m_ObjectHideFlags: 0
@@ -8565,6 +8713,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &2056661298
 GameObject:
   m_ObjectHideFlags: 0
@@ -8828,11 +8980,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 6
   companyName: 
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &2070655659
 GameObject:
   m_ObjectHideFlags: 0
@@ -9016,6 +9172,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &2109391229
 GameObject:
   m_ObjectHideFlags: 0
@@ -9415,7 +9575,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.size
-      value: 1
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: timelines.Array.data[0]
@@ -9432,7 +9592,11 @@ PrefabInstance:
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[0]
       value: 
-      objectReference: {fileID: 11400000, guid: 96e620c678711234bb9d0687caf85712, type: 2}
+      objectReference: {fileID: 11400000, guid: c228399759521484e832198cfe5897ba, type: 2}
+    - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      propertyPath: tileEvents.Array.data[1]
+      value: 
+      objectReference: {fileID: 11400000, guid: b0518d7e9aae8f04784dd8168f90c71c, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[2]
       value: 

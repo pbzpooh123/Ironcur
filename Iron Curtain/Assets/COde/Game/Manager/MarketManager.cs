@@ -289,11 +289,8 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
     [Server]
     public void ShowProposalForPawn(PlayerPawn pawn)
     {
-        if (pawn == null || pawn.Owner == null)
-        {
-            Debug.LogWarning("[MarketManager] ShowProposalForPawn: pawn or owner null.");
-            return;
-        }
+        if (pawn == null || pawn.Owner == null) return;
+        if (pawn.jailTurnsLeft.Value > 0) return;   // jailed → block proposal
         TargetShowProposalUI(pawn.Owner);
     }
 
@@ -350,11 +347,8 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
     [Server]
     public void ShowReviewForPawn(PlayerPawn owner)
     {
-        if (owner == null || owner.Owner == null)
-        {
-            Debug.LogWarning("[MarketManager] ShowReviewForPawn: owner or conn is null");
-            return;
-        }
+        if (owner == null || owner.Owner == null) return;
+        if (owner.jailTurnsLeft.Value > 0) return;  // jailed → block review
         TargetShowReviewUI(owner.Owner);
     }
 

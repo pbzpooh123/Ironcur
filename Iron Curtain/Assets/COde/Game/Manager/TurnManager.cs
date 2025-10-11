@@ -38,7 +38,8 @@ public class TurnManager : NetworkBehaviour
     private void Awake()
     {
         Instance = this;
-        roundCount.Value = 0; // start at 0, will increment after first full cycle
+        roundCount.Value = 1;
+        RpcUpdateRoundUI(roundCount.Value);
     }
 
     public override void OnStartServer()
@@ -189,12 +190,15 @@ public class TurnManager : NetworkBehaviour
     }
 
     /* -------------------- Turn lifecycle -------------------- */
+    
+
+    [Server]
+    private bool IsJailed(PlayerPawn pawn) => (pawn != null && pawn.jailTurnsLeft.Value > 0);
 
     [Server]
     private void StartTurn()
     {
         if (turnOrder.Count == 0) return;
-
         if (currentPlayerIndex.Value >= turnOrder.Count)
             currentPlayerIndex.Value = 0;
 
@@ -207,18 +211,34 @@ public class TurnManager : NetworkBehaviour
             return;
         }
 
-        // Reset per-turn MarketManager state
+        // Consume 1 turn of jail time at start (this turn counts as jailed if >0).
+        bool jailedThisTurn = IsJailed(currentPlayer);
+        if (jailedThisTurn)
+            currentPlayer.jailTurnsLeft.Value = Mathf.Max(0, currentPlayer.jailTurnsLeft.Value - 1);
+
         MarketManager.Instance.BeginTurnFor(currentPlayer);
 
-        // Ensure extra roll bucket exists for this pawn
         if (!_extraRolls.ContainsKey(currentPlayer))
             _extraRolls[currentPlayer] = 0;
 
-        // Let only the current player bind UI
         currentPlayer.TargetStartTurn(currentPlayer.Owner);
-        Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value}");
+        Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value} (jailed={jailedThisTurn})");
 
-        // REVIEW phase only when there are actual proposals for this owner
+        // === If jailed: NO Review, NO Roll, NO Proposal → directly EndReady ===
+        if (jailedThisTurn)
+        {
+            // Make sure no extra roll from previous effects is used this turn
+            _extraRolls[currentPlayer] = 0;
+
+            SetPhase(TurnPhase.EndReady);
+            currentPlayer.TargetEnableRoll(currentPlayer.Owner, false);
+            currentPlayer.TargetEnableEndTurn(currentPlayer.Owner, true);
+
+            // optional toast: "You are jailed this turn. You cannot act."
+            return;
+        }
+
+        // If not jailed, do normal Review check:
         if (MarketManager.Instance.HasProposalsForOwner(currentPlayer))
         {
             SetPhase(TurnPhase.Review);
@@ -228,6 +248,7 @@ public class TurnManager : NetworkBehaviour
 
         ProceedToRoll();
     }
+
 
     [Server]
     public void ProceedToRoll()
@@ -272,6 +293,16 @@ public class TurnManager : NetworkBehaviour
     {
         var pawn = GetCurrentPawn();
         if (pawn == null) return;
+        
+        if (IsJailed(pawn))
+        {
+            // Cannot propose while jailed; go directly to EndReady
+            SetPhase(TurnPhase.EndReady);
+            pawn.TargetEnableRoll(pawn.Owner, false);
+            pawn.TargetEnableEndTurn(pawn.Owner, true);
+            Debug.Log($"[TurnManager] {pawn.playerName.Value} is jailed → skipping Proposal, enabling EndTurn.");
+            return;
+        }
 
         SetPhase(TurnPhase.Proposal);
         MarketManager.Instance.ShowProposalForPawn(pawn);

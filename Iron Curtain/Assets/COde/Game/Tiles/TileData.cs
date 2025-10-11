@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public enum TileType { Normal, Event, Investment }
+public enum TileType { Normal, Event, Investment ,Tax,Bonus,GoToJail, Jail}
 
 public class TileData : MonoBehaviour
 {
@@ -11,6 +11,16 @@ public class TileData : MonoBehaviour
     public PlayerPawn owner;        
     public int companyCost = 100;   
     public int baseFactoryIncome = 50;
-      
+    
+    [Header("Tax Settings (if TileType = Tax)")]
+    public int taxFlat = 0;       // e.g. 200
+    [Range(0,100)]
+    public int taxPercent = 0;    // e.g. 10 (% of current cash)
+
+    [Header("Bonus Settings (if TileType = Bonus)")]
+    public int bonusAmount = 100; // e.g. +100
+
+    [Header("Jail Settings")]
+    public int jailSkipTurns = 2;
 
 }

@@ -109,16 +109,7 @@ public class GameManager : NetworkBehaviour
             );
         }
     }
-
     
-    [ObserversRpc]
-    private void RpcPlacePawnAtStart(int connId, Vector3 pos)
-    {
-        if (playerPawns.TryGetValue(connId, out PlayerPawn pawn))
-        {
-            pawn.transform.position = pos;
-        }
-    }
     
     public TileData GetTileData(int index)
     {
@@ -147,4 +138,15 @@ public class GameManager : NetworkBehaviour
         return null;
     }
 
+    public int FindFirstTileIndexOfType(TileType t)
+    {
+        if (boardTiles == null) return -1;
+        for (int i = 0; i < boardTiles.Length; i++)
+        {
+            var td = boardTiles[i]?.GetComponent<TileData>();
+            if (td != null && td.tileType == t)
+                return i;
+        }
+        return -1;
+    }
 }
