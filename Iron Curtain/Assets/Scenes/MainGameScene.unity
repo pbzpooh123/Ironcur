@@ -475,6 +475,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 500
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &69321817
 GameObject:
   m_ObjectHideFlags: 0
@@ -560,6 +564,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &118527604
 GameObject:
   m_ObjectHideFlags: 0
@@ -609,6 +617,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &121884037
 GameObject:
   m_ObjectHideFlags: 0
@@ -658,6 +670,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 1000
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &143938082
 GameObject:
   m_ObjectHideFlags: 0
@@ -990,6 +1006,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &274000815
 GameObject:
   m_ObjectHideFlags: 0
@@ -1341,6 +1361,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &322430028
 GameObject:
   m_ObjectHideFlags: 0
@@ -1866,6 +1890,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 1000
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &423422742
 GameObject:
   m_ObjectHideFlags: 0
@@ -1915,6 +1943,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &475119457
 GameObject:
   m_ObjectHideFlags: 0
@@ -1964,6 +1996,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &528077567
 GameObject:
   m_ObjectHideFlags: 0
@@ -2013,6 +2049,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &543362440
 GameObject:
   m_ObjectHideFlags: 0
@@ -2196,6 +2236,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &630938556
 GameObject:
   m_ObjectHideFlags: 0
@@ -2245,6 +2289,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &634894255
 GameObject:
   m_ObjectHideFlags: 0
@@ -2294,6 +2342,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &652064447
 GameObject:
   m_ObjectHideFlags: 0
@@ -2375,11 +2427,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 4
   companyName: 
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &774712083
 GameObject:
   m_ObjectHideFlags: 0
@@ -2464,6 +2520,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &807711255
 GameObject:
   m_ObjectHideFlags: 0
@@ -2768,6 +2828,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 500
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &847709261
 GameObject:
   m_ObjectHideFlags: 0
@@ -2951,6 +3015,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &858165028
 GameObject:
   m_ObjectHideFlags: 0
@@ -3209,6 +3277,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &874533102
 GameObject:
   m_ObjectHideFlags: 0
@@ -3258,6 +3330,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &884825184
 GameObject:
   m_ObjectHideFlags: 0
@@ -3382,6 +3458,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &928483352
 GameObject:
   m_ObjectHideFlags: 0
@@ -4079,6 +4159,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1024428421
 GameObject:
   m_ObjectHideFlags: 0
@@ -4379,6 +4463,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 1000
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1037992359
 GameObject:
   m_ObjectHideFlags: 0
@@ -4820,6 +4908,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1113485077
 GameObject:
   m_ObjectHideFlags: 0
@@ -4922,37 +5014,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1157353220
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1157353221}
-  m_Layer: 0
-  m_Name: spawn
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1157353221
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1157353220}
-  serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 324.5, y: -33, z: -83.2}
-  m_LocalScale: {x: 100, y: 100, z: 100}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 1968640749}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1190801691
 GameObject:
   m_ObjectHideFlags: 0
@@ -5030,13 +5091,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1190801691}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.00000046193594, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 938, y: 435.8, z: 465}
-  m_LocalScale: {x: 76.80644, y: 62.4, z: 72.65234}
-  m_ConstrainProportionsScale: 1
+  m_LocalRotation: {x: 0.00000042716738, y: 0.00000017582076, z: 0.38061702, w: 0.92473274}
+  m_LocalPosition: {x: 895, y: 545, z: 465}
+  m_LocalScale: {x: 67.17045, y: 116.29964, z: 144.72974}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 44.744}
 --- !u!1 &1215944783
 GameObject:
   m_ObjectHideFlags: 0
@@ -5331,6 +5392,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1275964216
 GameObject:
   m_ObjectHideFlags: 0
@@ -5380,6 +5445,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1289775145
 GameObject:
   m_ObjectHideFlags: 0
@@ -5920,6 +5989,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 500
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1352702746
 GameObject:
   m_ObjectHideFlags: 0
@@ -5969,6 +6042,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 500
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1403265752
 GameObject:
   m_ObjectHideFlags: 0
@@ -6230,6 +6307,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1451767782
 GameObject:
   m_ObjectHideFlags: 0
@@ -6413,6 +6494,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1470477668
 GameObject:
   m_ObjectHideFlags: 0
@@ -6552,6 +6637,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1523148270
 GameObject:
   m_ObjectHideFlags: 0
@@ -6601,6 +6690,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1542772444
 GameObject:
   m_ObjectHideFlags: 0
@@ -6784,6 +6877,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1659339365
 GameObject:
   m_ObjectHideFlags: 0
@@ -6868,6 +6965,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1698762369
 GameObject:
   m_ObjectHideFlags: 0
@@ -7038,6 +7139,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 1000
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1733418980
 GameObject:
   m_ObjectHideFlags: 0
@@ -7355,6 +7460,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 1000
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1837240889
 GameObject:
   m_ObjectHideFlags: 0
@@ -7578,6 +7687,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1880573666
 GameObject:
   m_ObjectHideFlags: 0
@@ -8311,6 +8424,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1968035974
 GameObject:
   m_ObjectHideFlags: 0
@@ -8360,6 +8477,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &1968640748
 GameObject:
   m_ObjectHideFlags: 0
@@ -8389,7 +8510,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1157353221}
   - {fileID: 1087421309}
   - {fileID: 773949530}
   - {fileID: 1351379423}
@@ -8614,6 +8734,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &2056661298
 GameObject:
   m_ObjectHideFlags: 0
@@ -8882,6 +9006,10 @@ MonoBehaviour:
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
+  taxFlat: 0
+  taxPercent: 0
+  bonusAmount: 100
+  jailSkipTurns: 2
 --- !u!1 &2070655659
 GameObject:
   m_ObjectHideFlags: 0
