@@ -219,6 +219,9 @@ public void TriggerMainEvent(int round)
     [Server]
     private void ResumeAfterEvent()
     {
+        if (TurnManager.Instance != null && TurnManager.Instance.IsGameEnded)
+            return; // match ended; don't resume anything
+
         Debug.Log($"[EventManager] ResumeAfterEvent: {_resume}");
         switch (_resume)
         {
@@ -226,7 +229,6 @@ public void TriggerMainEvent(int round)
                 if (_resumeTilePawn != null)
                     TurnManager.Instance.ServerOnTileActionComplete(_resumeTilePawn);
                 break;
-
             case ResumeContext.Main:
                 TurnManager.Instance.ServerStartTurnAfterMainEvent();
                 break;
@@ -938,10 +940,64 @@ private void ResolveCompetition()
 
                 foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
                     TargetShowMainEvent(conn,
-                        $"🏦 Odd Roll Fine: {roller.playerName.Value} pays ${pay}M to {bankOwner.playerName.Value}.",
+                        $"Odd Roll Fine: {roller.playerName.Value} pays ${pay}M to {bankOwner.playerName.Value}.",
                         false);
             }
         }
     }
+    
+    // ======== MATCH END HOOK ========
+    [Server]
+    public void OnMatchEnded()
+    {
+        // Cancel any ongoing waits/flows
+        waitingForAcks = false;
+        playersReady = 0;
+        requiredReady = 0;
+
+        _resume = ResumeContext.None;
+        _resumeTilePawn = null;
+
+        // Clear special modes and competitions
+        _compEvent = null;
+        _compParticipants.Clear();
+        _compRolls.Clear();
+        _compPot = 0;
+        _compFixedPayoutMode = false;
+        _compWinnerPayout = 0;
+        _compOtherPayout = 0;
+
+        _tsEvent = null;
+        _tsChooser = null;
+        _tsCyberAttackMode = false;
+        _tsRansomRate = 0f;
+
+        // Disable temporary rules like Odd Fine
+        _bankOddFineActive = false;
+        _bankOddFineExpiresAtRound = -1;
+
+        // Close all related UIs on clients
+        RpcCloseEventUIs();
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcCloseEventUIs()
+    {
+        // Event popup(s)
+        if (EventUI.Instance != null)
+        {
+            // If you have dedicated close APIs, use them; otherwise disable the GO.
+            EventUI.Instance.gameObject.SetActive(false);
+        }
+
+        // Target selection
+        if (TargetSelectUI.Instance != null)
+            TargetSelectUI.Instance.gameObject.SetActive(false);
+
+        // Competition UI
+        if (CompetitionUI.Instance != null)
+            CompetitionUI.Instance.gameObject.SetActive(false);
+    }
+
 
 }

@@ -1,27 +1,38 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class TurnUI : MonoBehaviour
 {
+    [Header("Buttons")]
     public Button rollDiceButton;
     public Button endTurnButton;
+
+    [Header("Optional Message/Banner (assign either)")]
+    public TMP_Text messageTMP;         // TextMeshPro (optional)
 
     private PlayerPawn myPawn;
 
     private void Start()
     {
-        rollDiceButton.onClick.AddListener(OnRollDiceClicked);
-        endTurnButton.onClick.AddListener(OnEndTurnClicked);
-
-        // Make sure they start disabled. Server will enable via RpcSetTurnState.
+        if (rollDiceButton != null) rollDiceButton.onClick.AddListener(OnRollDiceClicked);
+        if (endTurnButton != null)  endTurnButton.onClick.AddListener(OnEndTurnClicked);
+        
         SetRollInteractable(false);
         SetEndTurnInteractable(false);
+        ClearMessage();
+    }
+
+    private void OnDestroy()
+    {
+        if (rollDiceButton != null) rollDiceButton.onClick.RemoveListener(OnRollDiceClicked);
+        if (endTurnButton != null)  endTurnButton.onClick.RemoveListener(OnEndTurnClicked);
     }
 
     public void BindPawn(PlayerPawn pawn)
     {
         myPawn = pawn;
-        // Do not enable anything here; server will broadcast.
         SetRollInteractable(false);
         SetEndTurnInteractable(false);
     }
@@ -30,8 +41,8 @@ public class TurnUI : MonoBehaviour
     {
         if (myPawn != null && myPawn.IsOwner)
         {
-            myPawn.OnRollDiceButton();  // calls CmdRollDiceAndMove (server validates CanRoll)
-            SetRollInteractable(false); // prevent double-click
+            myPawn.OnRollDiceButton();     
+            SetRollInteractable(false); 
         }
     }
 
@@ -39,13 +50,49 @@ public class TurnUI : MonoBehaviour
     {
         if (myPawn != null && myPawn.IsOwner)
         {
-            myPawn.OnEndTurnButton();   // calls CmdEndTurn (server validates CanEndTurn)
-            SetEndTurnInteractable(false); // prevent double-click
+            myPawn.OnEndTurnButton();     
+            SetEndTurnInteractable(false); 
         }
     }
 
-    public void SetEndTurnInteractable(bool enable) => endTurnButton.interactable = enable;
-    public void SetRollInteractable(bool enable)    => rollDiceButton.interactable = enable;
+    public void SetEndTurnInteractable(bool enable)
+    {
+        if (endTurnButton != null) endTurnButton.interactable = enable;
+    }
+
+    public void SetRollInteractable(bool enable)
+    {
+        if (rollDiceButton != null) rollDiceButton.interactable = enable;
+    }
 
     public void ForceDisableEndTurn() => SetEndTurnInteractable(false);
+    
+    public void FreezeAll()
+    {
+        SetRollInteractable(false);
+        SetEndTurnInteractable(false);
+    }
+    
+    public void ShowMessage(string msg)
+    {
+       if (messageTMP != null) messageTMP.text = msg;
+    }
+
+    public void ClearMessage()
+    {
+        if (messageTMP != null) messageTMP.text = "";
+    }
+    
+    public void ShowToast(string msg, float seconds = 3f)
+    {
+        if (gameObject.activeInHierarchy)
+            StartCoroutine(CoToast(msg, seconds));
+    }
+
+    private IEnumerator CoToast(string msg, float seconds)
+    {
+        if (messageTMP != null) messageTMP.text = msg;
+        yield return new WaitForSeconds(seconds);
+        if (messageTMP != null) messageTMP.text = "";
+    }
 }

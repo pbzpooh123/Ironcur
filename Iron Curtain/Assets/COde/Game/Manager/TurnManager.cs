@@ -34,18 +34,23 @@ public class TurnManager : NetworkBehaviour
 
     // Main event single-fire guard.
     private int _lastMainEventRoundFired = -1;
+    
+    private const int maxrounds = 13;
+    private bool _gameEnded = false;
+    public bool IsGameEnded => _gameEnded;
 
     private void Awake()
     {
+        if (_gameEnded) return;
         Instance = this;
-        roundCount.Value = 1;
-        RpcUpdateRoundUI(roundCount.Value);
     }
 
     public override void OnStartServer()
     {
         base.OnStartServer();
         StartCoroutine(DelayedStart());
+        roundCount.Value = 1;
+        RpcUpdateRoundUI(roundCount.Value);
     }
 
     private System.Collections.IEnumerator DelayedStart()
@@ -324,43 +329,43 @@ public class TurnManager : NetworkBehaviour
     [Server]
     public void EndTurn()
     {
-        if (turnOrder.Count == 0) return;
+        if (turnOrder.Count == 0 || _gameEnded) return;
+
+        // Count every turn taken
+        turnCount.Value++;
 
         int nextIndex = currentPlayerIndex.Value + 1;
+        bool wrapped = nextIndex >= turnOrder.Count;
+        if (wrapped) nextIndex = 0;
 
-        if (nextIndex >= turnOrder.Count)
+        if (wrapped)
         {
-            nextIndex = 0;
-            turnCount.Value++;
+            // A new round begins now
+            roundCount.Value++;
+            Debug.Log($"[TurnManager] New round started: {roundCount.Value}");
 
-            Debug.Log($"[TurnManager] Completed a full cycle. TurnCount={turnCount.Value}");
-
-            // A round completes when everyone has taken a turn
-            if (turnCount.Value % turnOrder.Count == 0)
+            if (roundCount.Value > maxrounds)
             {
-                roundCount.Value++;
-                RpcUpdateRoundUI(roundCount.Value);
-                Debug.Log($"[TurnManager] Round {roundCount.Value} completed!");
+                EndMatch($"Completed Round {maxrounds}");
+                return;
+            }
 
-                MarketManager.Instance?.ProcessPayouts();
-                MarketManager.Instance?.OnRoundAdvanced(roundCount.Value);
+            // Normal between-round processing
+            MarketManager.Instance?.ProcessPayouts();
+            MarketManager.Instance?.OnRoundAdvanced(roundCount.Value);
+
+            // Fire Main Event only if NOT ended and round is eligible
+            if ((roundCount.Value % 3 == 0) && _lastMainEventRoundFired != roundCount.Value)
+            {
+                _lastMainEventRoundFired = roundCount.Value;
+                currentPlayerIndex.Value = nextIndex;   // set next player before pausing for event
+                EventManager.Instance?.TriggerMainEvent(roundCount.Value);
+                SetPhase(TurnPhase.None);
+                return; // EventManager will call ServerStartTurnAfterMainEvent()
             }
         }
 
         currentPlayerIndex.Value = nextIndex;
-
-        // Fire Main Event once per eligible round
-        if (roundCount.Value > 0 &&
-            (roundCount.Value % 3 == 0) &&
-            _lastMainEventRoundFired != roundCount.Value)
-        {
-            _lastMainEventRoundFired = roundCount.Value;
-            EventManager.Instance?.TriggerMainEvent(roundCount.Value);
-
-            SetPhase(TurnPhase.None);
-            return; // EventManager will call ServerStartTurnAfterMainEvent()
-        }
-
         SetPhase(TurnPhase.None);
         StartTurn();
     }
@@ -399,4 +404,37 @@ public class TurnManager : NetworkBehaviour
             (list[n], list[k]) = (list[k], list[n]);
         }
     }
+    
+    [Server]
+    private void EndMatch(string reason = "Reached final round.")
+    {
+        if (_gameEnded) return;
+        _gameEnded = true;
+
+        // Notify systems (now implemented below)
+        MarketManager.Instance?.OnMatchEnded();
+        EventManager.Instance?.OnMatchEnded();
+
+        // Lock phases and tell clients to freeze buttons / show banner
+        SetPhase(TurnPhase.None);
+        RpcOnGameEnded(reason);
+    }
+
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcOnGameEnded(string reason)
+    {
+        // Freeze roll/end buttons on any local TurnUI
+        var tu = GameObject.FindObjectOfType<TurnUI>();
+        if (tu != null)
+        {
+            tu.SetRollInteractable(false);
+            tu.SetEndTurnInteractable(false);
+            tu.ShowToast($"Game Over: {reason}", 5f);
+        }
+
+        // If you have a dedicated end screen, call it here instead:
+        // EndScreen.Show(finalScores);
+    }
+    
 }

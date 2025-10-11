@@ -800,5 +800,29 @@ private IEnumerator RebindOwnerLater(string companyName, string ownerName)
         }
         return false;
     }
+    
+    // ======== MATCH END HOOK ========
+    [Server]
+    public void OnMatchEnded()
+    {
+        _submittedThisTurn.Clear();
+        RpcCloseMarketUI();
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcCloseMarketUI()
+    {
+        if (ProposalUI.Instance != null)
+        {
+            if (ProposalUI.Instance.panel != null)
+                ProposalUI.Instance.Hide();
+        }
+        
+        if (ReviewUI.Instance != null)
+        {
+            if (ReviewUI.Instance.panel != null)
+                ReviewUI.Instance.Hide();
+        }
+    }
 
 }
