@@ -50,7 +50,6 @@ public class TurnManager : NetworkBehaviour
         base.OnStartServer();
         StartCoroutine(DelayedStart());
         roundCount.Value = 1;
-        RpcUpdateRoundUI(roundCount.Value);
     }
 
     private System.Collections.IEnumerator DelayedStart()
@@ -103,9 +102,6 @@ public class TurnManager : NetworkBehaviour
     [ObserversRpc(BufferLast = true)]
     private void RpcSetTurnState(int index, TurnPhase phase, string currentPlayerName)
     {
-        // Optional: debug
-        // Debug.Log($"[Client] TurnState -> idx={index}, phase={phase}, current={currentPlayerName}");
-
         var tu = GameObject.FindObjectOfType<TurnUI>();
         if (tu == null) return;
 
@@ -232,18 +228,15 @@ public class TurnManager : NetworkBehaviour
         // === If jailed: NO Review, NO Roll, NO Proposal → directly EndReady ===
         if (jailedThisTurn)
         {
-            // Make sure no extra roll from previous effects is used this turn
             _extraRolls[currentPlayer] = 0;
 
             SetPhase(TurnPhase.EndReady);
             currentPlayer.TargetEnableRoll(currentPlayer.Owner, false);
             currentPlayer.TargetEnableEndTurn(currentPlayer.Owner, true);
-
-            // optional toast: "You are jailed this turn. You cannot act."
+            
             return;
         }
-
-        // If not jailed, do normal Review check:
+        
         if (MarketManager.Instance.HasProposalsForOwner(currentPlayer))
         {
             SetPhase(TurnPhase.Review);
@@ -379,14 +372,7 @@ public class TurnManager : NetworkBehaviour
         SetPhase(TurnPhase.None);
         StartTurn();
     }
-
-    [ObserversRpc]
-    private void RpcUpdateRoundUI(int round)
-    {
-        if (roundtext != null)
-            roundtext.text = $"Round : {round}";
-    }
-
+    
     public PlayerPawn GetCurrentPawn()
     {
         if (turnOrder.Count == 0) return null;
@@ -437,4 +423,27 @@ public class TurnManager : NetworkBehaviour
         // EndScreen.Show(finalScores);
     }
     
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        ClientUpdateRoundUI(roundCount.Value);
+        roundCount.OnChange += OnRoundChanged;
+    }
+
+    private void OnDestroy()
+    {
+        roundCount.OnChange -= OnRoundChanged;
+    }
+
+    private void OnRoundChanged(int oldVal, int newVal, bool asServer)
+    {
+        ClientUpdateRoundUI(newVal);
+    }
+
+    private void ClientUpdateRoundUI(int round)
+    {
+        if (roundtext != null)
+            roundtext.text = $"Round : {round}";
+    }
+
 }

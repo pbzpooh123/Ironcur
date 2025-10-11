@@ -37,6 +37,8 @@ public class EventManager : NetworkBehaviour
 
     public List<TimelineSO> timelines = new(); // assign in inspector
     private int _currentTimelineIndex = -1;
+    private readonly Dictionary<int, PlayerPawn> _cidToPawn = new();
+
 
     #region ================= Timeline =================
     [Server]
@@ -92,11 +94,17 @@ public class EventManager : NetworkBehaviour
         else if (e != null && e.eventName == "Your Business Gains Media Attention!")
         {
             // All players roll; highest gets 1000, others 100
+            _resume = ResumeContext.Tile;
+            _resumeTilePawn = pawn;
+
             StartMediaAttentionAllRoll(winPayout: 1000, otherPayout: 100);
             return;
+            
         }
         else if (e != null && e.eventName == "Your Business Is Hit by a Cyber Attack!")
         {
+            _resume = ResumeContext.Tile;
+            _resumeTilePawn = pawn;
             // chooser chooses 1 target; target pays 10% to chooser
             StartCyberAttackTargetSelect(chooser, 0.10f);
             return;
@@ -415,6 +423,7 @@ private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
         _compEvent = e;
         _compParticipants.Clear();
         _compRolls.Clear();
+        _cidToPawn.Clear();
         _compPot = 0;
 
         if (GameManager.Instance == null) { ResumeAfterEvent(); return; }
@@ -423,6 +432,7 @@ private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
         {
             if (p?.Owner == null) continue;
             _compParticipants.Add(p.Owner.ClientId);
+            _cidToPawn[p.Owner.ClientId] = p;
 
             if (e.entryFee > 0)
             {
@@ -446,13 +456,15 @@ private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
             return;
         }
 
+        // Safety timeout
+        StartCoroutine(CoCompetitionTimeout(20f));
+
         string title = $"{e.eventName}\nEntry Pot = ${_compPot}\nRoll a d6. Highest wins!";
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-        {
             if (_compParticipants.Contains(conn.ClientId))
                 TargetShowCompetition(conn, title);
-        }
     }
+
 
     [TargetRpc]
     private void TargetShowCompetition(NetworkConnection conn, string title)
@@ -464,12 +476,14 @@ private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
     [ServerRpc(RequireOwnership = false)]
     public void CmdSubmitCompetitionRoll(int roll, NetworkConnection conn = null)
     {
-        if (_compEvent == null || _compEvent.mode != EventMode.Competition) return;
         if (conn == null) return;
+        
+        bool compActive = _compFixedPayoutMode || (_compEvent != null && _compEvent.mode == EventMode.Competition);
+        if (!compActive) return;
 
         int cid = conn.ClientId;
-        if (!_compParticipants.Contains(cid)) return;
-        if (_compRolls.ContainsKey(cid)) return;
+        if (!_compParticipants.Contains(cid)) return;   // not in this competition
+        if (_compRolls.ContainsKey(cid)) return;       // already submitted
 
         int r = Mathf.Clamp(roll, 1, 6);
         _compRolls[cid] = r;
@@ -479,6 +493,7 @@ private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
         if (_compRolls.Count >= _compParticipants.Count)
             ResolveCompetition();
     }
+
 
     [Server]
     private void BroadcastCompetitionStatus(int have, int total)
@@ -497,35 +512,22 @@ private void ApplyEventToPawn(GameEventSO e, PlayerPawn pawn)
     [Server]
 private void ResolveCompetition()
 {
-    // If we're in 'fixed payouts' mode (Media Attention)
     if (_compFixedPayoutMode)
     {
         int maxRoll = 0;
-        foreach (var r in _compRolls.Values)
-            if (r > maxRoll) maxRoll = r;
+        foreach (var r in _compRolls.Values) if (r > maxRoll) maxRoll = r;
 
-        // Who are winners?
         List<PlayerPawn> winners = new();
         foreach (var kv in _compRolls)
-        {
-            if (kv.Value == maxRoll)
-            {
-                var conn = InstanceFinder.ServerManager.Clients.TryGetValue(kv.Key, out var c) ? c : null;
-                var pawn = conn?.FirstObject?.GetComponent<PlayerPawn>();
-                if (pawn != null) winners.Add(pawn);
-            }
-        }
+            if (kv.Value == maxRoll && _cidToPawn.TryGetValue(kv.Key, out var pw) && pw != null)
+                winners.Add(pw);
 
-        // Payouts
-        foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
+        // Pay everyone
+        foreach (var cid in _compParticipants)
         {
-            var pawn = conn?.FirstObject?.GetComponent<PlayerPawn>();
-            if (pawn == null) continue;
-
-            if (winners.Contains(pawn))
-                pawn.AddMoney(_compWinnerPayout);
-            else
-                pawn.AddMoney(_compOtherPayout);
+            if (!_cidToPawn.TryGetValue(cid, out var pw) || pw == null) continue;
+            if (winners.Contains(pw)) pw.AddMoney(_compWinnerPayout);
+            else pw.AddMoney(_compOtherPayout);
         }
 
         string summary = $"Media Attention Roll\nMax Roll={maxRoll}\nWinners={winners.Count}\nWinner gets ${_compWinnerPayout}M, others ${_compOtherPayout}M.";
@@ -534,7 +536,6 @@ private void ResolveCompetition()
 
         CloseCompetitionUI();
 
-        // Reset flags
         _compFixedPayoutMode = false;
         _compWinnerPayout = 0;
         _compOtherPayout = 0;
@@ -542,7 +543,7 @@ private void ResolveCompetition()
         ResumeAfterEvent();
         return;
     }
-
+    
     // ====== Your original "pot / tie-split" competition logic ======
     if (_compEvent == null)
     {
@@ -552,19 +553,13 @@ private void ResolveCompetition()
     }
 
     int max = 0;
-    foreach (var r in _compRolls.Values)
-        if (r > max) max = r;
+    foreach (var r in _compRolls.Values) if (r > max) max = r;
 
     List<PlayerPawn> winners2 = new();
     foreach (var kv in _compRolls)
-    {
-        if (kv.Value == max)
-        {
-            var conn = InstanceFinder.ServerManager.Clients.TryGetValue(kv.Key, out var c) ? c : null;
-            var pawn = conn?.FirstObject?.GetComponent<PlayerPawn>();
-            if (pawn != null) winners2.Add(pawn);
-        }
-    }
+        if (kv.Value == max && _cidToPawn.TryGetValue(kv.Key, out var pw) && pw != null)
+            winners2.Add(pw);
+
 
     int each = (_compEvent.tieSplitPot && winners2.Count > 0)
         ? Mathf.FloorToInt(_compPot / winners2.Count)
@@ -772,9 +767,10 @@ private void ResolveCompetition()
     [Server]
     private void StartMediaAttentionAllRoll(int winPayout, int otherPayout)
     {
-        _compEvent = null; // Not using SO values; using our own special rule.
+        _compEvent = null; // fixed payout mode doesn't use SO
         _compParticipants.Clear();
         _compRolls.Clear();
+        _cidToPawn.Clear();
         _compPot = 0;
 
         _compFixedPayoutMode = true;
@@ -787,9 +783,8 @@ private void ResolveCompetition()
         {
             if (p?.Owner == null) continue;
             _compParticipants.Add(p.Owner.ClientId);
+            _cidToPawn[p.Owner.ClientId] = p;
         }
-
-        Debug.Log($"[EventManager] MediaAttention: participants={_compParticipants.Count}");
 
         if (_compParticipants.Count == 0)
         {
@@ -798,13 +793,16 @@ private void ResolveCompetition()
             return;
         }
 
+        // Safety: auto-resolve if someone never submits.
+        StartCoroutine(CoCompetitionTimeout(20f));
+
         string title = $"Your Business Gains Media Attention!\nRoll a d6. Highest gets ${winPayout}M; others get ${otherPayout}M.";
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-        {
             if (_compParticipants.Contains(conn.ClientId))
                 TargetShowCompetition(conn, title);
-        }
     }
+    
+    
 
     private bool _tsCyberAttackMode = false;
     private float _tsRansomRate = 0f; // e.g., 0.10f
@@ -917,7 +915,7 @@ private void ResolveCompetition()
         {
             _bankOddFineActive = false;
             foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowMainEvent(conn, $"🏦 Odd Roll Fine EXPIRED.", false);
+                TargetShowMainEvent(conn, $"Odd Roll Fine EXPIRED.", false);
         }
     }
     
@@ -997,6 +995,29 @@ private void ResolveCompetition()
         // Competition UI
         if (CompetitionUI.Instance != null)
             CompetitionUI.Instance.gameObject.SetActive(false);
+    }
+
+    private IEnumerator CoCompetitionTimeout(float seconds)
+    {
+        float t = seconds;
+        while (t > 0f
+               && (_compFixedPayoutMode || (_compEvent != null && _compEvent.mode == EventMode.Competition))
+               && _compRolls.Count < _compParticipants.Count)
+        {
+            t -= Time.deltaTime;
+            yield return null;
+        }
+
+        // Auto-roll missing players to avoid deadlock
+        if (_compRolls.Count < _compParticipants.Count
+            && (_compFixedPayoutMode || (_compEvent != null && _compEvent.mode == EventMode.Competition)))
+        {
+            foreach (var cid in _compParticipants)
+                if (!_compRolls.ContainsKey(cid))
+                    _compRolls[cid] = UnityEngine.Random.Range(1, 7);
+
+            ResolveCompetition();
+        }
     }
 
 

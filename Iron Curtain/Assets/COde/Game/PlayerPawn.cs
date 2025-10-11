@@ -119,7 +119,7 @@ public class PlayerPawn : NetworkBehaviour
     {
         if (!TurnManager.Instance.CanRoll(this)) return;
 
-        int roll = Random.Range(1, 7);
+        int roll = Random.Range(2, 13);
         lastRoll.Value = roll;
         
         EventManager.Instance?.OnServerPlayerRolled(this, roll);
