@@ -10,7 +10,7 @@ public enum TurnPhase
     None,
     Review,
     Rolling,
-    TileEventPending,
+    TileEventPending,   // actively waiting for a tile UI "Ready"
     Proposal,
     EndReady
 }
@@ -34,12 +34,15 @@ public class TurnManager : NetworkBehaviour
 
     // Main event single-fire guard.
     private int _lastMainEventRoundFired = -1;
-    
+
     private const int maxrounds = 13;
     private bool _gameEnded = false;
     public readonly SyncVar<int> remainingRounds = new();
     public bool IsGameEnded => _gameEnded;
-    
+
+    // === NEW: are we waiting for the tile panel "Ready"? ===
+    private bool _tileActionAwaitingAck = false;
+
     [SerializeField] private bool AutoBailoutAtTurnStart = true;
     private int RoundsRemaining() => Mathf.Max(0, maxrounds - (roundCount.Value - 1));
     private int RoundsUntilNextMainEvent()
@@ -91,12 +94,12 @@ public class TurnManager : NetworkBehaviour
         yield return new WaitForSeconds(1.0f);
         StartTurn();
     }
-    
+
     // --- Phase gate checks used by PlayerPawn ---
-    [Server] public bool CanRoll(PlayerPawn pawn)          => IsCurrentPawn(pawn) && _phase == TurnPhase.Rolling;
-    [Server] public bool CanEndTurn(PlayerPawn pawn)       => IsCurrentPawn(pawn) && _phase == TurnPhase.EndReady;
-    [Server] public bool InProposalPhaseFor(PlayerPawn p)  => IsCurrentPawn(p)    && _phase == TurnPhase.Proposal;
-    [Server] public bool InReviewPhaseFor(PlayerPawn p)    => IsCurrentPawn(p)    && _phase == TurnPhase.Review;
+    [Server] public bool CanRoll(PlayerPawn pawn)         => IsCurrentPawn(pawn) && _phase == TurnPhase.Rolling;
+    [Server] public bool CanEndTurn(PlayerPawn pawn)      => IsCurrentPawn(pawn) && _phase == TurnPhase.EndReady;
+    [Server] public bool InProposalPhaseFor(PlayerPawn p) => IsCurrentPawn(p)    && _phase == TurnPhase.Proposal;
+    [Server] public bool InReviewPhaseFor(PlayerPawn p)   => IsCurrentPawn(p)    && _phase == TurnPhase.Review;
 
     [Server]
     private void SetPhase(TurnPhase phase)
@@ -146,6 +149,12 @@ public class TurnManager : NetworkBehaviour
                 tu.SetRollInteractable(isMyTurn);
                 break;
 
+            case TurnPhase.TileEventPending:
+                // While a tile panel is open, no roll / no end turn.
+                tu.SetRollInteractable(false);
+                tu.SetEndTurnInteractable(false);
+                break;
+
             case TurnPhase.Proposal:
                 // Proposal UI for current player. No buttons here.
                 break;
@@ -162,7 +171,6 @@ public class TurnManager : NetworkBehaviour
         return pawn != null && turnOrder.Count > 0
                && turnOrder[Mathf.Clamp(currentPlayerIndex.Value, 0, turnOrder.Count - 1)] == pawn;
     }
-    
 
     [Server]
     private bool ShouldSkip(PlayerPawn pawn)
@@ -202,7 +210,6 @@ public class TurnManager : NetworkBehaviour
     }
 
     /* -------------------- Turn lifecycle -------------------- */
-    
 
     [Server]
     private bool IsJailed(PlayerPawn pawn) => (pawn != null && pawn.jailTurnsLeft.Value > 0);
@@ -215,10 +222,10 @@ public class TurnManager : NetworkBehaviour
             currentPlayerIndex.Value = 0;
 
         PlayerPawn currentPlayer = turnOrder[currentPlayerIndex.Value];
-        
+
         if (AutoBailoutAtTurnStart && currentPlayer.money.Value <= 0)
         {
-            currentPlayer.ForceBailoutOnce(); // your existing method (+$100 etc.)
+            currentPlayer.ForceBailoutOnce(); // (+$100 etc.)
             Debug.Log($"[TurnManager] Auto-bailout granted to {currentPlayer.playerName.Value} at turn start.");
         }
 
@@ -242,7 +249,7 @@ public class TurnManager : NetworkBehaviour
         currentPlayer.TargetStartTurn(currentPlayer.Owner);
         Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value} (jailed={jailedThisTurn})");
 
-        // === If jailed: NO Review, NO Roll, NO Proposal → directly EndReady ===
+        // If jailed: NO Review, NO Roll, NO Proposal → directly EndReady
         if (jailedThisTurn)
         {
             _extraRolls[currentPlayer] = 0;
@@ -250,10 +257,10 @@ public class TurnManager : NetworkBehaviour
             SetPhase(TurnPhase.EndReady);
             currentPlayer.TargetEnableRoll(currentPlayer.Owner, false);
             currentPlayer.TargetEnableEndTurn(currentPlayer.Owner, true);
-            
+
             return;
         }
-        
+
         if (MarketManager.Instance.HasProposalsForOwner(currentPlayer))
         {
             SetPhase(TurnPhase.Review);
@@ -264,7 +271,6 @@ public class TurnManager : NetworkBehaviour
         ProceedToRoll();
     }
 
-
     [Server]
     public void ProceedToRoll()
     {
@@ -272,9 +278,36 @@ public class TurnManager : NetworkBehaviour
         if (pawn == null) return;
 
         SetPhase(TurnPhase.Rolling);
-        // Still okay to hint current pawn UI directly
         pawn.TargetEnableRoll(pawn.Owner, true);
         pawn.TargetEnableEndTurn(pawn.Owner, false);
+    }
+
+    // === NEW: bracket any tile panel ===
+    [Server]
+    public void ServerBeginTileAction(PlayerPawn pawn)
+    {
+        if (!IsCurrentPawn(pawn)) return;
+        _tileActionAwaitingAck = true;
+        SetPhase(TurnPhase.TileEventPending);
+
+        // lock roll/end on the active pawn while a tile panel is open
+        pawn.TargetEnableRoll(pawn.Owner, false);
+        pawn.TargetEnableEndTurn(pawn.Owner, false);
+    }
+
+    // Called by the local player when they press Ready/Close on that tile panel.
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdTileActionReady(FishNet.Connection.NetworkConnection caller = null)
+    {
+        if (caller == null) return;
+        var pawn = GetCurrentPawn();
+        if (pawn == null || pawn.Owner != caller) return;
+        if (!_tileActionAwaitingAck || _phase != TurnPhase.TileEventPending) return;
+
+        _tileActionAwaitingAck = false;
+
+        // Continue: extra rolls first, then proposal
+        ServerOnTileActionComplete(pawn);
     }
 
     [Server]
@@ -293,22 +326,21 @@ public class TurnManager : NetworkBehaviour
         {
             ConsumeOneExtraRoll(pawn);
             Debug.Log($"[TurnManager] Consumed one extra roll. Remaining={GetExtraRolls(pawn)} → ProceedToRoll()");
-            ProceedToRoll();  // This will SetPhase(Rolling) and enable Roll, disable EndTurn
+            ProceedToRoll(); // roll again; that tile should also call ServerBeginTileAction + CmdTileActionReady
         }
         else
         {
             Debug.Log("[TurnManager] No extra roll → ProceedToProposal()");
-            ProceedToProposal(); // This opens ProposalUI and eventually enables EndTurn
+            ProceedToProposal();
         }
     }
-
 
     [Server]
     public void ProceedToProposal()
     {
         var pawn = GetCurrentPawn();
         if (pawn == null) return;
-        
+
         // Block proposals for the round if the event is active
         if (EventManager.Instance != null && EventManager.Instance.IsProposalBlockedNow())
         {
@@ -318,10 +350,9 @@ public class TurnManager : NetworkBehaviour
             Debug.Log($"[TurnManager] Proposals disabled → EndTurn enabled for {pawn.playerName.Value}.");
             return;
         }
-        
+
         if (IsJailed(pawn))
         {
-            // Cannot propose while jailed; go directly to EndReady
             SetPhase(TurnPhase.EndReady);
             pawn.TargetEnableRoll(pawn.Owner, false);
             pawn.TargetEnableEndTurn(pawn.Owner, true);
@@ -369,17 +400,17 @@ public class TurnManager : NetworkBehaviour
                 EndMatch($"Completed {maxrounds} rounds");
                 return;
             }
-            
+
             MarketManager.Instance?.ProcessPayouts();
             MarketManager.Instance?.OnRoundAdvanced(roundCount.Value);
-            
+
             if ((roundCount.Value % 3 == 0) && _lastMainEventRoundFired != roundCount.Value)
             {
                 _lastMainEventRoundFired = roundCount.Value;
                 currentPlayerIndex.Value = nextIndex;
                 EventManager.Instance?.TriggerMainEvent(roundCount.Value);
                 SetPhase(TurnPhase.None);
-                return; 
+                return;
             }
         }
         currentPlayerIndex.Value = nextIndex;
@@ -393,19 +424,16 @@ public class TurnManager : NetworkBehaviour
         if (roundtext != null)
             roundtext.text = $"Rounds left: {roundsLeft}   (Main event in {eventIn})";
     }
-    
-    /// <summary>
-    /// Called by EventManager AFTER main event finishes.
-    /// </summary>
+
+    /// <summary> Called by EventManager AFTER main event finishes. </summary>
     [Server]
     public void ServerStartTurnAfterMainEvent()
     {
         RpcUpdateRoundUI(RoundsRemaining(), RoundsUntilNextMainEvent());
-
         SetPhase(TurnPhase.None);
         StartTurn();
     }
-    
+
     public PlayerPawn GetCurrentPawn()
     {
         if (turnOrder.Count == 0) return null;
@@ -423,14 +451,14 @@ public class TurnManager : NetworkBehaviour
             (list[n], list[k]) = (list[k], list[n]);
         }
     }
-    
+
     [Server]
     private void EndMatch(string reason = "Reached final round.")
     {
         if (_gameEnded) return;
         _gameEnded = true;
 
-        // Notify systems (now implemented below)
+        // Notify systems
         MarketManager.Instance?.OnMatchEnded();
         EventManager.Instance?.OnMatchEnded();
 
@@ -439,11 +467,9 @@ public class TurnManager : NetworkBehaviour
         RpcOnGameEnded(reason);
     }
 
-
     [ObserversRpc(BufferLast = true)]
     private void RpcOnGameEnded(string reason)
     {
-        // Freeze roll/end buttons on any local TurnUI
         var tu = GameObject.FindObjectOfType<TurnUI>();
         if (tu != null)
         {
@@ -451,10 +477,5 @@ public class TurnManager : NetworkBehaviour
             tu.SetEndTurnInteractable(false);
             tu.ShowToast($"Game Over: {reason}", 5f);
         }
-
-        // If you have a dedicated end screen, call it here instead:
-        // EndScreen.Show(finalScores);
     }
-    
-
 }

@@ -79,7 +79,22 @@ public class EventUI : MonoBehaviour
         if (waitingForAll)
         {
             // Send "ready" to server
-            EventManager.Instance.CmdPlayerReady();
+            TurnManager.Instance.CmdTileActionReady();
         }
+    }
+    
+    public System.Action onSideeventReady;
+
+    public void SetSideeventReadyCallback(System.Action cb)
+    {
+        onSideeventReady = cb;
+    }
+    
+    public void OnSideEventReadyClicked()
+    {
+        var cb = onSideeventReady;
+        onSideeventReady = null;
+        cb?.Invoke();   // This will call pawn.CmdTileActionComplete()
+        OnSideOk();
     }
 }
