@@ -309,6 +309,16 @@ public class TurnManager : NetworkBehaviour
         var pawn = GetCurrentPawn();
         if (pawn == null) return;
         
+        // Block proposals for the round if the event is active
+        if (EventManager.Instance != null && EventManager.Instance.IsProposalBlockedNow())
+        {
+            SetPhase(TurnPhase.EndReady);
+            pawn.TargetEnableRoll(pawn.Owner, false);
+            pawn.TargetEnableEndTurn(pawn.Owner, true);
+            Debug.Log($"[TurnManager] Proposals disabled → EndTurn enabled for {pawn.playerName.Value}.");
+            return;
+        }
+        
         if (IsJailed(pawn))
         {
             // Cannot propose while jailed; go directly to EndReady

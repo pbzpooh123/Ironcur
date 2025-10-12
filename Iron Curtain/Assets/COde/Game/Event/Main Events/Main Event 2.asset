@@ -14,32 +14,55 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventName: Berlin Blockade
   description: "The Soviet Union blockades access to West Berlin.\n\nSteel & Iron
-    Production: \u201325% revenue for 3 turns\n\nFood & Beverage Production: If allied
-    with the West, gain an additional $200 revenue\n\nTransportation & Logistics:
-    \u201350% revenue for 3 turns"
+    Production: \u201325% revenue for 3 turns\n\nFood & Beverage Production:  gain
+    an additional $200 revenue\n\nTransportation & Logistics: \u201350% revenue for
+    3 turns"
   type: 1
+  mode: 5
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 1
   effects:
   - targetType: 0
     targetName: Steel & Iron Production
-    moneyDelta: 150
+    moneyDelta: 0
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: -0.25
     duration: 3
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
   - targetType: 0
     targetName: Food & Beverage Production
-    moneyDelta: 120
-    multiplier: 0.66
-    duration: 0
-    skipTurn: 0
+    moneyDelta: 200
     randomMoneyMin: 0
     randomMoneyMax: 0
+    multiplier: 0
+    duration: 0
+    skipTurn: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
   - targetType: 0
     targetName: Transportation & Logistics
-    moneyDelta: 200
+    moneyDelta: 0
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: -0.5
     duration: 3
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1

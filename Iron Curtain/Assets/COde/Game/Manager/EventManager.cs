@@ -38,6 +38,11 @@ public class EventManager : NetworkBehaviour
     public List<TimelineSO> timelines = new(); // assign in inspector
     private int _currentTimelineIndex = -1;
     private readonly Dictionary<int, PlayerPawn> _cidToPawn = new();
+    // ==== ForcedRollTier state ====
+    private bool _tierActive = false;
+    private int _tierLowMax, _tierHighMin, _tierPay, _tierGain;
+    private readonly HashSet<int> _tierParticipants = new();
+    private readonly Dictionary<int, int> _tierRolls = new();
 
 
     #region ================= Timeline =================
@@ -180,6 +185,14 @@ public void TriggerMainEvent(int round)
                 break;
             case EventMode.TargetSelect:
                 StartTargetSelect(e);
+                break;
+            case EventMode.ProposalBlock:
+                EnableProposalBlockForRounds(Mathf.Max(1, e.blockProposalRounds));
+                ResumeAfterEvent();
+                break;
+
+            case EventMode.ForcedRollTier:
+                StartForcedRollTier(e);
                 break;
             default:
                 ApplyEventToAll(e);
@@ -1019,6 +1032,162 @@ private void ResolveCompetition()
             ResolveCompetition();
         }
     }
+    
+    // --- Proposal block state ---
+    private int _proposalBlockExpiresAtRound = -1;
+    
+    public bool IsProposalBlockedNow()
+    {
+        var tm = TurnManager.Instance;
+        if (tm == null) return false;
+        return (_proposalBlockExpiresAtRound >= 0 &&
+                tm.roundCount.Value <= _proposalBlockExpiresAtRound);
+    }
+    
+    [Server]
+    private void EnableProposalBlockForRounds(int rounds)
+    {
+        var tm = TurnManager.Instance;
+        if (tm == null) return;
+        int cur = Mathf.Max(1, tm.roundCount.Value);
+        int newExpiry = cur + Mathf.Max(1, rounds) - 1; // inclusive
+        _proposalBlockExpiresAtRound = Mathf.Max(_proposalBlockExpiresAtRound, newExpiry);
+
+        foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
+            TargetShowMainEvent(c, $"Proposals disabled for {rounds} round(s).", false);
+    }
+    
+    [Server]
+    private void StartForcedRollTier(GameEventSO e)
+    {
+        _tierActive = true;
+        _tierParticipants.Clear();
+        _tierRolls.Clear();
+
+        // cache config
+        _tierLowMax = Mathf.Clamp(e.lowMax, 1, 5);
+        _tierHighMin = Mathf.Clamp(e.highMin, 2, 6);
+        _tierPay  = Mathf.Max(0, e.lowPayAmount);
+        _tierGain = Mathf.Max(0, e.highGainAmount);
+
+        // who plays?
+        var list = new List<PlayerPawn>();
+        if (e.affectAllPlayers || TurnManager.Instance?.GetCurrentPawn() == null)
+            list.AddRange(GameManager.Instance.Players);
+        else
+            list.Add(TurnManager.Instance.GetCurrentPawn());
+
+        // build name map for clients
+        var ids = new List<int>();
+        var names = new List<string>();
+        foreach (var p in list)
+        {
+            if (p?.Owner == null) continue;
+            ids.Add(p.Owner.ClientId);
+            names.Add(p.playerName.Value);
+            _tierParticipants.Add(p.Owner.ClientId);
+        }
+
+        string header = $"{e.eventName}\n1–{_tierLowMax}: pay ${_tierPay} • {_tierHighMin}–6: +${_tierGain} • else: no change";
+
+        // tell each client to open UI; only enable their own Roll button locally
+        foreach (var kv in InstanceFinder.ServerManager.Clients)
+        {
+            int cid = kv.Key;
+            TargetShowForcedRollTier(kv.Value, header, ids.ToArray(), names.ToArray(), cid);
+        }
+    }
+    
+    [TargetRpc]
+    private void TargetShowForcedRollTier(NetworkConnection conn, string header, int[] cids, string[] names, int localCid)
+    {
+        var map = new Dictionary<int,string>();
+        for (int i = 0; i < cids.Length; i++)
+            map[cids[i]] = (i < names.Length ? names[i] : ("P"+cids[i]));
+
+        ForcedRollTierUI.Instance?.Show(header, new List<int>(cids), map, localCid);
+    }
+
+    [TargetRpc]
+    private void TargetTierRolling(NetworkConnection conn, int cid)
+    {
+        ForcedRollTierUI.Instance?.SetRolling(cid);
+    }
+
+    [TargetRpc]
+    private void TargetTierRolled(NetworkConnection conn, int cid, int roll, string outcome)
+    {
+        ForcedRollTierUI.Instance?.SetRolled(cid, roll, outcome);
+    }
+
+    [ObserversRpc]
+    private void RpcCloseForcedRollTier()
+    {
+        ForcedRollTierUI.Instance?.Hide();
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdRequestTierRoll(NetworkConnection conn = null)
+    {
+        if (!_tierActive || conn == null) return;
+
+        int cid = conn.ClientId;
+        if (!_tierParticipants.Contains(cid)) return;
+        if (_tierRolls.ContainsKey(cid)) return; // already rolled
+
+        // visual “rolling…” to everyone
+        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
+            TargetTierRolling(c, cid);
+
+        int roll = Random.Range(1, 7);
+        _tierRolls[cid] = roll;
+
+        var pawn = conn.FirstObject?.GetComponent<PlayerPawn>();
+        string outcome;
+
+        if (roll <= _tierLowMax)
+        {
+            int pay = Mathf.Min(_tierPay, pawn.money.Value);
+            if (pay > 0) pawn.TrySpendMoney(pay);
+            outcome = $"-${pay}";
+        }
+        else if (roll >= _tierHighMin)
+        {
+            pawn.AddMoney(_tierGain);
+            outcome = $"+${_tierGain}";
+        }
+        else
+        {
+            outcome = "no change";
+        }
+
+        // broadcast this player’s result to all
+        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
+            TargetTierRolled(c, cid, roll, outcome);
+
+        // if all done → close + resume
+        if (_tierRolls.Count >= _tierParticipants.Count)
+            ResolveForcedRollTier();
+    }
+
+    [Server]
+    private void ResolveForcedRollTier()
+    {
+        _tierActive = false;
+
+        // Optional: build a summary string
+        System.Text.StringBuilder sb = new();
+        sb.AppendLine("Forced Roll Tier – Results");
+        foreach (var kv in _tierRolls)
+            sb.AppendLine($"CID {kv.Key}: {kv.Value}");
+
+        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
+            TargetShowMainEvent(c, sb.ToString(), false);
+
+        RpcCloseForcedRollTier();
+        ResumeAfterEvent(); // your existing flow
+    }
+
 
 
 }

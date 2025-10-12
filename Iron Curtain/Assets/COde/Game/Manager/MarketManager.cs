@@ -424,18 +424,18 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
         }
         var proposer = GameManager.Instance.Players.Find(p => p.Owner == caller);
         if (proposer == null) return;
-
-        // Optional if you have phase-checks:
-        // if (!TurnManager.Instance.InProposalPhaseFor(proposer)) return;
-
+        if (EventManager.Instance != null && EventManager.Instance.IsProposalBlockedNow())
+        {
+            Debug.LogWarning("[Market] Proposal blocked this round.");
+            return;
+        }
+        
         if (!companies.TryGetValue(companyName, out var company)) return;
         if (company.owner == proposer) return; // cannot propose to self
-
-        // Bounds
+        
         percent = Mathf.Clamp(percent, 1, 40);
         price   = Mathf.Max(1, price);
-
-        // Only one per company this turn
+        
         if (!_submittedThisTurn.TryGetValue(proposer, out var set))
         {
             set = new HashSet<string>();
@@ -446,8 +446,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
             Debug.LogWarning($"[Market] {proposer.playerName.Value} already proposed to {companyName} this turn.");
             return;
         }
-
-        // Cap by owner's available
+        
         int ownerAvailable = company.GetOwnership(company.owner);
         if (ownerAvailable <= 0)
         {

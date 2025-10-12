@@ -16,12 +16,31 @@ MonoBehaviour:
   description: "Formation of the Soviet\u2013Eastern Bloc Military Alliance\n\nWeapon
     Manufacturing: +50% revenue"
   type: 1
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
   effects:
   - targetType: 0
     targetName: Weapon Manufacturing
     moneyDelta: 500
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 0.5
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
