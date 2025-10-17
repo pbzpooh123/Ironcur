@@ -11542,7 +11542,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: timelines.Array.size
-      value: 1
+      value: 3
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.size
@@ -11707,6 +11707,15 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 8924475397208095649, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       insertIndex: -1
       addedObject: {fileID: 4936575218940012829}
+    - targetCorrespondingSourceObject: {fileID: 8924475397208095649, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4936575218940012832}
+    - targetCorrespondingSourceObject: {fileID: 8924475397208095649, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4936575218940012831}
+    - targetCorrespondingSourceObject: {fileID: 8924475397208095649, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 4936575218940012830}
   m_SourcePrefab: {fileID: 100100000, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
 --- !u!1 &4936575218940012828 stripped
 GameObject:
@@ -11765,6 +11774,48 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0, z: 0, w: 0}
     Scale: {x: 0, y: 0, z: 0}
     IsValid: 0
+--- !u!114 &4936575218940012830
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4936575218940012828}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dc2d304a0cb016b459b027930f156f15, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!225 &4936575218940012831
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4936575218940012828}
+  m_Enabled: 1
+  m_Alpha: 1
+  m_Interactable: 1
+  m_BlocksRaycasts: 1
+  m_IgnoreParentGroups: 0
+--- !u!114 &4936575218940012832
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4936575218940012828}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7d62c4612baed584f8000152017070fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  anchor: {fileID: 2479898681294742902, guid: f5d5ba9968e59cf418f038c854905253, type: 3}
+  popupPrefab: {fileID: 1592717669587039832, guid: efbfadc6972a522489a6e1e155ae55bf, type: 3}
+  floatPixels: 48
+  duration: 0.85
+  plusColor: {r: 0.2, g: 0.85, b: 0.2, a: 1}
+  minusColor: {r: 0.9, g: 0.2, b: 0.2, a: 1}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

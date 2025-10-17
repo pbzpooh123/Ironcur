@@ -69,6 +69,13 @@ public class PlayerPawn : NetworkBehaviour
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
     {
         infoPanel?.UpdateMoney(newValue);
+        int delta = newValue - oldValue;
+        if (delta != 0 && infoPanel != null)
+        {
+            var deltaCtrl = infoPanel.GetComponentInChildren<MoneyDeltaController>(true);
+            if (deltaCtrl != null)
+                deltaCtrl.ShowDelta(delta);
+        }
     }
 
     /* ---------- Money ---------- */
