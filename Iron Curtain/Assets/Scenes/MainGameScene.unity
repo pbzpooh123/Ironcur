@@ -573,7 +573,7 @@ Transform:
   m_GameObject: {fileID: 69229067}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 386, y: -33, z: -71}
+  m_LocalPosition: {x: 354.9, y: -33, z: -115}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -591,11 +591,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 4
   companyName: 1
   owner: {fileID: 0}
-  companyCost: 1000
-  baseFactoryIncome: 11
+  companyCost: 0
+  baseFactoryIncome: 0
   taxFlat: 0
   taxPercent: 0
   bonusAmount: 100
@@ -662,7 +662,7 @@ Transform:
   m_GameObject: {fileID: 98137011}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 623, y: -33, z: 315}
+  m_LocalPosition: {x: 595, y: -33, z: 265.5}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -849,7 +849,7 @@ Transform:
   m_GameObject: {fileID: 118527604}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -161, y: -33.3, z: 12}
+  m_LocalPosition: {x: -180, y: -33.3, z: -34.6}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -867,11 +867,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 4
-  companyName: 783687
+  tileType: 1
+  companyName: 
   owner: {fileID: 0}
-  companyCost: 78857
-  baseFactoryIncome: 82587
+  companyCost: 0
+  baseFactoryIncome: 0
   taxFlat: 0
   taxPercent: 0
   bonusAmount: 100
@@ -902,7 +902,7 @@ Transform:
   m_GameObject: {fileID: 121884037}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -83, y: -33, z: 710}
+  m_LocalPosition: {x: -98, y: -33, z: 640}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1353,7 +1353,7 @@ Transform:
   m_GameObject: {fileID: 265888313}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 621, y: -33.3, z: 165}
+  m_LocalPosition: {x: 595, y: -33.3, z: 112}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1708,7 +1708,7 @@ Transform:
   m_GameObject: {fileID: 315532495}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -160, y: -33, z: 320}
+  m_LocalPosition: {x: -180, y: -33, z: 268}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2237,7 +2237,7 @@ Transform:
   m_GameObject: {fileID: 401960807}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -80, y: -33.3, z: -66}
+  m_LocalPosition: {x: -105.3, y: -33.3, z: -115}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2290,7 +2290,7 @@ Transform:
   m_GameObject: {fileID: 423422742}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 627, y: -33.3, z: 636}
+  m_LocalPosition: {x: 595, y: -33.3, z: 560.5}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2477,7 +2477,7 @@ Transform:
   m_GameObject: {fileID: 475119457}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1, y: -33, z: 710}
+  m_LocalPosition: {x: -23, y: -33, z: 640}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2495,7 +2495,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 4
   companyName: 
   owner: {fileID: 0}
   companyCost: 0
@@ -2515,7 +2515,7 @@ GameObject:
   - component: {fileID: 528077568}
   - component: {fileID: 528077569}
   m_Layer: 0
-  m_Name: Waypoints 1 (30)
+  m_Name: Tax
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -2530,7 +2530,7 @@ Transform:
   m_GameObject: {fileID: 528077567}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 624, y: -33.3, z: 707}
+  m_LocalPosition: {x: 595, y: -33.3, z: 640}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2754,7 +2754,7 @@ Transform:
   m_GameObject: {fileID: 618608538}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -159, y: -33, z: 396}
+  m_LocalPosition: {x: -180, y: -33, z: 340}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2772,7 +2772,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 4
   companyName: 
   owner: {fileID: 0}
   companyCost: 0
@@ -2807,7 +2807,7 @@ Transform:
   m_GameObject: {fileID: 630938556}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -159, y: -33, z: 558}
+  m_LocalPosition: {x: -180, y: -33, z: 495}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2825,7 +2825,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 4
   companyName: 
   owner: {fileID: 0}
   companyCost: 0
@@ -2845,7 +2845,7 @@ GameObject:
   - component: {fileID: 634894256}
   - component: {fileID: 634894257}
   m_Layer: 0
-  m_Name: Jail
+  m_Name: Tax
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -2860,7 +2860,7 @@ Transform:
   m_GameObject: {fileID: 634894255}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -157, y: -33, z: 712}
+  m_LocalPosition: {x: -180, y: -33, z: 640}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2878,13 +2878,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 6
+  tileType: 3
   companyName: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
   taxFlat: 0
-  taxPercent: 0
+  taxPercent: 10
   bonusAmount: 100
   jailSkipTurns: 2
 --- !u!1 &641634702
@@ -3122,7 +3122,7 @@ Transform:
   m_GameObject: {fileID: 773949529}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 543, y: -33, z: -69}
+  m_LocalPosition: {x: 507.8, y: -33, z: -115}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3140,7 +3140,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 4
+  tileType: 1
   companyName: 1
   owner: {fileID: 0}
   companyCost: 100
@@ -3210,7 +3210,7 @@ Transform:
   m_GameObject: {fileID: 786955240}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 550, y: -33.3, z: 708}
+  m_LocalPosition: {x: 516, y: -33.3, z: 640}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3228,7 +3228,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 4
+  tileType: 1
   companyName: 
   owner: {fileID: 0}
   companyCost: 0
@@ -3786,7 +3786,7 @@ Transform:
   m_GameObject: {fileID: 837427014}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 77, y: -33, z: -70}
+  m_LocalPosition: {x: 46.9, y: -33, z: -115}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3973,7 +3973,7 @@ Transform:
   m_GameObject: {fileID: 851475949}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 630, y: -33.3, z: 467}
+  m_LocalPosition: {x: 595, y: -33.3, z: 413.1}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4235,7 +4235,7 @@ Transform:
   m_GameObject: {fileID: 869416078}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 163, y: -33.3, z: 709}
+  m_LocalPosition: {x: 131, y: -33.3, z: 640}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4288,7 +4288,7 @@ Transform:
   m_GameObject: {fileID: 874533102}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -160, y: -33, z: 627}
+  m_LocalPosition: {x: -180, y: -33, z: 566}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4550,7 +4550,7 @@ Transform:
   m_GameObject: {fileID: 903583031}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 394, y: -33.3, z: 708}
+  m_LocalPosition: {x: 360, y: -33.3, z: 640}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5506,7 +5506,7 @@ Transform:
   m_GameObject: {fileID: 1018004847}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -157, y: -33, z: 471}
+  m_LocalPosition: {x: -180, y: -33, z: 417}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5854,7 +5854,7 @@ Transform:
   m_GameObject: {fileID: 1033973181}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -157, y: -33, z: 164}
+  m_LocalPosition: {x: -180, y: -33, z: 117}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6150,7 +6150,7 @@ GameObject:
   - component: {fileID: 1087421309}
   - component: {fileID: 1087421310}
   m_Layer: 0
-  m_Name: Waypoints 1
+  m_Name: Start
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -6165,7 +6165,7 @@ Transform:
   m_GameObject: {fileID: 1087421308}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 620.7, y: -33, z: -71.7}
+  m_LocalPosition: {x: 595, y: -33, z: -115}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6352,7 +6352,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 21300000, guid: e1f4d74c8451ad347b6e47927975b1dd, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 4932317a1e40d5148acb796573c663e2, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -6371,13 +6371,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1190801691}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.00000042716738, y: 0.00000017582076, z: 0.38061702, w: 0.92473274}
-  m_LocalPosition: {x: 895, y: 545, z: 465}
-  m_LocalScale: {x: 67.17045, y: 116.29964, z: 144.72974}
+  m_LocalRotation: {x: 0.00000046193483, y: -0.0000000010325677, z: 0.705524, w: 0.708686}
+  m_LocalPosition: {x: 854, y: 500, z: 465}
+  m_LocalScale: {x: 79.105385, y: 79.105385, z: 79.105385}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 44.744}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 89.744}
 --- !u!1 &1215944783
 GameObject:
   m_ObjectHideFlags: 0
@@ -6649,7 +6649,7 @@ Transform:
   m_GameObject: {fileID: 1270985474}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 470, y: -33.3, z: 705}
+  m_LocalPosition: {x: 438, y: -33.3, z: 640}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6667,7 +6667,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 4
   companyName: 
   owner: {fileID: 0}
   companyCost: 0
@@ -6687,7 +6687,7 @@ GameObject:
   - component: {fileID: 1275964217}
   - component: {fileID: 1275964218}
   m_Layer: 0
-  m_Name: Waypoints 10 (1)
+  m_Name: Jail
   m_TagString: Untagged
   m_Icon: {fileID: 5132851093641282708, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
@@ -6702,7 +6702,7 @@ Transform:
   m_GameObject: {fileID: 1275964216}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -159, y: -33.3, z: -63}
+  m_LocalPosition: {x: -180, y: -33, z: -115}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6720,7 +6720,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 6
   companyName: 44444
   owner: {fileID: 0}
   companyCost: 444
@@ -7278,7 +7278,7 @@ Transform:
   m_GameObject: {fileID: 1351379422}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 456, y: -33, z: -70}
+  m_LocalPosition: {x: 430.7, y: -33, z: -115}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7331,7 +7331,7 @@ Transform:
   m_GameObject: {fileID: 1352702746}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 155, y: -33, z: -69}
+  m_LocalPosition: {x: 123.9, y: -33, z: -115}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7349,7 +7349,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 4
+  tileType: 1
   companyName: 25
   owner: {fileID: 0}
   companyCost: 522
@@ -7730,7 +7730,7 @@ Transform:
   m_GameObject: {fileID: 1431142085}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 621, y: -33, z: 6}
+  m_LocalPosition: {x: 595, y: -33, z: -38.6}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7917,7 +7917,7 @@ Transform:
   m_GameObject: {fileID: 1457942203}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 630, y: -33.3, z: 236}
+  m_LocalPosition: {x: 595, y: -33.3, z: 192.4}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7935,7 +7935,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 4
+  tileType: 1
   companyName: 
   owner: {fileID: 0}
   companyCost: 0
@@ -8060,7 +8060,7 @@ Transform:
   m_GameObject: {fileID: 1471565496}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 628, y: -33.345673, z: 557}
+  m_LocalPosition: {x: 595, y: -33.345673, z: 492.3}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8113,7 +8113,7 @@ Transform:
   m_GameObject: {fileID: 1523148270}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 84, y: -33, z: 710}
+  m_LocalPosition: {x: 53, y: -33, z: 640}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8300,7 +8300,7 @@ Transform:
   m_GameObject: {fileID: 1621081716}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -158, y: -33.3, z: 91}
+  m_LocalPosition: {x: -180, y: -33.3, z: 45.4}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8318,14 +8318,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 4
   companyName: 745287
   owner: {fileID: 0}
   companyCost: 78857
   baseFactoryIncome: 758752
   taxFlat: 0
   taxPercent: 0
-  bonusAmount: 0
+  bonusAmount: 100
   jailSkipTurns: 2
 --- !u!1 &1647370335
 GameObject:
@@ -8621,7 +8621,7 @@ Transform:
   m_GameObject: {fileID: 1684293465}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 314, y: -33.3, z: 710}
+  m_LocalPosition: {x: 289, y: -33.3, z: 640}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -8639,7 +8639,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 4
+  tileType: 1
   companyName: 
   owner: {fileID: 0}
   companyCost: 0
@@ -8795,7 +8795,7 @@ Transform:
   m_GameObject: {fileID: 1699834312}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 306, y: -33, z: -66}
+  m_LocalPosition: {x: 275.9, y: -33, z: -115}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9249,7 +9249,7 @@ Transform:
   m_GameObject: {fileID: 1821530174}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 230, y: -33, z: -70}
+  m_LocalPosition: {x: 201.8, y: -33, z: -115}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9476,7 +9476,7 @@ Transform:
   m_GameObject: {fileID: 1844927377}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -161, y: -33, z: 235}
+  m_LocalPosition: {x: -180, y: -33, z: 194}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10213,7 +10213,7 @@ Transform:
   m_GameObject: {fileID: 1959678375}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 626, y: -33, z: 392}
+  m_LocalPosition: {x: 595, y: -33, z: 338.7}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10266,7 +10266,7 @@ Transform:
   m_GameObject: {fileID: 1968035974}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 236, y: -33.3, z: 712}
+  m_LocalPosition: {x: 208, y: -33.3, z: 640}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10523,7 +10523,7 @@ Transform:
   m_GameObject: {fileID: 2038504683}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 625, y: -33, z: 84}
+  m_LocalPosition: {x: 595, y: -33, z: 42.1}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10541,7 +10541,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 4
+  tileType: 1
   companyName: 
   owner: {fileID: 0}
   companyCost: 0
@@ -11063,7 +11063,7 @@ Transform:
   m_GameObject: {fileID: 2063492754}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -2, y: -33, z: -66}
+  m_LocalPosition: {x: -27.3, y: -33, z: -115}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
