@@ -69,12 +69,18 @@ public class PlayerPawn : NetworkBehaviour
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
     {
         infoPanel?.UpdateMoney(newValue);
+        Debug.Log($"[Money] {playerName.Value}: ${oldValue} -> ${newValue}");
         int delta = newValue - oldValue;
         if (delta != 0 && infoPanel != null)
         {
             var deltaCtrl = infoPanel.GetComponentInChildren<MoneyDeltaController>(true);
+            Debug.Log("111");
             if (deltaCtrl != null)
+            {
+                Debug.Log("111");
                 deltaCtrl.ShowDelta(delta);
+            }
+
         }
     }
 
@@ -124,7 +130,7 @@ public class PlayerPawn : NetworkBehaviour
     {
         if (!TurnManager.Instance.CanRoll(this)) return;
 
-        int roll = Random.Range(2, 13);
+        int roll = Random.Range(1, 7);
         lastRoll.Value = roll;
 
         // Rule hooks (e.g., Odd Fine)
