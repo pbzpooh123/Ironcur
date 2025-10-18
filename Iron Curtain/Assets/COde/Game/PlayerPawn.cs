@@ -4,6 +4,7 @@ using FishNet.Connection;
 using System.Collections;
 using System.Collections.Generic;
 using FishNet.Object.Synchronizing;
+using System.Threading.Tasks;
 
 public class PlayerPawn : NetworkBehaviour
 {
@@ -130,7 +131,7 @@ public class PlayerPawn : NetworkBehaviour
     {
         if (!TurnManager.Instance.CanRoll(this)) return;
 
-        int roll = Random.Range(1, 7);
+        int roll = Random.Range(2, 13);
         lastRoll.Value = roll;
 
         // Rule hooks (e.g., Odd Fine)
@@ -445,5 +446,29 @@ public class PlayerPawn : NetworkBehaviour
         int finalPay = Mathf.Min(amount, money.Value);
         if (finalPay > 0) TrySpendMoney(finalPay);
         return finalPay;
+    }
+
+    [TargetRpc] 
+    public void TargetSubmitToLeaderboard(NetworkConnection conn, long score, string displayName)
+    {
+        _ = SubmitMyScoreAsync(score, displayName);
+    }
+
+    private async Task SubmitMyScoreAsync(long score, string displayName)
+    {
+        if (UGSLeaderboard.Instance == null)
+        {
+            Debug.LogWarning("UGSLeaderboard singleton missing.");
+            return;
+        }
+        try
+        {
+            await UGSLeaderboard.Instance.SubmitMyScoreAsync(score, displayName);
+            Debug.Log($"[UGS] Submitted score {score} for {displayName}");
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[UGS] Submit failed: {ex}");
+        }
     }
 }

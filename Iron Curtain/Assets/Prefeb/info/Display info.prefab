@@ -132,7 +132,7 @@ MonoBehaviour:
   anchor: {fileID: 7471322108025677135}
   popupPrefab: {fileID: 1592717669587039832, guid: efbfadc6972a522489a6e1e155ae55bf, type: 3}
   floatPixels: 48
-  duration: 500
+  duration: 2
   plusColor: {r: 0.2, g: 0.85, b: 0.2, a: 1}
   minusColor: {r: 0.9, g: 0.2, b: 0.2, a: 1}
 --- !u!225 &976833868473205106

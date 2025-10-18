@@ -5630,6 +5630,7 @@ GameObject:
   - component: {fileID: 1024428434}
   - component: {fileID: 1024428436}
   - component: {fileID: 1024428437}
+  - component: {fileID: 1024428438}
   m_Layer: 5
   m_Name: Canvas
   m_TagString: Untagged
@@ -5904,6 +5905,19 @@ MonoBehaviour:
   footerText: {fileID: 1367563966}
   closeButton: {fileID: 924155820}
   closeButtonLabel: {fileID: 939423681}
+--- !u!114 &1024428438
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1024428421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 622d45078a363b84ab90a7a45d83a177, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  label: {fileID: 2058663530}
 --- !u!1 &1033973181
 GameObject:
   m_ObjectHideFlags: 0
@@ -10893,7 +10907,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -10913,7 +10927,7 @@ MonoBehaviour:
   m_fontSize: 36
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -10946,7 +10960,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: 0, y: 0, z: -157.06445, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -10976,7 +10990,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -75, y: -80}
+  m_AnchoredPosition: {x: -111, y: 412}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2062596617

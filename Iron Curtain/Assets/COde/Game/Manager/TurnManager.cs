@@ -64,6 +64,8 @@ public class TurnManager : NetworkBehaviour
         remainingRounds.Value = maxrounds;
         RpcUpdateRoundUI(RoundsRemaining(), RoundsUntilNextMainEvent());
         StartCoroutine(DelayedStart());
+        EventManager.Instance?.ServerSelectTimelineAndAnnounce();
+
     }
 
     private System.Collections.IEnumerator DelayedStart()
@@ -96,10 +98,10 @@ public class TurnManager : NetworkBehaviour
     }
 
     // --- Phase gate checks used by PlayerPawn ---
-    [Server] public bool CanRoll(PlayerPawn pawn)         => IsCurrentPawn(pawn) && _phase == TurnPhase.Rolling;
-    [Server] public bool CanEndTurn(PlayerPawn pawn)      => IsCurrentPawn(pawn) && _phase == TurnPhase.EndReady;
-    [Server] public bool InProposalPhaseFor(PlayerPawn p) => IsCurrentPawn(p)    && _phase == TurnPhase.Proposal;
-    [Server] public bool InReviewPhaseFor(PlayerPawn p)   => IsCurrentPawn(p)    && _phase == TurnPhase.Review;
+    [Server] public bool CanRoll(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.Rolling;
+    [Server] public bool CanEndTurn(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.EndReady;
+    [Server] public bool InProposalPhaseFor(PlayerPawn p) => IsCurrentPawn(p) && _phase == TurnPhase.Proposal;
+    [Server] public bool InReviewPhaseFor(PlayerPawn p) => IsCurrentPawn(p) && _phase == TurnPhase.Review;
 
     [Server]
     private void SetPhase(TurnPhase phase)
@@ -202,8 +204,9 @@ public class TurnManager : NetworkBehaviour
         _extraRolls[pawn] += Mathf.Max(1, count);
     }
 
-    [Server] private int  GetExtraRolls(PlayerPawn pawn) => (pawn != null && _extraRolls.TryGetValue(pawn, out int v)) ? v : 0;
-    [Server] private void ConsumeOneExtraRoll(PlayerPawn pawn)
+    [Server] private int GetExtraRolls(PlayerPawn pawn) => (pawn != null && _extraRolls.TryGetValue(pawn, out int v)) ? v : 0;
+    [Server]
+    private void ConsumeOneExtraRoll(PlayerPawn pawn)
     {
         if (pawn != null && _extraRolls.TryGetValue(pawn, out int v) && v > 0)
             _extraRolls[pawn] = v - 1;
@@ -458,11 +461,9 @@ public class TurnManager : NetworkBehaviour
         if (_gameEnded) return;
         _gameEnded = true;
 
-        // Notify systems
+        ServerRequestClientScoreSubmissions();
         MarketManager.Instance?.OnMatchEnded();
         EventManager.Instance?.OnMatchEnded();
-
-        // Lock phases and tell clients to freeze buttons / show banner
         SetPhase(TurnPhase.None);
         RpcOnGameEnded(reason);
     }
@@ -478,4 +479,19 @@ public class TurnManager : NetworkBehaviour
             tu.ShowToast($"Game Over: {reason}", 5f);
         }
     }
+
+    [Server]
+    private void ServerRequestClientScoreSubmissions()
+    {
+        foreach (var p in GameManager.Instance.Players)
+        {
+            if (p == null || p.Owner == null) continue;
+            string name = string.IsNullOrWhiteSpace(p.playerName.Value) ? "Player" : p.playerName.Value;
+            long score = p.money.Value - (100L * p.bailoutMarks.Value);
+
+            // Non-async RPC — safe for FishNet
+            p.TargetSubmitToLeaderboard(p.Owner, score, name);
+        }
+    }
+
 }

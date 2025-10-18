@@ -56,7 +56,8 @@ public class EventManager : NetworkBehaviour
 
     /* ================= TIMELINE HELPERS ================= */
 
-    [Server] private void SelectTimelineIfNeeded()
+    [Server]
+    private void SelectTimelineIfNeeded()
     {
         if (timelines == null || timelines.Count == 0) return;
         if (_currentTimelineIndex >= 0 && _currentTimelineIndex < timelines.Count) return;
@@ -65,9 +66,11 @@ public class EventManager : NetworkBehaviour
         var name = timelines[_currentTimelineIndex]?.timelineName ?? "Unknown Era";
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
             TargetShowMainEvent(conn, $"Timeline selected: {name}", false);
+        RpcSetTimelineName(name);
     }
 
-    [Server] private TimelineSO GetCurrentTimeline()
+    [Server]
+    private TimelineSO GetCurrentTimeline()
     {
         if (_currentTimelineIndex >= 0 &&
             timelines != null &&
@@ -76,7 +79,8 @@ public class EventManager : NetworkBehaviour
         return null;
     }
 
-    [Server] private GameEventSO PickMainEventFromTimeline()
+    [Server]
+    private GameEventSO PickMainEventFromTimeline()
     {
         var tl = GetCurrentTimeline();
         if (tl != null && tl.mainEvents != null && tl.mainEvents.Count > 0)
@@ -1042,6 +1046,8 @@ public class EventManager : NetworkBehaviour
         _pendingTierEvent = null;
 
         RpcCloseEventUIs();
+        RpcSetTimelineName("—");
+
     }
 
     [ObserversRpc(BufferLast = true)]
@@ -1116,10 +1122,10 @@ public class EventManager : NetworkBehaviour
         _tierParticipants.Clear();
         _tierRolls.Clear();
 
-        _tierLowMax  = Mathf.Clamp(e.lowMax, 1, 5);
+        _tierLowMax = Mathf.Clamp(e.lowMax, 1, 5);
         _tierHighMin = Mathf.Clamp(e.highMin, 2, 6);
-        _tierPay     = Mathf.Max(0, e.lowPayAmount);
-        _tierGain    = Mathf.Max(0, e.highGainAmount);
+        _tierPay = Mathf.Max(0, e.lowPayAmount);
+        _tierGain = Mathf.Max(0, e.highGainAmount);
 
         var list = new List<PlayerPawn>();
         if (e.affectAllPlayers || TurnManager.Instance?.GetCurrentPawn() == null)
@@ -1222,7 +1228,7 @@ public class EventManager : NetworkBehaviour
     private void ResolveForcedRollTier()
     {
         _tierActive = false;
-        
+
         // Keep UI open; wait for EVERY participant to press Close.
         _tierAwaitingCloses = true;
         _tierClosed.Clear();
@@ -1287,5 +1293,23 @@ public class EventManager : NetworkBehaviour
                         false);
             }
         }
+    }
+
+    private string _timelineName = "—";
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcSetTimelineName(string tl)
+    {
+        _timelineName = string.IsNullOrWhiteSpace(tl) ? "—" : tl;
+        TimelineUI.Instance?.SetTimeline(_timelineName);
+    }
+
+    [Server]
+    public void ServerSelectTimelineAndAnnounce()
+    {
+        SelectTimelineIfNeeded();
+        var tl = GetCurrentTimeline();
+        string name = tl?.timelineName ?? "Classic";
+        RpcSetTimelineName(name);
     }
 }
