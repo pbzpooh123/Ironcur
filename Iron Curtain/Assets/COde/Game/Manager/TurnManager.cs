@@ -42,7 +42,7 @@ public class TurnManager : NetworkBehaviour
 
     // === NEW: are we waiting for the tile panel "Ready"? ===
     private bool _tileActionAwaitingAck = false;
-
+    [SerializeField] private bool enableDevHotkeys = true;
     [SerializeField] private bool AutoBailoutAtTurnStart = true;
     private int RoundsRemaining() => Mathf.Max(0, maxrounds - (roundCount.Value - 1));
     private int RoundsUntilNextMainEvent()
@@ -72,6 +72,33 @@ public class TurnManager : NetworkBehaviour
     {
         yield return null;
         StartGame();
+    }
+
+    private void Update()
+    {
+        if (!enableDevHotkeys) return;
+
+        // Only react when the key is pressed this frame
+        if (Input.GetKeyDown(KeyCode.Keypad9))
+        {
+            // If we're the server/host, end immediately.
+            if (IsServer)
+            {
+                EndMatch("Ended by DEV hotkey (Numpad 9).");
+            }
+            else
+            {
+                // Ask the server to end the match.
+                CmdDevEndMatch();
+            }
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void CmdDevEndMatch(FishNet.Connection.NetworkConnection caller = null)
+    {
+        if (!enableDevHotkeys) return; // guard if disabled on server
+        EndMatch("Ended by DEV hotkey (Numpad 9).");
     }
 
     [Server]
@@ -455,17 +482,41 @@ public class TurnManager : NetworkBehaviour
         }
     }
 
+    private int _resultsReady = 0;
+    private int _resultsRequired = 0;
+
     [Server]
     private void EndMatch(string reason = "Reached final round.")
     {
         if (_gameEnded) return;
         _gameEnded = true;
 
-        ServerRequestClientScoreSubmissions();
-        MarketManager.Instance?.OnMatchEnded();
-        EventManager.Instance?.OnMatchEnded();
         SetPhase(TurnPhase.None);
         RpcOnGameEnded(reason);
+
+        MarketManager.Instance?.OnMatchEnded();
+        EventManager.Instance?.OnMatchEnded();
+
+        var players = GameManager.Instance.Players;
+        int n = players.Count;
+        string[] names = new string[n];
+        int[] moneys = new int[n];
+        int[] bailouts = new int[n];
+        int[] finals = new int[n];
+
+        for (int i = 0; i < n; i++)
+        {
+            var p = players[i];
+            names[i] = string.IsNullOrWhiteSpace(p.playerName.Value) ? $"Player {i + 1}" : p.playerName.Value;
+            moneys[i] = p.money.Value;
+            bailouts[i] = p.bailoutMarks.Value;
+            finals[i] = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
+        }
+
+        RpcShowFinalResults(names, moneys, bailouts, finals);
+
+        _resultsReady = 0;
+        _resultsRequired = Mathf.Max(1, n);
     }
 
     [ObserversRpc(BufferLast = true)]
@@ -489,9 +540,61 @@ public class TurnManager : NetworkBehaviour
             string name = string.IsNullOrWhiteSpace(p.playerName.Value) ? "Player" : p.playerName.Value;
             long score = p.money.Value - (100L * p.bailoutMarks.Value);
 
-            // Non-async RPC — safe for FishNet
+
             p.TargetSubmitToLeaderboard(p.Owner, score, name);
         }
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcShowFinalResults(string[] names, int[] moneys, int[] bailouts, int[] finals)
+    {
+
+        var ui = MatchResultsUI.Instance;
+        if (ui != null)
+            ui.Show(names, moneys, bailouts, finals);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdFinalResultsReady(FishNet.Connection.NetworkConnection conn = null)
+    {
+
+        if (conn == null) return;
+
+        _readyClientIds ??= new HashSet<int>();
+        if (_readyClientIds.Contains(conn.ClientId)) return;
+
+        _readyClientIds.Add(conn.ClientId);
+        _resultsReady++;
+
+        if (_resultsReady >= _resultsRequired)
+        {
+
+            SubmitScoresFireAndForget();
+
+            RpcGoToLeaderboard();
+        }
+    }
+    private HashSet<int> _readyClientIds;
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcGoToLeaderboard()
+    {
+        MatchResultsUI.Instance?.GoToLeaderboardScene();
+    }
+
+    private void SubmitScoresFireAndForget()
+    {
+        // run without awaiting
+        var svc = UGSLeaderboard.Instance;
+        if (svc == null) return;
+
+            foreach (var p in GameManager.Instance.Players)
+            {
+                string name = string.IsNullOrWhiteSpace(p.playerName.Value) ? "Player" : p.playerName.Value;
+                long score = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
+                _ = svc.SubmitMyScoreAsync(score, name);
+            }
+
     }
 
 }

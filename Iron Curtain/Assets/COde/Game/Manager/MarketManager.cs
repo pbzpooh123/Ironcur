@@ -149,9 +149,10 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
         companies[key] = record;
         tile.owner = pawn;
 
-        // Sync to everyone.
-        RpcAddCompany(key, tile.companyCost, pawn.playerName.Value);
-        Debug.Log($"[Market] {pawn.playerName.Value} founded company {key}");
+            // Sync to everyone.
+            RpcAddCompany(key, tile.companyCost, pawn.playerName.Value);
+            pawn.ServerBroadcastPortfolio();
+            Debug.Log($"[Market] {pawn.playerName.Value} founded company {key}");
     }
     else
     {
@@ -544,6 +545,10 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
                 RpcUpdateTileOwner(companyName, majority.playerName.Value);
             }
 
+            proposal.proposer.ServerBroadcastPortfolio();
+            prevOwner.ServerBroadcastPortfolio();
+            if (company.owner != prevOwner) // majority takeover changed owner
+                company.owner.ServerBroadcastPortfolio();
             // Sync
             RpcSyncOwnership(companyName, proposal.proposer.playerName.Value, company.GetOwnership(proposal.proposer));
             RpcSyncOwnership(companyName, prevOwner.playerName.Value, company.GetOwnership(prevOwner));
@@ -647,6 +652,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
                         rec.multiplier = 1f;
                         rec.multiplierExpiresAt = 0;
                         pawn.factoryPortfolio[company.companyName] = rec;
+                        pawn.ServerBroadcastPortfolio();
                     }
                     payout = Mathf.RoundToInt(payout * rec.multiplier);
                 }

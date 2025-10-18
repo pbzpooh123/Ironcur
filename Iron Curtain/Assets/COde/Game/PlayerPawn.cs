@@ -12,9 +12,9 @@ public class PlayerPawn : NetworkBehaviour
     private int currentTile = 0;
 
     public readonly SyncVar<string> playerName = new();
-    public readonly SyncVar<int>    lastRoll   = new();
-    public readonly SyncVar<int>    money      = new();
-    public readonly SyncVar<int>    bailoutMarks = new();
+    public readonly SyncVar<int> lastRoll = new();
+    public readonly SyncVar<int> money = new();
+    public readonly SyncVar<int> bailoutMarks = new();
 
     public Dictionary<string, ShareRecord> factoryPortfolio = new();
 
@@ -176,13 +176,15 @@ public class PlayerPawn : NetworkBehaviour
         }
     }
 
-    [TargetRpc] public void TargetEnableEndTurn(NetworkConnection conn, bool enable)
+    [TargetRpc]
+    public void TargetEnableEndTurn(NetworkConnection conn, bool enable)
     {
         var ui = GameObject.FindObjectOfType<TurnUI>();
         if (ui != null) ui.SetEndTurnInteractable(enable);
     }
 
-    [TargetRpc] public void TargetEnableRoll(NetworkConnection conn, bool enable)
+    [TargetRpc]
+    public void TargetEnableRoll(NetworkConnection conn, bool enable)
     {
         var ui = GameObject.FindObjectOfType<TurnUI>();
         if (ui != null) ui.SetRollInteractable(enable);
@@ -246,43 +248,43 @@ public class PlayerPawn : NetworkBehaviour
         switch (data.tileType)
         {
             case TileType.Tax:
-            {
-                // <<< CHANGED: BRACKET + WAIT FOR READY >>>
-                TurnManager.Instance.ServerBeginTileAction(this);
+                {
+                    // <<< CHANGED: BRACKET + WAIT FOR READY >>>
+                    TurnManager.Instance.ServerBeginTileAction(this);
 
-                int percent = Mathf.Clamp(data.taxPercent, 0, 100);
-                int percentPart = Mathf.FloorToInt(money.Value * (percent / 100f));
-                int totalOwed = Mathf.Max(0, data.taxFlat + percentPart);
+                    int percent = Mathf.Clamp(data.taxPercent, 0, 100);
+                    int percentPart = Mathf.FloorToInt(money.Value * (percent / 100f));
+                    int totalOwed = Mathf.Max(0, data.taxFlat + percentPart);
 
-                int paid = PayWithOptionalBailouts(totalOwed, allowBailout: true, maxBailouts: 5);
+                    int paid = PayWithOptionalBailouts(totalOwed, allowBailout: true, maxBailouts: 5);
 
-                // Show panel and wait; Ready will call CmdTileActionComplete()
-                TargetShowTilePopupAndWait(Owner, $"TAX: Owed ${totalOwed}M. Paid ${paid}M.");
-                return;
-            }
+                    // Show panel and wait; Ready will call CmdTileActionComplete()
+                    TargetShowTilePopupAndWait(Owner, $"TAX: Owed ${totalOwed}M. Paid ${paid}M.");
+                    return;
+                }
 
             case TileType.Bonus:
-            {
-                // <<< CHANGED: BRACKET + WAIT FOR READY >>>
-                TurnManager.Instance.ServerBeginTileAction(this);
+                {
+                    // <<< CHANGED: BRACKET + WAIT FOR READY >>>
+                    TurnManager.Instance.ServerBeginTileAction(this);
 
-                int bonus = Mathf.Max(0, data.bonusAmount);
-                if (bonus > 0) AddMoney(bonus);
+                    int bonus = Mathf.Max(0, data.bonusAmount);
+                    if (bonus > 0) AddMoney(bonus);
 
-                TargetShowTilePopupAndWait(Owner, $"BONUS: You received ${bonus}M.");
-                return;
-            }
+                    TargetShowTilePopupAndWait(Owner, $"BONUS: You received ${bonus}M.");
+                    return;
+                }
 
             case TileType.Jail:
-            {
-                // <<< CHANGED: BRACKET + WAIT FOR READY >>>
-                TurnManager.Instance.ServerBeginTileAction(this);
+                {
+                    // <<< CHANGED: BRACKET + WAIT FOR READY >>>
+                    TurnManager.Instance.ServerBeginTileAction(this);
 
-                ServerSetJail(2); // e.g., 2 jailed turns
+                    ServerSetJail(2); // e.g., 2 jailed turns
 
-                TargetShowTilePopupAndWait(Owner, $"You are jailed for {jailTurnsLeft.Value} turn(s).");
-                return;
-            }
+                    TargetShowTilePopupAndWait(Owner, $"You are jailed for {jailTurnsLeft.Value} turn(s).");
+                    return;
+                }
         }
 
         // Normal tile (no UI to wait on)
@@ -409,7 +411,8 @@ public class PlayerPawn : NetworkBehaviour
         // (Message shown by the wait-popup path above for Jail tiles)
     }
 
-    [Server] public void ServerReleaseFromJail()
+    [Server]
+    public void ServerReleaseFromJail()
     {
         jailTurnsLeft.Value = 0;
         TargetShowToast(Owner, "You are released from jail.");
@@ -448,7 +451,7 @@ public class PlayerPawn : NetworkBehaviour
         return finalPay;
     }
 
-    [TargetRpc] 
+    [TargetRpc]
     public void TargetSubmitToLeaderboard(NetworkConnection conn, long score, string displayName)
     {
         _ = SubmitMyScoreAsync(score, displayName);
@@ -470,5 +473,98 @@ public class PlayerPawn : NetworkBehaviour
         {
             Debug.LogError($"[UGS] Submit failed: {ex}");
         }
+    }
+
+    [System.Serializable]
+    public struct PortfolioItemDTO
+    {
+        public string company;
+        public int percent;
+        public float multiplier;
+    }
+
+    // Client-side cached snapshot we render from (NOT authoritative)
+    private readonly List<PortfolioItemDTO> _clientPortfolio = new();
+    public System.Action OnClientPortfolioChanged;
+
+    [TargetRpc]
+    private void TargetReceivePortfolio(NetworkConnection conn, string[] names, int[] percents, float[] multipliers)
+    {
+        _clientPortfolio.Clear();
+        for (int i = 0; i < names.Length && i < percents.Length && i < multipliers.Length; i++)
+        {
+            _clientPortfolio.Add(new PortfolioItemDTO
+            {
+                company = names[i],
+                percent = percents[i],
+                multiplier = multipliers[i]
+            });
+        }
+        OnClientPortfolioChanged?.Invoke();
+    }
+
+    // Server → ALL observers (use when portfolio changes on server)
+    [ObserversRpc(BufferLast = true)]
+    private void RpcReceivePortfolioBroadcast(string[] names, int[] percents, float[] multipliers)
+    {
+        _clientPortfolio.Clear();
+        for (int i = 0; i < names.Length && i < percents.Length && i < multipliers.Length; i++)
+        {
+            _clientPortfolio.Add(new PortfolioItemDTO
+            {
+                company = names[i],
+                percent = percents[i],
+                multiplier = multipliers[i]
+            });
+        }
+        OnClientPortfolioChanged?.Invoke();
+    }
+
+    // Client asks server to send a fresh snapshot just to this viewer.
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdRequestPortfolioForViewer(NetworkConnection conn = null)
+    {
+        if (conn == null) return;
+
+        var names = new List<string>();
+        var perc = new List<int>();
+        var mult = new List<float>();
+
+        foreach (var kv in factoryPortfolio)
+        {
+            var rec = kv.Value;
+            if (rec.sharePercent <= 0) continue;
+            names.Add(kv.Key);
+            perc.Add(rec.sharePercent);
+            mult.Add(rec.multiplier);
+        }
+
+        TargetReceivePortfolio(conn, names.ToArray(), perc.ToArray(), mult.ToArray());
+    }
+
+    // Call this on SERVER whenever this pawn’s portfolio changes
+    [Server]
+    public void ServerBroadcastPortfolio()
+    {
+        var names = new List<string>();
+        var perc = new List<int>();
+        var mult = new List<float>();
+
+        foreach (var kv in factoryPortfolio)
+        {
+            var rec = kv.Value;
+            if (rec.sharePercent <= 0) continue;
+            names.Add(kv.Key);
+            perc.Add(rec.sharePercent);
+            mult.Add(rec.multiplier);
+        }
+
+        RpcReceivePortfolioBroadcast(names.ToArray(), perc.ToArray(), mult.ToArray());
+    }
+
+    // Public read-only snapshot for UI code (client-side)
+    public List<PortfolioItemDTO> GetClientPortfolioSnapshot()
+    {
+        return new List<PortfolioItemDTO>(_clientPortfolio);
     }
 }
