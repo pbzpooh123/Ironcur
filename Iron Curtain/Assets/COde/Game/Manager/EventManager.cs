@@ -635,7 +635,7 @@ public class EventManager : NetworkBehaviour
 
             string summary = $"Media Attention Roll\nMax Roll={maxRoll}\nWinners={winners.Count}\nWinner gets ${_compWinnerPayout}M, others ${_compOtherPayout}M.";
             foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowMainEvent(c, summary, false);
+                TargetShowSideEvent(c, summary, false);
 
             CloseCompetitionUI();
 
