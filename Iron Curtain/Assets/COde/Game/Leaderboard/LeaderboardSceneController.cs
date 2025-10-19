@@ -35,11 +35,6 @@ public class LeaderboardSceneController : MonoBehaviour
         await RefreshFromServer();
     }
 
-    public void OnBackButton()
-    {
-        SceneManager.LoadScene("MainMenu");
-    }
-
     public void OnPrevPage()
     {
         if (_cache.Count == 0) return;
@@ -135,5 +130,10 @@ public class LeaderboardSceneController : MonoBehaviour
     {
         if (pageText != null)
             pageText.text = (total <= 0) ? "Page 0 / 0" : $"Page {current} / {total}";
+    }
+
+    public void OnBackToMainMenu()
+    {
+        SceneManager.LoadScene("Lobby");
     }
 }

@@ -5,7 +5,7 @@ public class BoardManager : MonoBehaviour
     public static BoardManager Instance;
 
     [Header("Board Path")]
-    public Transform[] waypoints; // ช่องบนบอร์ด (ตั้งเป็น Empty Object วางในฉาก)
+    public Transform[] waypoints; 
 
     private void Awake()
     {

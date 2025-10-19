@@ -38,7 +38,16 @@ public class MainMenuUI : MonoBehaviour
         if (PlayerPrefs.HasKey("PlayerName"))
             nameInput.text = PlayerPrefs.GetString("PlayerName");
         
-        OpenStartPanel(); // Default start panel
+        DisconnectFromNetwork();
+        CloseAllPanels();
+        mainMenuPanel.SetActive(true);
+    startPanel.SetActive(true);
+
+    isHosting = false;
+    if (hostButton != null) hostButton.interactable = true;
+
+    if (lobbyUI != null) lobbyUI.SetRoomCode(string.Empty);
+    if (roomCodeInput != null) roomCodeInput.text = string.Empty;
     }
 
     // --- UI Navigation ---
@@ -229,4 +238,31 @@ public class MainMenuUI : MonoBehaviour
         PlayerPrefs.SetString("PlayerName", nameInput.text);
         PlayerPrefs.Save();
     }
+
+    public void OnClickLobbyBackToMain()
+{
+    DisconnectFromNetwork();
+        CloseAllPanels();
+        mainMenuPanel.SetActive(true);
+    startPanel.SetActive(true);
+
+    isHosting = false;
+    if (hostButton != null) hostButton.interactable = true;
+
+    if (lobbyUI != null) lobbyUI.SetRoomCode(string.Empty);
+    if (roomCodeInput != null) roomCodeInput.text = string.Empty;
+}
+
+private void DisconnectFromNetwork()
+{
+    var nm = InstanceFinder.NetworkManager;
+    if (nm == null) return;
+
+    if (nm.ServerManager.Started)
+        nm.ServerManager.StopConnection(true);  
+
+
+    if (nm.ClientManager.Started)
+        nm.ClientManager.StopConnection();
+}
 }
