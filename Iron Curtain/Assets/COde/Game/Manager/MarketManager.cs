@@ -859,7 +859,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
 
         if (local == null) return;
         if (PortfolioUI.Instance.panel != null && PortfolioUI.Instance.panel.activeInHierarchy)
-            PortfolioUI.Instance.Refresh();
+            PortfolioUI.Instance.RefreshFromSnapshot();
     }
     
     private void EnsurePortfolioEntry(PlayerPawn pawn, string company, int percent)

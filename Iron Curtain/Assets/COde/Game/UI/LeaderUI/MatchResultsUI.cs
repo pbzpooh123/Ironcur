@@ -1,31 +1,42 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using TMPro;
-using UnityEngine.UI;
-using FishNet.Managing.Scened;
+using UnityEngine.UI;           // <-- add this
+using UnityEngine.SceneManagement;
 
 public class MatchResultsUI : MonoBehaviour
 {
     public static MatchResultsUI Instance;
 
     [Header("Root/Panel")]
-    public GameObject root;            // your results Canvas or Panel (set in Inspector)
-    public Transform rowsParent;       // container for rows
-    public GameObject rowPrefab;       // prefab with ResultsEntryUI
+    public GameObject root;
+    public Transform rowsParent;
+    public GameObject rowPrefab;
 
-    private void Awake()
+    [Header("Controls")]
+    public Button readyButton;          // <-- assign in Inspector
+
+    [Header("Scenes")]
+    [SerializeField] private string leaderboardSceneName = "Leaderboard";
+
+    void Awake()
     {
         Instance = this;
-        if (root != null) root.SetActive(false);   // hide on boot
+        if (root != null) root.SetActive(false);
+        if (readyButton != null) readyButton.interactable = false; // disabled until animation done
     }
 
-    // Call this from RPC on clients
     public void Show(string[] names, int[] startMoney, int[] bailouts, int[] finalScores)
     {
-        // 1) Make sure we are ACTIVE before any coroutine
         if (root != null && !root.activeSelf) root.SetActive(true);
         if (!gameObject.activeInHierarchy) gameObject.SetActive(true);
+
+        // Make sure the button is wired exactly once
+        if (readyButton != null)
+        {
+            readyButton.onClick.RemoveListener(OnReadyClicked);
+            readyButton.onClick.AddListener(OnReadyClicked);
+            readyButton.interactable = false; // enable after rows animate
+        }
 
         StopAllCoroutines();
         StartCoroutine(CoBuildAndAnimate(names, startMoney, bailouts, finalScores));
@@ -33,31 +44,44 @@ public class MatchResultsUI : MonoBehaviour
 
     private IEnumerator CoBuildAndAnimate(string[] names, int[] startMoney, int[] bailouts, int[] finalScores)
     {
-        // optional: let layout enable
         yield return null;
 
-        // clear old
+        // clear
         for (int i = rowsParent.childCount - 1; i >= 0; i--)
             Destroy(rowsParent.GetChild(i).gameObject);
 
-        int n = names.Length;
-        for (int i = 0; i < n; i++)
+        // build rows
+        for (int i = 0; i < names.Length; i++)
         {
             var go = Instantiate(rowPrefab, rowsParent);
-
-            // 2) Ensure each row is ACTIVE before we bind/animate
             if (!go.activeSelf) go.SetActive(true);
 
             var row = go.GetComponent<ResultsEntryUI>();
             if (row != null)
-            {
-                // Bind data; row will animate bar/score internally
                 row.Bind(names[i], startMoney[i], bailouts[i], finalScores[i], i);
-            }
 
-            // small stagger if you like
             yield return null;
         }
+
+        // (Optional) wait a short moment so all bar tweens start
+        yield return new WaitForSeconds(0.25f);
+
+        // now allow the player to continue
+        if (readyButton != null) readyButton.interactable = true;
+    }
+
+    private bool _sentReady = false;
+    private void OnReadyClicked()
+    {
+        if (_sentReady) return;
+        _sentReady = true;
+        if (readyButton != null) readyButton.interactable = false; // avoid double taps
+
+        // Tell the server “I’m done watching results”
+        if (TurnManager.Instance != null)
+            TurnManager.Instance.CmdFinalResultsReady();
+        else
+            Debug.LogWarning("TurnManager.Instance missing when pressing Ready on results screen.");
     }
 
     public void Hide()
@@ -65,10 +89,6 @@ public class MatchResultsUI : MonoBehaviour
         if (root != null) root.SetActive(false);
     }
 
-    [Header("Scenes")]
-    [SerializeField] private string leaderboardSceneName = "Leaderboard"; 
-
- 
     public void GoToLeaderboardScene()
     {
         if (string.IsNullOrWhiteSpace(leaderboardSceneName))
@@ -76,9 +96,6 @@ public class MatchResultsUI : MonoBehaviour
             Debug.LogError("[MatchResultsUI] Leaderboard scene name is empty.");
             return;
         }
-        SceneLoadData loadData = new SceneLoadData(leaderboardSceneName)
-        {
-            ReplaceScenes = ReplaceOption.All
-        };
+        SceneManager.LoadScene(leaderboardSceneName);
     }
 }

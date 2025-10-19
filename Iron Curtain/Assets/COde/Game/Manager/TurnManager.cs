@@ -5,12 +5,13 @@ using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using TMPro;
 
+
 public enum TurnPhase
 {
     None,
     Review,
     Rolling,
-    TileEventPending,   // actively waiting for a tile UI "Ready"
+    TileEventPending, 
     Proposal,
     EndReady
 }
@@ -26,6 +27,7 @@ public class TurnManager : NetworkBehaviour
     public readonly SyncVar<int> roundCount = new();
 
     public TMP_Text roundtext;
+    
 
     private TurnPhase _phase = TurnPhase.None;
 
@@ -496,6 +498,7 @@ public class TurnManager : NetworkBehaviour
 
         MarketManager.Instance?.OnMatchEnded();
         EventManager.Instance?.OnMatchEnded();
+        roundtext.text = "Game Ended";
 
         var players = GameManager.Instance.Players;
         int n = players.Count;

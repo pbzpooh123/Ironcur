@@ -9,16 +9,26 @@ public class PortfolioUI : MonoBehaviour
     public static PortfolioUI Instance;
 
     [Header("Panel & Layout")]
-    public GameObject panel;          
-    public Transform rowsParent;        
-    public GameObject rowPrefab;       
-    
+    public GameObject panel;            // root panel
+    public Transform rowsParent;        // single column container
+    public GameObject rowPrefab;        // PortfolioRow prefab
+
     [Header("Header")]
     public TMP_Text titleText;
     public TMP_Text summaryText;
-    public TMP_Text cashText; 
+    public TMP_Text cashText;
+
+    [Header("Paging")]
+    [Tooltip("How many rows to show per page")]
+    public int rowsPerPage = 3;
+    public TMP_Text pageText;           // optional "Page X / Y" text
 
     private PlayerPawn _current;
+
+    // cache for paging
+    private List<(string company, int percent, float multiplier, int baseCost)> _itemsCache
+        = new List<(string, int, float, int)>();
+    private int _pageIndex = 0; // 0-based
 
     private void Awake()
     {
@@ -26,62 +36,75 @@ public class PortfolioUI : MonoBehaviour
         if (panel != null) panel.SetActive(false);
     }
 
+    private void OnDestroy()
+    {
+        if (_current != null)
+            _current.OnClientPortfolioChanged -= RefreshFromSnapshot;
+    }
+
     public void Show(PlayerPawn pawn)
     {
         _current = pawn;
 
         // subscribe once so UI auto-refreshes on pushes
-        _current.OnClientPortfolioChanged -= Refresh;
-        _current.OnClientPortfolioChanged += Refresh;
+        _current.OnClientPortfolioChanged -= RefreshFromSnapshot;
+        _current.OnClientPortfolioChanged += RefreshFromSnapshot;
 
-        // ask server for a fresh snapshot for THIS viewer
+        // request a fresh snapshot from server (safe for host too)
         if (_current.IsServerInitialized)
-        {
-            // if you’re host, you already have state; still fine to request
             _current.CmdRequestPortfolioForViewer(_current.Owner);
-        }
         else
-        {
-            _current.CmdRequestPortfolioForViewer(); // viewer’s connection is passed by FishNet
-        }
+            _current.CmdRequestPortfolioForViewer();
 
-        Refresh();
+        // build from current snapshot immediately
+        RefreshFromSnapshot();
+
         if (panel != null) panel.SetActive(true);
     }
 
     public void Hide()
     {
-        if (_current != null) _current.OnClientPortfolioChanged -= Refresh;
-        if (panel != null) panel.SetActive(false);
+        if (_current != null)
+            _current.OnClientPortfolioChanged -= RefreshFromSnapshot;
+
+        if (panel != null)
+            panel.SetActive(false);
     }
 
-    public void Refresh()
+    // === Paging controls ===
+    public void OnPrevPage()
+    {
+        if (_itemsCache.Count == 0) return;
+        _pageIndex = Mathf.Max(0, _pageIndex - 1);
+        RenderPageOnly();
+    }
+
+    public void OnNextPage()
+    {
+        if (_itemsCache.Count == 0) return;
+        _pageIndex = Mathf.Min(GetMaxPageIndex(), _pageIndex + 1);
+        RenderPageOnly();
+    }
+
+    public void OnRefreshClicked()
+    {
+        RefreshFromSnapshot(); // local rebuild (server already pushes changes)
+    }
+
+    // === Build cache from the pawn snapshot and render current page ===
+    public void RefreshFromSnapshot()
     {
         if (_current == null) return;
 
-        // Clear old rows
-        for (int i = rowsParent.childCount - 1; i >= 0; i--)
-            Destroy(rowsParent.GetChild(i).gameObject);
+        // Build cache from the client-side snapshot
+        var snap = _current.GetClientPortfolioSnapshot(); // (company, percent, multiplier)
 
-        // Use the client snapshot (kept up-to-date by RPCs)
-        var items = _current.GetClientPortfolioSnapshot();
+        // Rebuild cache with baseCost resolved
+        _itemsCache.Clear();
 
-        // Sort by percent desc, then name
-        items.Sort((a, b) =>
+        foreach (var it in snap)
         {
-            int pc = b.percent.CompareTo(a.percent);
-            return pc != 0 ? pc : string.Compare(a.company, b.company, System.StringComparison.Ordinal);
-        });
-
-        int totalPercent = 0;
-        int totalEstPayout = 0;
-
-        foreach (var it in items)
-        {
-            var go = Instantiate(rowPrefab, rowsParent);
-            var row = go.GetComponent<PortfolioRow>();
             int baseCost = 0;
-
             if (MarketManager.Instance != null &&
                 MarketManager.Instance.companies.TryGetValue(it.company, out var comp) &&
                 comp != null)
@@ -89,22 +112,75 @@ public class PortfolioUI : MonoBehaviour
                 baseCost = comp.baseCost;
             }
 
-            row?.Bind(it.company, it.percent, Mathf.Max(0.01f, it.multiplier), baseCost);
+            _itemsCache.Add((it.company, it.percent, Mathf.Max(0.01f, it.multiplier), baseCost));
+        }
 
-            int baseIncome = Mathf.RoundToInt(baseCost * 0.1f);
+        // Sort by percent desc then company name
+        _itemsCache.Sort((a, b) =>
+        {
+            int pc = b.percent.CompareTo(a.percent);
+            return pc != 0 ? pc : string.Compare(a.company, b.company, System.StringComparison.Ordinal);
+        });
+
+        // Update header (use totals across ALL items, not just page)
+        int totalPercent = 0;
+        int totalEstPayout = 0;
+        foreach (var it in _itemsCache)
+        {
+            int baseIncome = Mathf.RoundToInt(it.baseCost * 0.1f);
             float ownRatio = Mathf.Clamp01(it.percent / 100f);
             int est = Mathf.RoundToInt(baseIncome * ownRatio * it.multiplier);
-
             totalPercent += it.percent;
             totalEstPayout += est;
         }
 
-        if (titleText) titleText.text = $"{_current.playerName.Value}'s Portfolio";
-        if (summaryText) summaryText.text = $"{items.Count} companies • Total % = {totalPercent} • Est. payout = ${totalEstPayout}";
-        if (cashText) cashText.text = $"Cash: ${_current.money.Value}";
+        if (titleText)   titleText.text = $"{_current.playerName.Value}'s Portfolio";
+        if (summaryText) summaryText.text = $"{_itemsCache.Count} companies • Total % = {totalPercent} • Est. payout = ${totalEstPayout}";
+        if (cashText)    cashText.text = $"Cash: ${_current.money.Value}";
+
+        // reset to first page and render
+        _pageIndex = 0;
+        RenderPageOnly();
     }
 
+    private void RenderPageOnly()
+    {
+        // clear current rows
+        for (int i = rowsParent.childCount - 1; i >= 0; i--)
+            Destroy(rowsParent.GetChild(i).gameObject);
 
-    public void OnCloseClicked() => Hide();
-    public void OnRefreshClicked() => Refresh();
+        if (_itemsCache.Count == 0)
+        {
+            UpdatePageLabel(0, 0);
+            return;
+        }
+
+        int pageSize = Mathf.Max(1, rowsPerPage);
+        int start = _pageIndex * pageSize;
+        int endExclusive = Mathf.Min(start + pageSize, _itemsCache.Count);
+
+        for (int i = start; i < endExclusive; i++)
+        {
+            var it = _itemsCache[i];
+            var go = Instantiate(rowPrefab, rowsParent);
+            if (!go.activeSelf) go.SetActive(true);
+
+            var row = go.GetComponent<PortfolioRow>();
+            row?.Bind(it.company, it.percent, it.multiplier, it.baseCost);
+        }
+
+        UpdatePageLabel(_pageIndex + 1, GetMaxPageIndex() + 1);
+    }
+
+    private int GetMaxPageIndex()
+    {
+        int pageSize = Mathf.Max(1, rowsPerPage);
+        return (_itemsCache.Count == 0) ? 0 : Mathf.Max(0, (_itemsCache.Count - 1) / pageSize);
+    }
+
+    private void UpdatePageLabel(int current, int total)
+    {
+        if (pageText != null)
+            pageText.text = (total <= 0) ? "Page 0 / 0" : $"Page {current} / {total}";
+    }
 }
