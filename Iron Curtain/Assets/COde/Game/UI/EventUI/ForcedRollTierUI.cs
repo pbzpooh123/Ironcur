@@ -5,6 +5,9 @@ using TMPro;
 
 public class ForcedRollTierUI : MonoBehaviour
 {
+    public enum RollMode { Tier, Media }     // << renamed: no Competition
+    public static RollMode CurrentRollMode = RollMode.Tier;
+
     public static ForcedRollTierUI Instance;
 
     [Header("Root")]
@@ -12,13 +15,13 @@ public class ForcedRollTierUI : MonoBehaviour
     public TMP_Text headerText;
 
     [Header("Grid")]
-    public Transform gridParent;      // where Slot prefabs go
-    public GameObject slotPrefab;
+    public Transform gridParent;      // parent for SlotWidget prefab
+    public GameObject slotPrefab;     // prefab containing SlotWidget
 
     [Header("Footer")]
-    public TMP_Text footerText;       // shows “x/y players closed…”
-    public Button closeButton;        // local Close button
-    public TMP_Text closeButtonLabel; // optional label text on the button
+    public TMP_Text footerText;       // summary / progress
+    public Button closeButton;        // single Close button (always visible)
+    public TMP_Text closeButtonLabel;
 
     // runtime
     private readonly Dictionary<int, SlotWidget> _cidToWidget = new();
@@ -29,18 +32,23 @@ public class ForcedRollTierUI : MonoBehaviour
     {
         Instance = this;
         if (panel) panel.SetActive(false);
-        if (closeButton) closeButton.gameObject.SetActive(false);
+        if (closeButton)
+        {
+            closeButton.gameObject.SetActive(true);  // always visible in layout
+            closeButton.interactable = false;        // becomes interactable when server enables
+        }
         if (footerText) footerText.text = "";
     }
 
+    /// <summary>Builds the grid and wires up local Roll buttons.</summary>
     public void Show(string header, List<int> clientIds, Dictionary<int,string> names, int localCid)
     {
         _cidToWidget.Clear();
         _localCid = localCid;
         _localCloseSent = false;
 
-        // Clear old
-        for (int i = gridParent.childCount-1; i >= 0; i--)
+        // Clear grid
+        for (int i = gridParent.childCount - 1; i >= 0; i--)
             Destroy(gridParent.GetChild(i).gameObject);
 
         if (headerText) headerText.text = header;
@@ -48,28 +56,32 @@ public class ForcedRollTierUI : MonoBehaviour
         foreach (int cid in clientIds)
         {
             var go = Instantiate(slotPrefab, gridParent);
-            var w = go.GetComponent<SlotWidget>();
-            if (w == null) w = go.AddComponent<SlotWidget>(); // safety
-            w.Bind(cid, names != null && names.TryGetValue(cid, out var nm) ? nm : ("P"+cid));
+            var w = go.GetComponent<SlotWidget>() ?? go.AddComponent<SlotWidget>();
+
+            string display = (names != null && names.TryGetValue(cid, out var nm)) ? nm : ("P" + cid);
+            w.Bind(cid, display);
 
             bool isLocal = (cid == _localCid);
             w.SetButtonEnabled(isLocal, () =>
             {
-                // local pressed Roll → disable immediately to guard double-click
+                // guard double-click immediately
                 w.SetButtonEnabled(false, null);
-                // Ask server to roll on our behalf (authoritative)
-                EventManager.Instance.CmdRequestTierRoll(); 
+
+                // Ask server to roll (authoritative)
+                if (CurrentRollMode == RollMode.Media)
+                    EventManager.Instance.CmdRequestMediaRoll();
+                else
+                    EventManager.Instance.CmdRequestTierRoll();
             });
 
             _cidToWidget[cid] = w;
         }
 
-        if (footerText) footerText.text = "";
+        SetFooter("");
         if (closeButton)
         {
             closeButton.onClick.RemoveAllListeners();
-            closeButton.gameObject.SetActive(false); // only shown after server enables
-            closeButton.interactable = false;
+            closeButton.interactable = false;              // will be enabled by server
         }
         if (closeButtonLabel) closeButtonLabel.text = "Close";
 
@@ -81,7 +93,8 @@ public class ForcedRollTierUI : MonoBehaviour
         if (panel) panel.SetActive(false);
     }
 
-    /// server → client updates
+    // ---- server → client updates ----
+
     public void SetRolling(int cid)
     {
         if (_cidToWidget.TryGetValue(cid, out var w))
@@ -94,13 +107,10 @@ public class ForcedRollTierUI : MonoBehaviour
             w.SetRolled(value, outcome);
     }
 
-    /// Called by EventManager.TargetTierEnableClose() once all rolls are in.
     public void EnableCloseForLocal()
     {
         if (!closeButton) return;
 
-        // Only the local player should be able to press their Close button.
-        closeButton.gameObject.SetActive(true);
         closeButton.interactable = !_localCloseSent;
         if (closeButtonLabel) closeButtonLabel.text = _localCloseSent ? "Waiting…" : "Close";
 
@@ -110,18 +120,23 @@ public class ForcedRollTierUI : MonoBehaviour
             if (_localCloseSent) return;
             _localCloseSent = true;
 
-            // Immediately disable to avoid double click spam
             closeButton.interactable = false;
             if (closeButtonLabel) closeButtonLabel.text = "Waiting…";
 
-            // Tell server we closed
-            EventManager.Instance.CmdTierClientClosed();
+            if (CurrentRollMode == RollMode.Media)
+                EventManager.Instance.CmdMediaClientClosed();
+            else
+                EventManager.Instance.CmdTierClientClosed();
         });
     }
 
-    /// Optional: EventManager can broadcast progress (have/total)
+    public void SetFooter(string text)
+    {
+        if (footerText) footerText.text = text ?? "";
+    }
+
     public void UpdateCloseStatus(int have, int total)
     {
-        if (footerText) footerText.text = $"Close status: {have}/{total} players closed.";
+        SetFooter($"Close status: {have}/{total} players closed.");
     }
 }

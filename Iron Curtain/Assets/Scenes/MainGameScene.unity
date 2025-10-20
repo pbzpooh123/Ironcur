@@ -3279,12 +3279,12 @@ MonoBehaviour:
   m_fontSize: 36
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 1
+  m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -3312,7 +3312,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -296.85925, y: 0, z: -292.91425, w: 0}
+  m_margin: {x: -296.85925, y: 0, z: -292.91425, w: -16.292828}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -4626,7 +4626,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pauseRoot: {fileID: 319205858}
-  settingsPanel: {fileID: 0}
   lobbySceneName: Lobby
   toggleKey: 27
   pauseTimeScale: 0
@@ -7388,10 +7387,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dee296f0a6de8c045a39edae80356605, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  panel: {fileID: 1403265752}
-  titleText: {fileID: 861559838}
-  statusText: {fileID: 1342539824}
-  rollButton: {fileID: 1956212191}
 --- !u!114 &1024428437
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7411,6 +7406,7 @@ MonoBehaviour:
   footerText: {fileID: 1367563966}
   closeButton: {fileID: 924155820}
   closeButtonLabel: {fileID: 939423681}
+  diceFacesGlobal: []
 --- !u!114 &1024428438
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10657,7 +10653,7 @@ MonoBehaviour:
   m_Padding:
     m_Left: 4
     m_Right: 0
-    m_Top: 5
+    m_Top: 14
     m_Bottom: 0
   m_ChildAlignment: 0
   m_StartCorner: 0
@@ -13789,7 +13785,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.size
-      value: 7
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: timelines.Array.data[0]
@@ -13806,11 +13802,11 @@ PrefabInstance:
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[0]
       value: 
-      objectReference: {fileID: 11400000, guid: c228399759521484e832198cfe5897ba, type: 2}
+      objectReference: {fileID: 11400000, guid: c782f7d782a90ef4cafc62d72fe6a3ec, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[1]
       value: 
-      objectReference: {fileID: 11400000, guid: b0518d7e9aae8f04784dd8168f90c71c, type: 2}
+      objectReference: {fileID: 11400000, guid: c782f7d782a90ef4cafc62d72fe6a3ec, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[2]
       value: 

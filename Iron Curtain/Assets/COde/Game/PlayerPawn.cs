@@ -567,4 +567,6 @@ public class PlayerPawn : NetworkBehaviour
     {
         return new List<PortfolioItemDTO>(_clientPortfolio);
     }
+
+
 }

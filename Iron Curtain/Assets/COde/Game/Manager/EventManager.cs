@@ -11,26 +11,22 @@ public class EventManager : NetworkBehaviour
 
     private int playersReady = 0;
     private int requiredReady = 0;
-    private bool waitingForAcks = false; // used for MAIN events only
+    private bool waitingForAcks = false;
 
-    // Resume context to differentiate Tile vs Main
     private enum ResumeContext { None, Tile, Main }
     private ResumeContext _resume = ResumeContext.None;
     private PlayerPawn _resumeTilePawn = null;
 
     [Header("Event Databases")]
-    // Tile Events are NOT timeline-bound.
+
     public List<GameEventSO> tileEvents = new();
 
-    // Optional legacy list (used only if current timeline has no events)
     public List<GameEventSO> mainEvents = new();
 
-    // ===== State for special modes =====
     private bool _compFixedPayoutMode = false;
     private int _compWinnerPayout = 0;
     private int _compOtherPayout = 0;
 
-    // Bank Odd Fine (rule toggle)
     private bool _bankOddFineActive = false;
     private string _bankCompanyName = "Bank";
     private int _bankOddFineAmount = 500;
@@ -39,17 +35,15 @@ public class EventManager : NetworkBehaviour
     private void Awake() => Instance = this;
 
     [Header("Timelines (Main Events only)")]
-    public List<TimelineSO> timelines = new(); // assign in inspector
-    private int _currentTimelineIndex = -1;     // selected once per match
+    public List<TimelineSO> timelines = new(); 
+    private int _currentTimelineIndex = -1;     
     private readonly Dictionary<int, PlayerPawn> _cidToPawn = new();
 
-    // ==== ForcedRollTier state ====
     private bool _tierActive = false;
     private int _tierLowMax, _tierHighMin, _tierPay, _tierGain;
     private readonly HashSet<int> _tierParticipants = new();
     private readonly Dictionary<int, int> _tierRolls = new();
 
-    // Defer tier start until everyone presses Ready on the main-event popup; keep UI until all Close
     private GameEventSO _pendingTierEvent = null;
     private bool _tierAwaitingCloses = false;
     private readonly HashSet<int> _tierClosed = new();
@@ -149,7 +143,7 @@ public class EventManager : NetworkBehaviour
         }
 
         // ===== Default tile behaviour (simple side popup) =====
-        // IMPORTANT: no per-tile waitingForAcks. The tile panel's Ready calls TurnManager.CmdTileActionReady().
+       
         TurnManager.Instance.ServerBeginTileAction(pawn);
 
         _resume = ResumeContext.Tile;
@@ -157,10 +151,62 @@ public class EventManager : NetworkBehaviour
 
         TargetShowSideEvent(pawn.Owner, $"{e.eventName}\n\n{e.description}", true);
 
-        // Apply effects immediately; proposal will NOT open until the player presses Ready on the panel.
+
         ApplyEventToPawn(e, pawn);
-        // Now we wait for the client Ready → TurnManager.CmdTileActionReady() → TurnManager.ServerOnTileActionComplete(pawn)
+       
     }
+
+    private PlayerPawn _tileFlowPawn;
+private int _tileStepOpenCount = 0;
+
+[Server] private void BeginTileFlow(PlayerPawn pawn)
+{
+    _tileFlowPawn = pawn;
+    _tileStepOpenCount = 0;
+    TurnManager.Instance.ServerBeginTileAction(pawn); 
+}
+
+[Server] private void ShowStep(PlayerPawn pawn, string msg)
+{
+    _tileStepOpenCount++;
+    if (pawn?.Owner != null)
+        TargetShowSideEventStep(pawn.Owner, msg);
+}
+
+
+[TargetRpc]
+private void TargetShowSideEventStep(FishNet.Connection.NetworkConnection conn, string message)
+{
+    if (EventUI.Instance != null)
+    {
+        EventUI.Instance.SideeventShow(message, pauseAll:true);
+        EventUI.Instance.SetSideeventReadyCallback(() =>
+        {
+            EventManager.Instance.CmdTileStepClosed();
+        });
+    }
+}
+
+[TargetRpc]
+private void TargetShowSideEventFinal(FishNet.Connection.NetworkConnection conn, string message)
+{
+    if (EventUI.Instance != null)
+    {
+        EventUI.Instance.SideeventShow(message, pauseAll:true);
+        EventUI.Instance.SetSideeventReadyCallback(() =>
+        {
+            TurnManager.Instance.CmdTileActionReady();
+        });
+    }
+}
+
+[ServerRpc(RequireOwnership = false)]
+public void CmdTileStepClosed(FishNet.Connection.NetworkConnection conn = null)
+{
+    if (_tileFlowPawn == null || _tileFlowPawn.Owner != conn) return;
+    _tileStepOpenCount = Mathf.Max(0, _tileStepOpenCount - 1);
+    // No release here — final panel will release.
+}
 
     /* ================= MAIN EVENTS (TIMELINE-BOUND) ================= */
 
@@ -305,9 +351,6 @@ public class EventManager : NetworkBehaviour
                 {
                     case DeferredMode.ForcedRollAgainstOwner:
                         StartForcedRollAgainstOwner(e);
-                        return;
-                    case DeferredMode.Competition:
-                        StartCompetition(e);
                         return;
                     case DeferredMode.TargetSelect:
                         StartTargetSelect(e);
@@ -519,184 +562,214 @@ public class EventManager : NetworkBehaviour
         ResumeAfterEvent();
     }
 
-    private GameEventSO _compEvent;
-    private readonly HashSet<int> _compParticipants = new();
-    private readonly Dictionary<int, int> _compRolls = new();
-    private int _compPot;
 
-    [Server]
-    private void StartCompetition(GameEventSO e)
+// ===================== MEDIA ATTENTION (uses the grid UI) =====================
+
+private GameEventSO _compEvent;
+private readonly HashSet<int> _compParticipants = new();
+private readonly Dictionary<int, int> _compRolls = new();
+private int _compPot;
+private bool _compAwaitingCloses = false;
+private readonly HashSet<int> _compClosed = new();
+private bool _mediaModeActive = false;
+private int _mediaWinnerPayout = 0;
+private int _mediaOtherPayout = 0;
+private readonly HashSet<int> _mediaParticipants = new();
+private readonly Dictionary<int, int> _mediaRolls = new();
+private bool _mediaAwaitingCloses = false;
+private readonly HashSet<int> _mediaClosed = new();
+
+[ObserversRpc]
+private void RpcSetRollMode(ForcedRollTierUI.RollMode mode)
+{
+    ForcedRollTierUI.CurrentRollMode = mode;
+}
+
+[TargetRpc]
+private void TargetGridRolling(FishNet.Connection.NetworkConnection conn, int cid)
+{
+    ForcedRollTierUI.Instance?.SetRolling(cid);
+}
+
+[TargetRpc]
+private void TargetGridRolled(FishNet.Connection.NetworkConnection conn, int cid, int roll, string outcome)
+{
+    ForcedRollTierUI.Instance?.SetRolled(cid, roll, outcome);
+}
+
+[TargetRpc]
+private void TargetSetFooterAndEnableClose(FishNet.Connection.NetworkConnection conn, string footer)
+{
+    ForcedRollTierUI.Instance?.SetFooter(footer);
+    ForcedRollTierUI.Instance?.EnableCloseForLocal();
+}
+
+[ObserversRpc]
+private void RpcUpdateMediaCloseStatus(int have, int total)
+{
+    ForcedRollTierUI.Instance?.UpdateCloseStatus(have, total);
+}
+
+[ObserversRpc]
+private void RpcCloseGridUI()
+{
+    ForcedRollTierUI.Instance?.Hide();
+}
+
+[Server]
+private void StartMediaAttentionAllRoll(int winPayout, int otherPayout)
+{
+    _mediaModeActive = true;
+    _mediaWinnerPayout = winPayout;
+    _mediaOtherPayout = otherPayout;
+
+    _mediaParticipants.Clear();
+    _mediaRolls.Clear();
+    _cidToPawn.Clear();
+    _mediaAwaitingCloses = false;
+    _mediaClosed.Clear();
+
+    if (GameManager.Instance == null) { ResumeAfterEvent(); return; }
+
+    foreach (var p in GameManager.Instance.Players)
     {
-        _compEvent = e;
-        _compParticipants.Clear();
-        _compRolls.Clear();
-        _cidToPawn.Clear();
-        _compPot = 0;
-
-        if (GameManager.Instance == null) { ResumeAfterEvent(); return; }
-
-        foreach (var p in GameManager.Instance.Players)
-        {
-            if (p?.Owner == null) continue;
-            _compParticipants.Add(p.Owner.ClientId);
-            _cidToPawn[p.Owner.ClientId] = p;
-
-            if (e.entryFee > 0)
-            {
-                if (!p.TrySpendMoney(e.entryFee))
-                {
-                    int have = p.money.Value;
-                    if (have > 0) p.TrySpendMoney(have);
-                    _compPot += have;
-                }
-                else
-                {
-                    _compPot += e.entryFee;
-                }
-            }
-        }
-
-        if (_compParticipants.Count == 0)
-        {
-            _compEvent = null;
-            ResumeAfterEvent();
-            return;
-        }
-
-        StartCoroutine(CoCompetitionTimeout(20f));
-
-        string title = $"{e.eventName}\nEntry Pot = ${_compPot}\nRoll a d6. Highest wins!";
-        foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-            if (_compParticipants.Contains(conn.ClientId))
-                TargetShowCompetition(conn, title);
+        if (p?.Owner == null) continue;
+        _mediaParticipants.Add(p.Owner.ClientId);
+        _cidToPawn[p.Owner.ClientId] = p;
     }
 
-    [TargetRpc]
-    private void TargetShowCompetition(NetworkConnection conn, string title)
+    if (_mediaParticipants.Count == 0)
     {
-        if (CompetitionUI.Instance != null)
-            CompetitionUI.Instance.Show(title);
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void CmdSubmitCompetitionRoll(int roll, NetworkConnection conn = null)
-    {
-        if (conn == null) return;
-
-        bool compActive = _compFixedPayoutMode || (_compEvent != null && _compEvent.mode == EventMode.Competition);
-        if (!compActive) return;
-
-        int cid = conn.ClientId;
-        if (!_compParticipants.Contains(cid)) return;
-        if (_compRolls.ContainsKey(cid)) return;
-
-        int r = Mathf.Clamp(roll, 1, 6);
-        _compRolls[cid] = r;
-
-        BroadcastCompetitionStatus(_compRolls.Count, _compParticipants.Count);
-
-        if (_compRolls.Count >= _compParticipants.Count)
-            ResolveCompetition();
-    }
-
-    [Server]
-    private void BroadcastCompetitionStatus(int have, int total)
-    {
-        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetCompetitionStatus(c, $"Competition: {have}/{total} rolls submitted.");
-    }
-
-    [TargetRpc]
-    private void TargetCompetitionStatus(NetworkConnection conn, string status)
-    {
-        if (CompetitionUI.Instance != null)
-            CompetitionUI.Instance.UpdateStatus(status);
-    }
-
-    [Server]
-    private void ResolveCompetition()
-    {
-        if (_compFixedPayoutMode)
-        {
-            int maxRoll = 0;
-            foreach (var r in _compRolls.Values) if (r > maxRoll) maxRoll = r;
-
-            List<PlayerPawn> winners = new();
-            foreach (var kv in _compRolls)
-                if (kv.Value == maxRoll && _cidToPawn.TryGetValue(kv.Key, out var pw) && pw != null)
-                    winners.Add(pw);
-
-            foreach (var cid in _compParticipants)
-            {
-                if (!_cidToPawn.TryGetValue(cid, out var pw) || pw == null) continue;
-                if (winners.Contains(pw)) pw.AddMoney(_compWinnerPayout);
-                else pw.AddMoney(_compOtherPayout);
-            }
-
-            string summary = $"Media Attention Roll\nMax Roll={maxRoll}\nWinners={winners.Count}\nWinner gets ${_compWinnerPayout}M, others ${_compOtherPayout}M.";
-            foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowSideEvent(c, summary, false);
-
-            CloseCompetitionUI();
-
-            _compFixedPayoutMode = false;
-            _compWinnerPayout = 0;
-            _compOtherPayout = 0;
-
-            ResumeAfterEvent();
-            return;
-        }
-
-        if (_compEvent == null)
-        {
-            CloseCompetitionUI();
-            ResumeAfterEvent();
-            return;
-        }
-
-        int max = 0;
-        foreach (var r in _compRolls.Values) if (r > max) max = r;
-
-        List<PlayerPawn> winners2 = new();
-        foreach (var kv in _compRolls)
-            if (kv.Value == max && _cidToPawn.TryGetValue(kv.Key, out var pw) && pw != null)
-                winners2.Add(pw);
-
-        int each = (_compEvent.tieSplitPot && winners2.Count > 0)
-            ? Mathf.FloorToInt(_compPot / winners2.Count)
-            : _compPot;
-
-        if (_compEvent.tieSplitPot)
-        {
-            foreach (var w in winners2) w.AddMoney(each);
-        }
-        else if (winners2.Count > 0)
-        {
-            winners2[0].AddMoney(each);
-        }
-
-        string summary2 = $"{_compEvent.eventName}\nResult: Max Roll={max}, Winners={winners2.Count}, Pot=${_compPot}M.";
-        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(c, summary2, false);
-
-        CloseCompetitionUI();
-        _compEvent = null;
+        _mediaModeActive = false;
         ResumeAfterEvent();
+        return;
     }
 
-    [Server]
-    private void CloseCompetitionUI()
+    // Build ids + names for UI
+    var ids = new System.Collections.Generic.List<int>(_mediaParticipants);
+    var names = new System.Collections.Generic.Dictionary<int, string>();
+    foreach (var cid in ids)
+        names[cid] = _cidToPawn.TryGetValue(cid, out var pp) && pp != null ? pp.playerName.Value : ("P" + cid);
+
+    // Switch UI to "Media" mode, show the grid for everyone with their local id
+    RpcSetRollMode(ForcedRollTierUI.RollMode.Media);
+
+    string header = $"Your Business Gains Media Attention!\nRoll a d6. Highest gets ${_mediaWinnerPayout}M; others get ${_mediaOtherPayout}M.";
+    foreach (var kv in FishNet.InstanceFinder.ServerManager.Clients)
+        TargetShowForcedRollTier(kv.Value, header, ids.ToArray(), ToNames(ids, names), kv.Key);
+
+    // Optional: auto-roll timeout for AFK
+    StartCoroutine(CoMediaTimeout(20f));
+}
+
+private string[] ToNames(System.Collections.Generic.List<int> ids, System.Collections.Generic.Dictionary<int, string> map)
+{
+    var arr = new string[ids.Count];
+    for (int i = 0; i < ids.Count; i++) arr[i] = map.TryGetValue(ids[i], out var n) ? n : ("P" + ids[i]);
+    return arr;
+}
+
+[TargetRpc]
+private void TargetShowForcedRollTier(FishNet.Connection.NetworkConnection conn, string header, int[] cids, string[] names, int localCid)
+{
+    var map = new System.Collections.Generic.Dictionary<int, string>();
+    for (int i = 0; i < cids.Length; i++)
+        map[cids[i]] = (i < names.Length ? names[i] : ("P" + cids[i]));
+
+    ForcedRollTierUI.Instance?.Show(header, new System.Collections.Generic.List<int>(cids), map, localCid);
+}
+
+private System.Collections.IEnumerator CoMediaTimeout(float seconds)
+{
+    float t = seconds;
+    while (t > 0f && _mediaModeActive && _mediaRolls.Count < _mediaParticipants.Count)
     {
-        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetCloseCompetition(c);
+        t -= Time.deltaTime;
+        yield return null;
     }
 
-    [TargetRpc]
-    private void TargetCloseCompetition(NetworkConnection conn)
+    if (_mediaModeActive && _mediaRolls.Count < _mediaParticipants.Count)
     {
-        if (CompetitionUI.Instance != null)
-            CompetitionUI.Instance.Hide();
+        foreach (var cid in _mediaParticipants)
+            if (!_mediaRolls.ContainsKey(cid))
+                _mediaRolls[cid] = UnityEngine.Random.Range(1, 7);
+
+        ResolveMediaAttention();
     }
+}
+
+[ServerRpc(RequireOwnership = false)]
+public void CmdRequestMediaRoll(FishNet.Connection.NetworkConnection conn = null)
+{
+    if (!_mediaModeActive || conn == null) return;
+
+    int cid = conn.ClientId;
+    if (!_mediaParticipants.Contains(cid)) return;
+    if (_mediaRolls.ContainsKey(cid)) return;
+
+    foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
+        TargetGridRolling(c, cid);
+
+    int roll = UnityEngine.Random.Range(1, 7);
+    _mediaRolls[cid] = roll;
+
+    string outcome = $"roll {roll}";
+    foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
+        TargetGridRolled(c, cid, roll, outcome);
+
+    if (_mediaRolls.Count >= _mediaParticipants.Count)
+        ResolveMediaAttention();
+}
+
+[Server]
+private void ResolveMediaAttention()
+{
+    if (!_mediaModeActive) return;
+
+    int maxRoll = 0;
+    foreach (var r in _mediaRolls.Values) if (r > maxRoll) maxRoll = r;
+
+    var winners = new System.Collections.Generic.List<PlayerPawn>();
+    foreach (var kv in _mediaRolls)
+        if (kv.Value == maxRoll && _cidToPawn.TryGetValue(kv.Key, out var pw) && pw != null)
+            winners.Add(pw);
+
+    // Pay everyone according to winners vs others
+    foreach (var cid in _mediaParticipants)
+    {
+        if (!_cidToPawn.TryGetValue(cid, out var pw) || pw == null) continue;
+        if (winners.Contains(pw)) pw.AddMoney(_mediaWinnerPayout);
+        else pw.AddMoney(_mediaOtherPayout);
+    }
+
+    string footer = $"Max {maxRoll}. Winners: {winners.Count}. Winner +${_mediaWinnerPayout}M, others +${_mediaOtherPayout}M.";
+    foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
+        TargetSetFooterAndEnableClose(c, footer);
+
+    _mediaAwaitingCloses = true;
+    _mediaClosed.Clear();
+}
+
+[ServerRpc(RequireOwnership = false)]
+public void CmdMediaClientClosed(FishNet.Connection.NetworkConnection conn = null)
+{
+    if (conn == null || !_mediaAwaitingCloses) return;
+    int cid = conn.ClientId;
+    if (!_mediaParticipants.Contains(cid)) return;
+    if (_mediaClosed.Contains(cid)) return;
+
+    _mediaClosed.Add(cid);
+    RpcUpdateMediaCloseStatus(_mediaClosed.Count, _mediaParticipants.Count);
+
+    if (_mediaClosed.Count >= _mediaParticipants.Count)
+    {
+        _mediaAwaitingCloses = false;
+        _mediaModeActive = false;
+        RpcCloseGridUI();     // hide grid for all
+        ResumeAfterEvent();   // continue turn flow
+    }
+}
+
 
     private GameEventSO _tsEvent;
     private PlayerPawn _tsChooser;
@@ -859,43 +932,7 @@ public class EventManager : NetworkBehaviour
         return string.Join("|", arr);
     }
 
-    [Server]
-    private void StartMediaAttentionAllRoll(int winPayout, int otherPayout)
-    {
-        _compEvent = null;
-        _compParticipants.Clear();
-        _compRolls.Clear();
-        _cidToPawn.Clear();
-        _compPot = 0;
-
-        _compFixedPayoutMode = true;
-        _compWinnerPayout = winPayout;
-        _compOtherPayout = otherPayout;
-
-        if (GameManager.Instance == null) { ResumeAfterEvent(); return; }
-
-        foreach (var p in GameManager.Instance.Players)
-        {
-            if (p?.Owner == null) continue;
-            _compParticipants.Add(p.Owner.ClientId);
-            _cidToPawn[p.Owner.ClientId] = p;
-        }
-
-        if (_compParticipants.Count == 0)
-        {
-            _compFixedPayoutMode = false;
-            ResumeAfterEvent();
-            return;
-        }
-
-        StartCoroutine(CoCompetitionTimeout(20f));
-
-        string title = $"Your Business Gains Media Attention!\nRoll a d6. Highest gets ${winPayout}M; others get ${otherPayout}M.";
-        foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-            if (_compParticipants.Contains(conn.ClientId))
-                TargetShowCompetition(conn, title);
-    }
-
+    
     private bool _tsCyberAttackMode = false;
     private float _tsRansomRate = 0f; // e.g., 0.10f
 
@@ -1059,33 +1096,10 @@ public class EventManager : NetworkBehaviour
         if (TargetSelectUI.Instance != null)
             TargetSelectUI.Instance.gameObject.SetActive(false);
 
-        if (CompetitionUI.Instance != null)
-            CompetitionUI.Instance.gameObject.SetActive(false);
-
         ForcedRollTierUI.Instance?.Hide();
     }
 
-    private IEnumerator CoCompetitionTimeout(float seconds)
-    {
-        float t = seconds;
-        while (t > 0f
-               && (_compFixedPayoutMode || (_compEvent != null && _compEvent.mode == EventMode.Competition))
-               && _compRolls.Count < _compParticipants.Count)
-        {
-            t -= Time.deltaTime;
-            yield return null;
-        }
 
-        if (_compRolls.Count < _compParticipants.Count
-            && (_compFixedPayoutMode || (_compEvent != null && _compEvent.mode == EventMode.Competition)))
-        {
-            foreach (var cid in _compParticipants)
-                if (!_compRolls.ContainsKey(cid))
-                    _compRolls[cid] = UnityEngine.Random.Range(1, 7);
-
-            ResolveCompetition();
-        }
-    }
 
     // --- Proposal block state ---
     private int _proposalBlockExpiresAtRound = -1;
@@ -1144,20 +1158,24 @@ public class EventManager : NetworkBehaviour
         }
 
         string header = $"{e.eventName}\n1–{_tierLowMax}: pay ${_tierPay} • {_tierHighMin}–6: +${_tierGain} • else: no change";
-
         foreach (var kv in InstanceFinder.ServerManager.Clients)
-            TargetShowForcedRollTier(kv.Value, header, ids.ToArray(), names.ToArray(), kv.Key);
+             TargetShowForcedRollTier(kv.Value, header, ids.ToArray(), names.ToArray(), kv.Key, true);
     }
 
-    [TargetRpc]
-    private void TargetShowForcedRollTier(NetworkConnection conn, string header, int[] cids, string[] names, int localCid)
-    {
-        var map = new Dictionary<int, string>();
-        for (int i = 0; i < cids.Length; i++)
-            map[cids[i]] = (i < names.Length ? names[i] : ("P" + cids[i]));
+   [TargetRpc]
+private void TargetShowForcedRollTier(NetworkConnection conn, string header, int[] cids, string[] names, int localCid, bool isCompetition)
+{
+    // Set the roll mode *locally on this client* right before showing the UI.
+    ForcedRollTierUI.CurrentRollMode = isCompetition
+        ? ForcedRollTierUI.RollMode.Media
+        : ForcedRollTierUI.RollMode.Tier;
 
-        ForcedRollTierUI.Instance?.Show(header, new List<int>(cids), map, localCid);
-    }
+    var map = new Dictionary<int, string>();
+    for (int i = 0; i < cids.Length; i++)
+        map[cids[i]] = (i < names.Length ? names[i] : ("P" + cids[i]));
+
+    ForcedRollTierUI.Instance?.Show(header, new List<int>(cids), map, localCid);
+}
 
     [TargetRpc]
     private void TargetTierRolling(NetworkConnection conn, int cid)
@@ -1183,49 +1201,9 @@ public class EventManager : NetworkBehaviour
         ForcedRollTierUI.Instance?.EnableCloseForLocal();
     }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void CmdRequestTierRoll(NetworkConnection conn = null)
-    {
-        if (!_tierActive || conn == null) return;
 
-        int cid = conn.ClientId;
-        if (!_tierParticipants.Contains(cid)) return;
-        if (_tierRolls.ContainsKey(cid)) return;
-
-        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetTierRolling(c, cid);
-
-        int roll = Random.Range(1, 7);
-        _tierRolls[cid] = roll;
-
-        var pawn = conn.FirstObject?.GetComponent<PlayerPawn>();
-        string outcome;
-
-        if (roll <= _tierLowMax)
-        {
-            int pay = Mathf.Min(_tierPay, pawn.money.Value);
-            if (pay > 0) pawn.TrySpendMoney(pay);
-            outcome = $"-${pay}";
-        }
-        else if (roll >= _tierHighMin)
-        {
-            pawn.AddMoney(_tierGain);
-            outcome = $"+${_tierGain}";
-        }
-        else
-        {
-            outcome = "no change";
-        }
-
-        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetTierRolled(c, cid, roll, outcome);
-
-        if (_tierRolls.Count >= _tierParticipants.Count)
-            ResolveForcedRollTier();
-    }
-
-    [Server]
-    private void ResolveForcedRollTier()
+ [Server]
+private void ResolveForcedRollTier()
     {
         _tierActive = false;
 
@@ -1261,12 +1239,70 @@ public class EventManager : NetworkBehaviour
     }
 
     [Server]
-    private void BroadcastTierCloseStatus(int have, int total)
+private void BroadcastTierCloseStatus(int have, int total)
+{
+    RpcUpdateTierCloseStatus(have, total);
+}
+
+
+    [ObserversRpc]
+private void RpcUpdateTierCloseStatus(int have, int total)
+{
+    ForcedRollTierUI.Instance?.UpdateCloseStatus(have, total);
+}
+
+
+[ServerRpc(RequireOwnership = false)]
+public void CmdRequestTierRoll(NetworkConnection conn = null)
+{
+    if (!_tierActive || conn == null) return;
+
+    int cid = conn.ClientId;
+    if (!_tierParticipants.Contains(cid)) return;
+    if (_tierRolls.ContainsKey(cid)) return;
+
+    // Notify all clients that this slot is rolling
+    foreach (var c in InstanceFinder.ServerManager.Clients.Values)
+        TargetTierRolling(c, cid);
+
+    // Authoritative server roll
+    int roll = UnityEngine.Random.Range(1, 7);
+    _tierRolls[cid] = roll;
+
+    var pawn = conn.FirstObject?.GetComponent<PlayerPawn>();
+    string outcome;
+
+    if (pawn != null)
     {
-        // Optional status; reuse Competition status UI line
-        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetCompetitionStatus(c, $"Tier: {have}/{total} players closed.");
+        if (roll <= _tierLowMax)
+        {
+            int pay = Mathf.Min(_tierPay, pawn.money.Value);
+            if (pay > 0) pawn.TrySpendMoney(pay);
+            outcome = $"-${pay}";
+        }
+        else if (roll >= _tierHighMin)
+        {
+            pawn.AddMoney(_tierGain);
+            outcome = $"+${_tierGain}";
+        }
+        else
+        {
+            outcome = "no change";
+        }
     }
+    else
+    {
+        outcome = "no change";
+    }
+
+    // Push result to all clients (updates text + dice sprite)
+    foreach (var c in InstanceFinder.ServerManager.Clients.Values)
+        TargetTierRolled(c, cid, roll, outcome);
+
+    // If everyone rolled, move to close-gate
+    if (_tierRolls.Count >= _tierParticipants.Count)
+        ResolveForcedRollTier();
+}
 
     /* ================= BANK ODD FINE HOOK ================= */
 

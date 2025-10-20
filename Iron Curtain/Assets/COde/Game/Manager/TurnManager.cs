@@ -84,7 +84,7 @@ public class TurnManager : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.Keypad9))
         {
             // If we're the server/host, end immediately.
-            if (IsServer)
+            if (IsServerStarted)
             {
                 EndMatch("Ended by DEV hotkey (Numpad 9).");
             }
