@@ -13,15 +13,13 @@ MonoBehaviour:
   m_Name: Main Event 1
   m_EditorClassIdentifier: 
   eventName: Marshall Plan
-  description: 'The United States provides economic aid to European nations affected
-    by World War II.
-
-
-    Steel & Iron Production: +50% revenue for 5 turns
+  description: 'Steel & Iron Production: +50% revenue for 5 turns
 
 
     Transportation
     & Logistics: +50% revenue for 5 turns'
+  history: The United States provides economic aid to European nations affected by
+    World War II.
   type: 1
   mode: 5
   requiredCompanyName: 
@@ -61,3 +59,5 @@ MonoBehaviour:
   highMin: 5
   highGainAmount: 200
   affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

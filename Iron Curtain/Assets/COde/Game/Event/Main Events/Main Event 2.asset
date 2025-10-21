@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Main Event 2
   m_EditorClassIdentifier: 
   eventName: Berlin Blockade
-  description: "The Soviet Union blockades access to West Berlin.\n\nSteel & Iron
-    Production: \u201325% revenue for 3 turns\n\nFood & Beverage Production:  gain
-    an additional $200 revenue\n\nTransportation & Logistics: \u201350% revenue for
-    3 turns"
+  description: "Steel & Iron Production: \u201325% revenue for 3 turns\n\nFood &
+    Beverage Production:  gain an additional $200 revenue\n\nTransportation & Logistics:
+    \u201350% revenue for 3 turns"
+  history: The Soviet Union blockades access to West Berlin.
   type: 1
   mode: 5
   requiredCompanyName: 
@@ -66,3 +66,5 @@ MonoBehaviour:
   highMin: 5
   highGainAmount: 200
   affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3
