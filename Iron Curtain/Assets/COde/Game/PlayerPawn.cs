@@ -46,6 +46,10 @@ public class PlayerPawn : NetworkBehaviour
         {
             colorIndex.Value = PlayerColors.Clamp(lobby.colorIndex.Value);
         }
+        if (colorIndex.Value == 0)
+        {
+            colorIndex.Value = -1;
+        }
     }
 
     public override void OnStartClient()

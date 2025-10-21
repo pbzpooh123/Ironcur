@@ -4,6 +4,7 @@ using UnityEngine;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
 using TMPro;
+using System.Threading.Tasks;
 
 
 public enum TurnPhase
@@ -580,10 +581,7 @@ public class TurnManager : NetworkBehaviour
 
         if (_resultsReady >= _resultsRequired)
         {
-
-            SubmitScoresFireAndForget();
-
-            RpcGoToLeaderboard();
+             _ = SubmitScoresThenGoToLeaderboard();
         }
     }
     private HashSet<int> _readyClientIds;
@@ -594,19 +592,37 @@ public class TurnManager : NetworkBehaviour
         MatchResultsUI.Instance?.GoToLeaderboardScene();
     }
 
-    private void SubmitScoresFireAndForget()
+   private async Task SubmitScoresThenGoToLeaderboard()
+{
+    var svc = UGSLeaderboard.Instance;
+
+    if (svc != null)
     {
-        // run without awaiting
-        var svc = UGSLeaderboard.Instance;
-        if (svc == null) return;
+        var tasks = new List<Task>();
+        foreach (var p in GameManager.Instance.Players)
+        {
+            string name  = string.IsNullOrWhiteSpace(p.playerName.Value) ? "Player" : p.playerName.Value;
+            long score   = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
+            tasks.Add(svc.SubmitMyScoreAsync(score, name));
+        }
 
-            foreach (var p in GameManager.Instance.Players)
-            {
-                string name = string.IsNullOrWhiteSpace(p.playerName.Value) ? "Player" : p.playerName.Value;
-                long score = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
-                _ = svc.SubmitMyScoreAsync(score, name);
-            }
-
+        try
+        {
+            await Task.WhenAll(tasks);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[UGS] One or more leaderboard submissions failed: {ex}");
+        }
     }
+    else
+    {
+        Debug.LogWarning("[UGS] Leaderboard service not present; loading scene anyway.");
+        // tiny grace period so any client-side calls can race-in
+        await Task.Delay(500);
+    }
+
+    RpcGoToLeaderboard();
+}
 
 }

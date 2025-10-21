@@ -16,6 +16,13 @@ public class NetworkLobbyPlayer : NetworkBehaviour
 
     private LobbyUI lobbyUI;
 
+    public override void OnStartServer()
+     {
+        base.OnStartServer();
+           if (colorIndex.Value == 0) // default engine value
+               colorIndex.Value = -1; // not picked yet
+     }
+
     public override void OnStartClient()
     {
         base.OnStartClient();
@@ -60,27 +67,16 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     [ServerRpc]
     public void CmdSetProfile(string newName, int desiredColorIndex)
     {
-        playerName.Value = string.IsNullOrWhiteSpace(newName) ? "Player" : newName;
+            playerName.Value = string.IsNullOrWhiteSpace(newName) ? "Player" : newName;
 
-        int picked = GetUniqueColor(desiredColorIndex);
-        if (picked < 0)
-        {
-            // no color left, tell client to pick again (keeps previous)
-            TargetColorDenied(Owner);
-            NetworkManagerLobby.Instance.UpdateLobbyUI();
-            return;
-        }
+        int picked = GetUniqueColor(desiredColorIndex); 
 
         colorIndex.Value = picked;
-
-        // for host/server pawn, apply immediately on server too
         ApplyMyColor(colorIndex.Value);
-
         TargetColorAssigned(Owner, colorIndex.Value);
         NetworkManagerLobby.Instance.UpdateLobbyUI();
     }
 
-    // Check other players' selected colors and pick the first free one
     private int GetUniqueColor(int desired)
     {
         desired = PlayerColors.Clamp(desired);
@@ -92,20 +88,20 @@ public class NetworkLobbyPlayer : NetworkBehaviour
             if (no == null) continue;
             var lp = no.GetComponent<NetworkLobbyPlayer>();
             if (lp == null) continue;
-            if (lp.colorIndex.Value >= 0 && lp.colorIndex.Value < PlayerColors.Palette.Length)
-                taken.Add(lp.colorIndex.Value);
+
+            int idx = lp.colorIndex.Value;
+            if (idx >= 0 && idx < PlayerColors.Palette.Length) // ignore -1
+                taken.Add(idx);
         }
 
         if (!taken.Contains(desired))
             return desired;
 
-        // find first free color
         for (int i = 0; i < PlayerColors.Palette.Length; i++)
             if (!taken.Contains(i))
                 return i;
 
-        // none free
-        return -1;
+        return -1; // none free
     }
 
     [TargetRpc]
@@ -113,14 +109,9 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     {
         PlayerPrefs.SetInt("ColorIndex", idx);
         PlayerPrefs.Save();
-        // (Optional) flash a “Color reserved” UI message here
+
     }
 
-    [TargetRpc]
-    private void TargetColorDenied(FishNet.Connection.NetworkConnection conn)
-    {
-        // (Optional) show UI prompt “Color taken. Please pick another.”
-    }
 
     /* ---------------- Room code + lobby list ---------------- */
 

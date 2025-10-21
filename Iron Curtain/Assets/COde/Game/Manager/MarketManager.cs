@@ -448,7 +448,6 @@ public class MarketManager : NetworkBehaviour
         if (!companies.TryGetValue(companyName, out var company)) return;
         if (company.owner == proposer) return; // cannot propose to self
 
-        percent = Mathf.Clamp(percent, 1, 40);
         price = Mathf.Max(1, price);
 
         if (!_submittedThisTurn.TryGetValue(proposer, out var set))
