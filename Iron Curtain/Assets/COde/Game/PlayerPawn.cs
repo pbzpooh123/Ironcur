@@ -22,7 +22,15 @@ public class PlayerPawn : NetworkBehaviour
     public PlayerInfoPanel infoPanel;
 
     public readonly SyncVar<int> jailTurnsLeft = new();
+    private SpriteRenderer _sr;
+    public readonly SyncVar<int> colorIndex = new();
 
+    private void Awake()
+    {
+        // Find a SpriteRenderer on this GO or children
+        _sr = GetComponentInChildren<SpriteRenderer>();
+        if (_sr == null) _sr = GetComponent<SpriteRenderer>();
+    }
     public override void OnStartServer()
     {
         base.OnStartServer();
@@ -32,11 +40,19 @@ public class PlayerPawn : NetworkBehaviour
 
         if (money.Value == 0)
             money.Value = 1000;
+
+        if (Owner?.FirstObject != null &&
+        Owner.FirstObject.TryGetComponent(out NetworkLobbyPlayer lobby))
+        {
+            colorIndex.Value = PlayerColors.Clamp(lobby.colorIndex.Value);
+        }
     }
 
     public override void OnStartClient()
     {
         base.OnStartClient();
+        ApplyColor(colorIndex.Value);
+        colorIndex.OnChange += OnColorChanged;
         money.OnChange += OnMoneyChanged;
         StartCoroutine(AutoBindInfoPanel());
     }
@@ -60,6 +76,38 @@ public class PlayerPawn : NetworkBehaviour
             yield return null;
         }
     }
+     private void OnColorChanged(int oldVal, int newVal, bool asServer)
+    {
+        ApplyColor(newVal);
+    }
+
+    private void ApplyColor(int idx)
+    {
+        if (_sr == null)
+        {
+            // try lazily once more
+            _sr = GetComponentInChildren<SpriteRenderer>();
+            if (_sr == null) return;
+        }
+        _sr.color = PlayerColors.Get(idx);
+    }
+
+    public void ApplyColorIndex(int idx)
+    {
+        
+        if (IsServerInitialized)
+            colorIndex.Value = PlayerColors.Clamp(idx);
+        else
+            CmdSetColorIndex(idx);
+    
+        ApplyColor(idx);
+    }
+
+    [ServerRpc]
+    public void CmdSetColorIndex(int idx)
+    {
+        colorIndex.Value = PlayerColors.Clamp(idx);
+    }
 
     public override void OnStopClient()
     {
@@ -75,10 +123,8 @@ public class PlayerPawn : NetworkBehaviour
         if (delta != 0 && infoPanel != null)
         {
             var deltaCtrl = infoPanel.GetComponentInChildren<MoneyDeltaController>(true);
-            Debug.Log("111");
             if (deltaCtrl != null)
             {
-                Debug.Log("111");
                 deltaCtrl.ShowDelta(delta);
             }
 

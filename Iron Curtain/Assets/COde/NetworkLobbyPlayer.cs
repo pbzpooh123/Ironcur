@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
+using FishNet.Managing;
 using UnityEngine;
 
 public class NetworkLobbyPlayer : NetworkBehaviour
@@ -10,38 +11,121 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     public readonly SyncVar<bool> isReady = new();
     public readonly SyncVar<float> profit = new();
 
+    // NEW: chosen color (unique)
+    public readonly SyncVar<int> colorIndex = new();
+
     private LobbyUI lobbyUI;
 
     public override void OnStartClient()
     {
         base.OnStartClient();
+
+        // keep UI synced
         isReady.OnChange += OnReadyStatusChanged;
-        Invoke(nameof(FindLobbyUI), 0.5f);
+
+        // apply color on change (tints pawn for everyone)
+        colorIndex.OnChange += (oldV, newV, asServer) => ApplyMyColor(newV);
+
+        Invoke(nameof(FindLobbyUIAndPushProfile), 0.5f);
     }
 
-    private void FindLobbyUI()
+    private void FindLobbyUIAndPushProfile()
     {
         lobbyUI = FindObjectOfType<LobbyUI>();
 
         if (IsOwner)
         {
-            SetPlayerInfo(PlayerPrefs.GetString("PlayerName", "Player"));
+            string n = PlayerPrefs.GetString("PlayerName", "Player");
+            int ci = PlayerPrefs.GetInt("ColorIndex", 0);
+            CmdSetProfile(n, ci); // server will enforce uniqueness
             RequestRoomCode();
         }
     }
 
-    [ServerRpc]
-    public void SetPlayerInfo(string newName)
+   private void ApplyMyColor(int idx)
     {
-        playerName.Value = newName;
+        
+        foreach (var pawn in FindObjectsOfType<PlayerPawn>())
+        {
+            if (pawn != null && pawn.Owner == Owner)
+            {
+                pawn.ApplyColorIndex(idx); 
+                break;
+            }
+        }
+    }
+
+    /* ---------------- Profile + color (unique) ---------------- */
+
+    [ServerRpc]
+    public void CmdSetProfile(string newName, int desiredColorIndex)
+    {
+        playerName.Value = string.IsNullOrWhiteSpace(newName) ? "Player" : newName;
+
+        int picked = GetUniqueColor(desiredColorIndex);
+        if (picked < 0)
+        {
+            // no color left, tell client to pick again (keeps previous)
+            TargetColorDenied(Owner);
+            NetworkManagerLobby.Instance.UpdateLobbyUI();
+            return;
+        }
+
+        colorIndex.Value = picked;
+
+        // for host/server pawn, apply immediately on server too
+        ApplyMyColor(colorIndex.Value);
+
+        TargetColorAssigned(Owner, colorIndex.Value);
         NetworkManagerLobby.Instance.UpdateLobbyUI();
     }
 
-    [ServerRpc]
-    public void RequestRoomCode()
+    // Check other players' selected colors and pick the first free one
+    private int GetUniqueColor(int desired)
     {
-        TargetReceiveRoomCode(Owner, NetworkManagerLobby.Instance.roomCode);
+        desired = PlayerColors.Clamp(desired);
+
+        var taken = new HashSet<int>();
+        foreach (var kv in NetworkManager.ServerManager.Clients)
+        {
+            var no = kv.Value?.FirstObject;
+            if (no == null) continue;
+            var lp = no.GetComponent<NetworkLobbyPlayer>();
+            if (lp == null) continue;
+            if (lp.colorIndex.Value >= 0 && lp.colorIndex.Value < PlayerColors.Palette.Length)
+                taken.Add(lp.colorIndex.Value);
+        }
+
+        if (!taken.Contains(desired))
+            return desired;
+
+        // find first free color
+        for (int i = 0; i < PlayerColors.Palette.Length; i++)
+            if (!taken.Contains(i))
+                return i;
+
+        // none free
+        return -1;
     }
+
+    [TargetRpc]
+    private void TargetColorAssigned(FishNet.Connection.NetworkConnection conn, int idx)
+    {
+        PlayerPrefs.SetInt("ColorIndex", idx);
+        PlayerPrefs.Save();
+        // (Optional) flash a “Color reserved” UI message here
+    }
+
+    [TargetRpc]
+    private void TargetColorDenied(FishNet.Connection.NetworkConnection conn)
+    {
+        // (Optional) show UI prompt “Color taken. Please pick another.”
+    }
+
+    /* ---------------- Room code + lobby list ---------------- */
+
+    [ServerRpc] public void RequestRoomCode()
+        => TargetReceiveRoomCode(Owner, NetworkManagerLobby.Instance.roomCode);
 
     [TargetRpc]
     public void TargetReceiveRoomCode(FishNet.Connection.NetworkConnection conn, string code)
@@ -50,33 +134,19 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     }
 
     [ObserversRpc]
-    public void UpdatedPlayerList(List<string> playerDetails)
+    public void UpdatedPlayerList(List<string> names, List<bool> readies, List<int> connIds)
     {
         if (lobbyUI == null) lobbyUI = FindObjectOfType<LobbyUI>();
-
-        // Build default readies and connection id lists to match the names list length
-        var readies = new List<bool>(playerDetails.Count);
-        var connIds = new List<int>(playerDetails.Count);
-        for (int i = 0; i < playerDetails.Count; i++)
-        {
-            readies.Add(false);
-            connIds.Add(-1);
-        }
-
-        lobbyUI?.UpdatePlayerList(playerDetails, readies, connIds);
+        lobbyUI?.UpdatePlayerList(names, readies, connIds);
     }
 
     [ServerRpc]
     public void JoinRoom(string enteredCode)
     {
         if (NetworkManagerLobby.Instance.roomCode == enteredCode)
-        {
             TargetShowWaitingPanel(Owner);
-        }
         else
-        {
             Debug.Log("Invalid Room Code!");
-        }
     }
 
     [TargetRpc]
@@ -96,10 +166,8 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         isReady.Value = !isReady.Value;
         NetworkManagerLobby.Instance.UpdateLobbyUI();
     }
-    
-        // Called from the local toggle
-    [ServerRpc]
-    public void SetReady(bool value)
+
+    [ServerRpc] public void SetReady(bool value)
     {
         isReady.Value = value;
         NetworkManagerLobby.Instance.UpdateLobbyUI();
@@ -108,13 +176,11 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     private void OnReadyStatusChanged(bool oldVal, bool newVal, bool asServer)
     {
         if (lobbyUI == null) lobbyUI = FindObjectOfType<LobbyUI>();
-        // ask server to rebuild and push to all (this is already called in SetReady),
-        // but keeping this ensures UI sync after late joins etc.
         NetworkManagerLobby.Instance.UpdateLobbyUI();
     }
 
-    /* ---------------- HUD BROADCAST TO ALL ---------------- */
-    
+    /* ---------------- Game HUD bridge (unchanged) ---------------- */
+
     [ObserversRpc]
     public void TargetSetHUD(int slotIndex, string name, int initialMoney, int ownerConnectionId)
     {
@@ -138,12 +204,4 @@ public class NetworkLobbyPlayer : NetworkBehaviour
             }
         }
     }
-    
-    [ObserversRpc]
-public void UpdatedPlayerList(List<string> names, List<bool> readies, List<int> connIds)
-{
-    if (lobbyUI == null) lobbyUI = FindObjectOfType<LobbyUI>();
-    lobbyUI?.UpdatePlayerList(names, readies, connIds);
-}
-
 }

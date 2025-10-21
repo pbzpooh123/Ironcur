@@ -8,6 +8,7 @@ using FishNet.Managing;
 using FishNet.Transporting;
 using FishNet.Transporting.UTP;
 using System.Collections.Generic;
+using UnityEngine.UI;
 
 public class MainMenuUI : MonoBehaviour
 {
@@ -31,23 +32,37 @@ public class MainMenuUI : MonoBehaviour
     private bool isHosting = false;
     public UnityEngine.UI.Button hostButton;
 
-    
+    [Header("Name & Color Panel")]
+    public Button[] colorButtons;     // assign swatch buttons
+    private int _selectedColorIndex = 0;
+
     private void Start()
     {
         // Load last used player name if available
         if (PlayerPrefs.HasKey("PlayerName"))
             nameInput.text = PlayerPrefs.GetString("PlayerName");
-        
+
         DisconnectFromNetwork();
         CloseAllPanels();
         mainMenuPanel.SetActive(true);
-    startPanel.SetActive(true);
+        startPanel.SetActive(true);
 
-    isHosting = false;
-    if (hostButton != null) hostButton.interactable = true;
+        for (int i = 0; i < colorButtons.Length && i < PlayerColors.Palette.Length; i++)
+        {
+            int idx = i;
+            var img = colorButtons[i].GetComponent<Image>();
+            if (img) img.color = PlayerColors.Palette[i];
 
-    if (lobbyUI != null) lobbyUI.SetRoomCode(string.Empty);
-    if (roomCodeInput != null) roomCodeInput.text = string.Empty;
+            colorButtons[i].onClick.RemoveAllListeners();
+            colorButtons[i].onClick.AddListener(() => OnPickColor(idx));
+        }
+        OnPickColor(_selectedColorIndex);
+
+        isHosting = false;
+        if (hostButton != null) hostButton.interactable = true;
+
+        if (lobbyUI != null) lobbyUI.SetRoomCode(string.Empty);
+        if (roomCodeInput != null) roomCodeInput.text = string.Empty;
     }
 
     // --- UI Navigation ---
@@ -124,10 +139,9 @@ public class MainMenuUI : MonoBehaviour
         {
             OpenHostClientPanel();
         }
-        else
-        {
-            Debug.LogWarning("Please enter a name and select a country.");
-        }
+        PlayerPrefs.SetString("PlayerName", nameInput.text);
+        PlayerPrefs.SetInt("ColorIndex", _selectedColorIndex);
+        PlayerPrefs.Save();
     }
 
     public void OnClickBackToNameCountry()
@@ -135,6 +149,11 @@ public class MainMenuUI : MonoBehaviour
         OpenNameCountryPanel();
     }
     
+    public void OnPickColor(int idx)
+    {
+        _selectedColorIndex = PlayerColors.Clamp(idx);
+
+    }
     
 
     // --- Networking ---

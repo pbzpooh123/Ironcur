@@ -162,8 +162,9 @@ public class MarketManager : NetworkBehaviour
             companies[key] = record;
             tile.owner = pawn;
 
-            // Sync to everyone.
+            
             RpcAddCompany(key, tile.companyCost, pawn.playerName.Value);
+            RpcUpdateTileOwner(companyName: key, newOwnerName: pawn.playerName.Value, colorIndex: pawn.colorIndex.Value);
             pawn.ServerBroadcastPortfolio();
             Debug.Log($"[Market] {pawn.playerName.Value} founded company {key}");
         }
@@ -555,7 +556,7 @@ public class MarketManager : NetworkBehaviour
             if (majority != prevOwner)
             {
                 company.owner = majority;
-                RpcUpdateTileOwner(companyName, majority.playerName.Value);
+                RpcUpdateTileOwner(companyName, majority.playerName.Value, majority.colorIndex.Value);
             }
 
             proposal.proposer.ServerBroadcastPortfolio();
@@ -626,12 +627,18 @@ public class MarketManager : NetworkBehaviour
     }
 
     [ObserversRpc]
-    private void RpcUpdateTileOwner(string companyName, string newOwnerName)
+    private void RpcUpdateTileOwner(string companyName, string newOwnerName,int colorIndex)
     {
         var tile = GameManager.Instance.FindTileByCompanyName(companyName);
         var pawn = GameManager.Instance.Players.Find(p => p.playerName.Value == newOwnerName);
         if (tile != null)
             tile.owner = pawn;
+
+        if (tile.visuals != null)
+        {
+           if (pawn == null) tile.visuals.ShowUnclaimed();
+           else tile.visuals.ShowOwnedByColor(colorIndex);
+        }
     }
 
 

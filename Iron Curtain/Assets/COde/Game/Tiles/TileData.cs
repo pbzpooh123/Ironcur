@@ -23,4 +23,22 @@ public class TileData : MonoBehaviour
     [Header("Jail Settings")]
     public int jailSkipTurns = 2;
 
+    [Header("Visuals")]
+    public TileVisuals visuals;
+
+    private void Awake()
+    {
+        if (visuals == null) visuals = GetComponent<TileVisuals>();
+    }
+
+    public void RefreshVisuals()
+    {
+        if (visuals == null) return;
+
+        if (owner == null)
+            visuals.ShowUnclaimed();
+        else
+            visuals.ShowOwnedByColor(owner.colorIndex.Value);
+    }
+
 }
