@@ -16,25 +16,33 @@ public class Proposal
 public class CompanyRecord
 {
     public string companyName;
-    public int baseCost;
+    public int baseCost;                 
+    public int currentPrice;              
     public PlayerPawn owner;
+    public string ownerName;
 
-    // NEW: helps filter on clients before owner pawn rebinds
-    public string ownerName;     
+    public float volatilityPct = 5f;      
+    public float trendPct = 0f;       
+    public int minPrice = 50;          
+    public int maxPrice = 99999;
+
+    public float payoutMult = 1f;
+    public int payoutMultExpiresAtRound = 0;
 
     public Dictionary<PlayerPawn, int> ownershipPercents = new Dictionary<PlayerPawn, int>();
     public List<Proposal> proposals = new List<Proposal>();
 
-    public CompanyRecord(string name, int cost, PlayerPawn creator)
+   public CompanyRecord(string name, int cost, PlayerPawn creator)
     {
         companyName = name;
         baseCost = cost;
+        currentPrice = cost;
         owner = creator;
         ownerName = (creator != null) ? creator.playerName.Value : null;
 
         if (creator != null)
             ownershipPercents[creator] = 100;
-    }
+    }  
 
     public int GetOwnership(PlayerPawn pawn)
     {
@@ -59,7 +67,7 @@ public class MarketManager : NetworkBehaviour
     public static MarketManager Instance;
 
     public Dictionary<string, CompanyRecord> companies = new Dictionary<string, CompanyRecord>();
-    
+
     private readonly Dictionary<PlayerPawn, HashSet<string>> _submittedThisTurn = new();
     [Header("Proposal Policy")]
     [Tooltip("If true, allow accept even when proposer lacks money by triggering bailouts automatically.")]
@@ -67,6 +75,11 @@ public class MarketManager : NetworkBehaviour
 
     [Tooltip("Cap how many automatic bailouts could be applied for a single accept.")]
     public int MaxAutoBailoutsPerAccept = 10;
+
+    [Header("Market Settings")]
+    [Range(0f, 1f)] public float dividendYield = 0.10f;
+    private float _globalTrendPct = 0f;
+    private float _globalTrendPctPerRound = 0f;
 
     private void Awake()
     {
@@ -85,7 +98,7 @@ public class MarketManager : NetworkBehaviour
     [Server]
     public void OnRoundAdvanced(int newRound)
     {
-        // No-op for now; could clear cross-round data here if needed.
+        ServerAdvanceMarketOneStep();
     }
 
     [Server]
@@ -104,72 +117,72 @@ public class MarketManager : NetworkBehaviour
     /* ================= Buy Company ================= */
 
     [ServerRpc(RequireOwnership = false)]
-public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
-{
-    if (conn == null)
+    public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
     {
-        Debug.LogWarning("[Market] CmdBuyCompany called with null conn.");
-        return;
-    }
+        if (conn == null)
+        {
+            Debug.LogWarning("[Market] CmdBuyCompany called with null conn.");
+            return;
+        }
 
-    // Resolve the caller's pawn on the server.
-    var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
-    if (pawn == null)
-    {
-        Debug.LogWarning("[Market] CmdBuyCompany: Could not resolve pawn for caller.");
-        return;
-    }
+        // Resolve the caller's pawn on the server.
+        var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
+        if (pawn == null)
+        {
+            Debug.LogWarning("[Market] CmdBuyCompany: Could not resolve pawn for caller.");
+            return;
+        }
 
-    Debug.Log($"[Market] CmdBuyCompany received from {pawn.playerName.Value}, tile={tileIndex}");
+        Debug.Log($"[Market] CmdBuyCompany received from {pawn.playerName.Value}, tile={tileIndex}");
 
-    
-    var tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
-    if (tile == null)
-    {
-        Debug.LogWarning("[Market] CmdBuyCompany: TileData null.");
-        return;
-    }
-    if (tile.owner != null)
-    {
-        Debug.LogWarning("[Market] CmdBuyCompany: tile already owned.");
-        return;
-    }
 
-    // Cost check.
-    if (!pawn.TrySpendMoney(tile.companyCost))
-    {
-        Debug.LogWarning($"[Market] CmdBuyCompany: {pawn.playerName.Value} cannot afford ${tile.companyCost}.");
-        return;
-    }
+        var tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
+        if (tile == null)
+        {
+            Debug.LogWarning("[Market] CmdBuyCompany: TileData null.");
+            return;
+        }
+        if (tile.owner != null)
+        {
+            Debug.LogWarning("[Market] CmdBuyCompany: tile already owned.");
+            return;
+        }
 
-    string key = tile.companyName;
-    if (!companies.ContainsKey(key))
-    {
-        var record = new CompanyRecord(key, tile.companyCost, pawn);
-        companies[key] = record;
-        tile.owner = pawn;
+        // Cost check.
+        if (!pawn.TrySpendMoney(tile.companyCost))
+        {
+            Debug.LogWarning($"[Market] CmdBuyCompany: {pawn.playerName.Value} cannot afford ${tile.companyCost}.");
+            return;
+        }
+
+        string key = tile.companyName;
+        if (!companies.ContainsKey(key))
+        {
+            var record = new CompanyRecord(key, tile.companyCost, pawn);
+            companies[key] = record;
+            tile.owner = pawn;
 
             // Sync to everyone.
             RpcAddCompany(key, tile.companyCost, pawn.playerName.Value);
             pawn.ServerBroadcastPortfolio();
             Debug.Log($"[Market] {pawn.playerName.Value} founded company {key}");
-    }
-    else
-    {
-        // In case you landed on an existing company with no owner (edge case)
-        var rec = companies[key];
-        rec.owner = pawn;
-        rec.ownerName = pawn.playerName.Value;
-        rec.ownershipPercents.Clear();
-        rec.ownershipPercents[pawn] = 100;
-        tile.owner = pawn;
-        RpcAddCompany(key, rec.baseCost, pawn.playerName.Value);
-        Debug.Log($"[Market] {pawn.playerName.Value} took ownership of existing company {key}");
-    }
+        }
+        else
+        {
+            // In case you landed on an existing company with no owner (edge case)
+            var rec = companies[key];
+            rec.owner = pawn;
+            rec.ownerName = pawn.playerName.Value;
+            rec.ownershipPercents.Clear();
+            rec.ownershipPercents[pawn] = 100;
+            tile.owner = pawn;
+            RpcAddCompany(key, rec.baseCost, pawn.playerName.Value);
+            Debug.Log($"[Market] {pawn.playerName.Value} took ownership of existing company {key}");
+        }
 
-    // Continue your tile flow on the server (optional; your InvestmentUI already notifies).
-    TurnManager.Instance.ServerOnTileActionComplete(pawn);
-}
+        // Continue your tile flow on the server (optional; your InvestmentUI already notifies).
+        TurnManager.Instance.ServerOnTileActionComplete(pawn);
+    }
 
 
     [ObserversRpc]
@@ -227,7 +240,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
                     EnsurePortfolioEntry(ownerPawn, companyName, 100);
             }
         }
-        
+
         if (ProposalUI.Instance != null && ProposalUI.Instance.panel.activeSelf)
             ProposalUI.Instance.Refresh();
         if (ReviewUI.Instance != null && ReviewUI.Instance.panel.activeSelf)
@@ -299,7 +312,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
     }
 
     /* ================= Proposal Flow (server-driven UI) ================= */
-    
+
     [Server]
     public void ShowProposalForPawn(PlayerPawn pawn)
     {
@@ -327,7 +340,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
         ProposalUI.Instance.Show(local);
         Debug.Log("[MarketManager] ProposalUI opened.");
     }
-    
+
     [ServerRpc(RequireOwnership = false)]
     public void CmdRequestProposalUI(NetworkConnection conn = null)
     {
@@ -341,7 +354,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
         // Use server-only entry to show on that client.
         ShowProposalForPawn(pawn);
     }
-    
+
 
     [ServerRpc(RequireOwnership = false)]
     public void CmdNotifyProposalClosed(NetworkConnection caller = null)
@@ -393,7 +406,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
 
         ReviewUI.Instance.Show(local);
     }
-    
+
     [ServerRpc(RequireOwnership = false)]
     public void CmdNotifyReviewClosed(NetworkConnection caller = null)
     {
@@ -430,13 +443,13 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
             Debug.LogWarning("[Market] Proposal blocked this round.");
             return;
         }
-        
+
         if (!companies.TryGetValue(companyName, out var company)) return;
         if (company.owner == proposer) return; // cannot propose to self
-        
+
         percent = Mathf.Clamp(percent, 1, 40);
-        price   = Mathf.Max(1, price);
-        
+        price = Mathf.Max(1, price);
+
         if (!_submittedThisTurn.TryGetValue(proposer, out var set))
         {
             set = new HashSet<string>();
@@ -447,7 +460,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
             Debug.LogWarning($"[Market] {proposer.playerName.Value} already proposed to {companyName} this turn.");
             return;
         }
-        
+
         int ownerAvailable = company.GetOwnership(company.owner);
         if (ownerAvailable <= 0)
         {
@@ -631,10 +644,11 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
 
         foreach (var companyKvp in companies)
         {
-            CompanyRecord company = companyKvp.Value;
+            var company = companyKvp.Value;
             if (company == null) continue;
 
-            int baseIncome = Mathf.RoundToInt(company.baseCost * 0.1f);
+            // base pool = yield * currentPrice
+            int baseIncome = Mathf.RoundToInt(company.currentPrice * dividendYield);
 
             foreach (var kv in company.ownershipPercents)
             {
@@ -643,8 +657,9 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
                 if (pawn == null || percent <= 0) continue;
 
                 float ownershipRatio = percent / 100f;
-                int payout = Mathf.RoundToInt(baseIncome * ownershipRatio);
+                float payoutF = baseIncome * ownershipRatio;
 
+                // existing per-holder multiplier (your portfolio multiplier)
                 if (pawn.factoryPortfolio.TryGetValue(company.companyName, out var rec))
                 {
                     if (rec.multiplierExpiresAt > 0 && currentRound >= rec.multiplierExpiresAt)
@@ -654,11 +669,14 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
                         pawn.factoryPortfolio[company.companyName] = rec;
                         pawn.ServerBroadcastPortfolio();
                     }
-                    payout = Mathf.RoundToInt(payout * rec.multiplier);
+                    payoutF *= rec.multiplier;
                 }
 
-                if (payout != 0)
-                    pawn.AddMoney(payout);
+                payoutF *= company.payoutMult;
+
+                int finalPayout = Mathf.RoundToInt(payoutF);
+                if (finalPayout != 0)
+                    pawn.AddMoney(finalPayout);
             }
         }
     }
@@ -676,7 +694,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
         }
         return null;
     }
-    
+
     [ObserversRpc]
     private void RpcSyncProposals(string companyName, string[] proposerNames, int[] percents, int[] prices)
     {
@@ -689,7 +707,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
 
             company.proposals.Add(new Proposal
             {
-                proposer = proposerPawn, 
+                proposer = proposerPawn,
                 percent = percents[i],
                 price = prices[i]
             });
@@ -703,7 +721,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
             StartCoroutine(WaitAndRefreshReviewUI());
 
     }
-    
+
     private IEnumerator WaitAndRefreshReviewUI()
     {
         yield return null; // wait 1 frame so currentPawn gets set in Show()
@@ -726,7 +744,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
             ReviewUI.Instance?.Refresh();
         }
     }
-    
+
     [Server]
     private void SyncProposalsToClients(string companyName)
     {
@@ -734,19 +752,19 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
 
         int n = c.proposals.Count;
         var names = new string[n];
-        var perc  = new int[n];
+        var perc = new int[n];
         var price = new int[n];
 
         for (int i = 0; i < n; i++)
         {
             names[i] = c.proposals[i].proposer != null ? c.proposals[i].proposer.playerName.Value : "";
-            perc[i]  = c.proposals[i].percent;
+            perc[i] = c.proposals[i].percent;
             price[i] = c.proposals[i].price;
         }
 
         RpcSyncProposals(companyName, names, perc, price);
     }
-    
+
     [Server]
     public bool ServerHasAnyCompany(PlayerPawn pawn)
     {
@@ -793,7 +811,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
         if (pawn == null) return false;
         return _submittedThisTurn.TryGetValue(pawn, out var set) && set.Contains(companyName);
     }
-    
+
     [Server]
     public bool TryGetMajorityOwner(string companyName, out PlayerPawn majorityOwner)
     {
@@ -819,12 +837,13 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
         }
         return false;
     }
-    
+
     // ======== MATCH END HOOK ========
     [Server]
     public void OnMatchEnded()
     {
         _submittedThisTurn.Clear();
+        _globalTrendPctPerRound = 0f;
         RpcCloseMarketUI();
     }
 
@@ -836,7 +855,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
             if (ProposalUI.Instance.panel != null)
                 ProposalUI.Instance.Hide();
         }
-        
+
         if (ReviewUI.Instance != null)
         {
             if (ReviewUI.Instance.panel != null)
@@ -848,7 +867,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
     private void RpcRefreshLocalPortfolioUI()
     {
         if (PortfolioUI.Instance == null) return;
-        
+
         PlayerPawn local = null;
         foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
             if (p != null && p.IsOwner)
@@ -861,7 +880,7 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
         if (PortfolioUI.Instance.panel != null && PortfolioUI.Instance.panel.activeInHierarchy)
             PortfolioUI.Instance.RefreshFromSnapshot();
     }
-    
+
     private void EnsurePortfolioEntry(PlayerPawn pawn, string company, int percent)
     {
         if (pawn == null) return;
@@ -886,6 +905,177 @@ public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
 
         // keep UI quiet; only refresh if that UI is already open
         pawn.infoPanel?.UpdateCompanyOwnership(company, percent);
+    }
+
+    [Server]
+    private void ServerAdvanceMarketOneStep()
+    {
+        foreach (var kv in companies)
+        {
+            var c = kv.Value;
+            if (c == null) continue;
+
+            // Decay temporary payout buffs when expired
+            if (c.payoutMultExpiresAtRound > 0 &&
+                TurnManager.Instance.roundCount.Value >= c.payoutMultExpiresAtRound)
+            {
+                c.payoutMult = 1f;
+                c.payoutMultExpiresAtRound = 0;
+            }
+
+            // % step = trend + global + random in [-volatility, +volatility]
+            float r = Random.Range(-c.volatilityPct, c.volatilityPct);
+            float stepPct = c.trendPct + _globalTrendPct + r;
+
+            // apply
+            int newPrice = Mathf.RoundToInt(c.currentPrice * (1f + (stepPct / 100f)));
+            newPrice = Mathf.Clamp(newPrice, c.minPrice, c.maxPrice);
+
+            if (newPrice != c.currentPrice)
+            {
+                c.currentPrice = newPrice;
+                RpcSyncMarketPrice(c.companyName, newPrice);
+            }
+        }
+    }
+
+    [ObserversRpc]
+    private void RpcSyncMarketPrice(string companyName, int newPrice)
+    {
+        if (companies.TryGetValue(companyName, out var c))
+            c.currentPrice = newPrice;
+    }
+
+    /* ---------- PUBLIC EVENT HOOKS ---------- */
+
+    [Server]
+    public void ServerBumpCompanyPrice(string company, float deltaPercent)
+    {
+        if (!companies.TryGetValue(company, out var c) || c == null) return;
+        int np = Mathf.RoundToInt(c.currentPrice * (1f + deltaPercent / 100f));
+        c.currentPrice = Mathf.Clamp(np, c.minPrice, c.maxPrice);
+        RpcSyncMarketPrice(company, c.currentPrice);
+    }
+
+    [Server]
+    public void ServerBumpAllPrices(float deltaPercent)
+    {
+        foreach (var kv in companies)
+            ServerBumpCompanyPrice(kv.Key, deltaPercent);
+    }
+
+    [Server]
+    public void ServerSetCompanyVolatility(string company, float newVolPct)
+    {
+        if (!companies.TryGetValue(company, out var c) || c == null) return;
+        c.volatilityPct = Mathf.Max(0f, newVolPct);
+    }
+
+    [Server]
+    public void ServerSetGlobalTrend(float percentBias)
+    {
+        _globalTrendPct = percentBias; 
+    }
+
+    [Server]
+    public void ServerBoostCompanyPayouts(string company, float multiplier, int durationRounds)
+    {
+        if (!companies.TryGetValue(company, out var c) || c == null) return;
+        c.payoutMult = Mathf.Max(0f, multiplier);
+        c.payoutMultExpiresAtRound = TurnManager.Instance.roundCount.Value + Mathf.Max(1, durationRounds);
+    }
+
+    [Server]
+    public void ServerBoostAllCompaniesOwnedBy(PlayerPawn pawn, float priceDeltaPercent, float payoutMultiplier, int durationRounds)
+    {
+        if (pawn == null) return;
+        foreach (var kv in companies)
+        {
+            var c = kv.Value;
+            if (c == null) continue;
+
+            if (c.ownershipPercents.TryGetValue(pawn, out int pct) && pct > 0)
+            {
+                if (Mathf.Abs(priceDeltaPercent) > 0.001f)
+                    ServerBumpCompanyPrice(c.companyName, priceDeltaPercent);
+
+                if (payoutMultiplier != 1f && durationRounds > 0)
+                    ServerBoostCompanyPayouts(c.companyName, payoutMultiplier, durationRounds);
+            }
+        }
+    }
+
+    [Server]
+    public void ServerNerfAllCompaniesOwnedBy(PlayerPawn pawn, float priceDeltaPercent, float payoutMultiplier, int durationRounds)
+    {
+        if (pawn == null) return;
+
+        foreach (var kv in companies)
+        {
+            var c = kv.Value;
+            if (c == null) continue;
+
+            if (c.ownershipPercents.TryGetValue(pawn, out int pct) && pct > 0)
+            {
+                // negative allowed (e.g., -15f = -15%)
+                if (Mathf.Abs(priceDeltaPercent) > 0.001f)
+                    ServerBumpCompanyPrice(c.companyName, priceDeltaPercent);
+
+                // payoutMultiplier < 1f is a nerf; durationRounds sets expiry
+                if (!Mathf.Approximately(payoutMultiplier, 1f) && durationRounds > 0)
+                    ServerBoostCompanyPayouts(c.companyName, payoutMultiplier, durationRounds);
+            }
+        }
+    }
+    [Server]
+    public void ServerBoostAllPayouts(float multiplier, int durationRounds)
+    {
+        if (GameManager.Instance == null) return;
+        int now = TurnManager.Instance.roundCount.Value;
+
+        foreach (var comp in companies.Values)
+        {
+            if (comp == null) continue;
+
+            foreach (var kv in comp.ownershipPercents)
+            {
+                var pawn = kv.Key;
+                if (pawn == null || kv.Value <= 0) continue;
+
+                if (!pawn.factoryPortfolio.TryGetValue(comp.companyName, out var rec))
+                {
+                    rec = new ShareRecord
+                    {
+                        count = 0,
+                        roundBought = now,
+                        multiplier = 1f,
+                        multiplierExpiresAt = 0,
+                        sharePercent = kv.Value
+                    };
+                }
+
+                // Compose multipliers (stack multiplicatively)
+                rec.multiplier *= multiplier;
+                rec.multiplierExpiresAt = Mathf.Max(rec.multiplierExpiresAt, now + durationRounds);
+
+                pawn.factoryPortfolio[comp.companyName] = rec;
+                pawn.ServerBroadcastPortfolio();
+            }
+        }
+    }
+
+
+    [Server]
+    public void ApplyGlobalTrendThisRound()
+    {
+        if (Mathf.Approximately(_globalTrendPctPerRound, 0f)) return;
+
+        float k = 1f + (_globalTrendPctPerRound / 100f);
+        foreach (var comp in companies.Values)
+        {
+            if (comp == null) continue;
+            comp.baseCost = Mathf.Max(1, Mathf.RoundToInt(comp.baseCost * k));
+        }
     }
 
 }

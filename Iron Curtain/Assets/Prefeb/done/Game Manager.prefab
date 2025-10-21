@@ -107,6 +107,8 @@ MonoBehaviour:
   _addedNetworkObject: {fileID: 5195282429402389053}
   _networkObjectCache: {fileID: 5195282429402389053}
   roundtext: {fileID: 0}
+  enableDevHotkeys: 1
+  AutoBailoutAtTurnStart: 1
 --- !u!114 &1498389182421337685
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -152,6 +154,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 38d741ce483b37a4e88ea6e17661bddf, type: 2}
   - {fileID: 11400000, guid: 983b31752790d7b4cae047354e9a50a6, type: 2}
   - {fileID: 11400000, guid: 23eb33fafbb05da488d580ceb02a0ae3, type: 2}
+  timelines: []
 --- !u!114 &5195282429402389053
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,7 +204,7 @@ MonoBehaviour:
   _teleportThreshold: 1
   <PrefabId>k__BackingField: 8
   <SpawnableCollectionId>k__BackingField: 0
-  <AssetPathHash>k__BackingField: 14122985856790180780
+  <AssetPathHash>k__BackingField: 7345769414856316797
   <SceneId>k__BackingField: 0
   SerializedTransformProperties:
     Position: {x: 781.1427, y: 424.37967, z: 3.5179322}

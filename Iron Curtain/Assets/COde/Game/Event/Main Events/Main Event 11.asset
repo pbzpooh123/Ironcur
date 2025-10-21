@@ -13,12 +13,8 @@ MonoBehaviour:
   m_Name: Main Event 11
   m_EditorClassIdentifier: 
   eventName: Oil Crisis
-  description: 'Oil & Gas Production: +300% revenue during the crisis
-
-
-    Banking
-    & Finance: Players who own banks may collect a $500M fee from other players who
-    roll an odd number'
+  description: 'Oil & Gas Production: +300% revenue during the crisis'
+  history: 
   type: 1
   mode: 0
   requiredCompanyName: 
@@ -38,7 +34,15 @@ MonoBehaviour:
     skipTurn: 0
     ownershipDelta: 0
     grantExtraRoll: 0
-  enableBankOddFine: 1
+  enableBankOddFine: 0
   bankCompanyName: Bank
   oddFineAmount: 500
   oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 1
+  recessionRounds: 2

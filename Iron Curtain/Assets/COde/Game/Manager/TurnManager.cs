@@ -255,10 +255,17 @@ public class TurnManager : NetworkBehaviour
 
         PlayerPawn currentPlayer = turnOrder[currentPlayerIndex.Value];
 
-        if (AutoBailoutAtTurnStart && currentPlayer.money.Value <= 0)
+        if (AutoBailoutAtTurnStart && currentPlayer.money.Value < 0)
         {
-            currentPlayer.ForceBailoutOnce(); // (+$100 etc.)
-            Debug.Log($"[TurnManager] Auto-bailout granted to {currentPlayer.playerName.Value} at turn start.");
+            int tries = 0;
+            const int MAX_TRIES = 10; // safety cap
+            while (currentPlayer.money.Value < 0 && tries < MAX_TRIES)
+            {
+                currentPlayer.ForceBailoutOnce(); // your +$100, +mark
+                tries++;
+            }
+            if (tries > 0)
+                Debug.Log($"[TurnManager] Auto-bailout x{tries} for {currentPlayer.playerName.Value} (money={currentPlayer.money.Value}).");
         }
 
         if (ShouldSkip(currentPlayer))
@@ -424,6 +431,9 @@ public class TurnManager : NetworkBehaviour
         if (wrapped)
         {
             roundCount.Value++;
+
+            MarketManager.Instance?.OnRoundAdvanced(roundCount.Value);
+
             remainingRounds.Value = Mathf.Max(remainingRounds.Value - 1, 0);
             RpcUpdateRoundUI(remainingRounds.Value, RoundsUntilNextMainEvent());
 
@@ -434,7 +444,6 @@ public class TurnManager : NetworkBehaviour
             }
 
             MarketManager.Instance?.ProcessPayouts();
-            MarketManager.Instance?.OnRoundAdvanced(roundCount.Value);
 
             if ((roundCount.Value % 3 == 0) && _lastMainEventRoundFired != roundCount.Value)
             {

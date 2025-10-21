@@ -41,34 +41,6 @@ public class NetworkManagerLobby : MonoBehaviour
         }
     }
 
-    public void UpdateLobbyUI()
-    {
-        playerDetails.Clear();
-
-        foreach (var conn in networkManager.ServerManager.Clients)
-        {
-            if (conn.Value == null || conn.Value.FirstObject == null)
-                continue;
-
-            NetworkLobbyPlayer player = conn.Value.FirstObject.GetComponent<NetworkLobbyPlayer>();
-            if (player != null)
-            {
-                playerDetails.Add($"{player.playerName})");
-            }
-        }
-
-        foreach (var conn in networkManager.ServerManager.Clients)
-        {
-            if (conn.Value == null || conn.Value.FirstObject == null)
-                continue;
-
-            NetworkLobbyPlayer player = conn.Value.FirstObject.GetComponent<NetworkLobbyPlayer>();
-            if (player != null)
-            {
-                player.UpdatedPlayerList(GetPlayerList());
-            }
-        }
-    }
 
     private string GenerateRoomCode()
     {
@@ -79,19 +51,50 @@ public class NetworkManagerLobby : MonoBehaviour
         return code;
     }
 
-    public bool AllPlayersReady()
-    {
-        foreach (var conn in networkManager.ServerManager.Clients)
-        {
-            if (conn.Value == null || conn.Value.FirstObject == null)
-                continue;
+    public void UpdateLobbyUI()
+{
+    var names = new List<string>();
+    var readies = new List<bool>();
+    var ids = new List<int>();
 
-            var player = conn.Value.FirstObject.GetComponent<NetworkLobbyPlayer>();
-            if (player != null && !player.isReady.Value)
-                return false;
+    foreach (var kv in networkManager.ServerManager.Clients)
+    {
+        var conn = kv.Value;
+        if (conn == null || conn.FirstObject == null) continue;
+
+        var p = conn.FirstObject.GetComponent<NetworkLobbyPlayer>();
+        if (p != null)
+        {
+            names.Add(p.playerName.Value);
+            readies.Add(p.isReady.Value);
+            ids.Add(conn.ClientId);
         }
-        return true;
     }
+
+    // push to every client
+    foreach (var kv in networkManager.ServerManager.Clients)
+    {
+        var conn = kv.Value;
+        if (conn == null || conn.FirstObject == null) continue;
+
+        var p = conn.FirstObject.GetComponent<NetworkLobbyPlayer>();
+        if (p != null)
+            p.UpdatedPlayerList(names, readies, ids);
+    }
+}
+
+public bool AllPlayersReady()
+{
+    foreach (var kv in networkManager.ServerManager.Clients)
+    {
+        var conn = kv.Value;
+        if (conn == null || conn.FirstObject == null) continue;
+        var p = conn.FirstObject.GetComponent<NetworkLobbyPlayer>();
+        if (p != null && !p.isReady.Value)
+            return false;
+    }
+    return true;
+}
 
     public List<string> GetPlayerList()
     {

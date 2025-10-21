@@ -3,7 +3,6 @@ using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
 using FishNet;
-using FishNet.Managing.Scened;
 
 public class LobbyUI : MonoBehaviour
 {
@@ -14,6 +13,10 @@ public class LobbyUI : MonoBehaviour
     public Button readyButton;
     public Button startGameButton;
     public GameObject lobbyPanel;
+
+    // NEW: optional copy button (hook in Inspector)
+    [Header("Optional")]
+    public Button copyCodeButton;
 
     private void Start()
     {
@@ -26,47 +29,66 @@ public class LobbyUI : MonoBehaviour
         readyButton.onClick.AddListener(OnReadyClicked);
         startGameButton.onClick.AddListener(OnStartClicked);
         startGameButton.interactable = false;
+
+        // Host-only visibility at open
+        startGameButton.gameObject.SetActive(InstanceFinder.IsServerStarted);
+
+        if (copyCodeButton != null)
+            copyCodeButton.onClick.AddListener(CopyRoomCodeToClipboard);
     }
 
+    // CHANGE: use the string we’re given (don’t pull from a singleton here)
     public void SetRoomCode(string code)
     {
-        roomCodeText.text = "Room Code: " + NetworkManagerLobby.Instance.roomCode;
-
+        roomCodeText.text = string.IsNullOrWhiteSpace(code) ? "Room Code: —" : $"Room Code: {code}";
     }
 
-    public void UpdatePlayerList(List<string> playerDetails)
+    public void UpdatePlayerList(List<string> names, List<bool> readies, List<int> connIds)
     {
-        if (playerListContainer == null || playerEntryPrefab == null)
-        {
-            Debug.LogError("LobbyUI: playerListContainer or playerEntryPrefab is NULL when updating player list!");
-            return;
-        }
-
+        // clear current rows
         foreach (Transform child in playerListContainer)
             Destroy(child.gameObject);
 
-        foreach (var details in playerDetails)
+        // local client id
+        int localCid = InstanceFinder.ClientManager != null
+            ? InstanceFinder.ClientManager.Connection.ClientId
+            : -1;
+
+        for (int i = 0; i < names.Count; i++)
         {
-            GameObject entry = Instantiate(playerEntryPrefab, playerListContainer);
-
-            TMP_Text textComponent = entry.GetComponent<TMP_Text>();
-            if (textComponent == null)
-                textComponent = entry.GetComponentInChildren<TMP_Text>();
-
-            if (textComponent == null)
+            var go = Instantiate(playerEntryPrefab, playerListContainer);
+            var row = go.GetComponent<PlayerEntryRow>();
+            if (row == null)
             {
-                Debug.LogError("LobbyUI: playerEntryPrefab does NOT have a TMP_Text component!");
+                Debug.LogError("playerEntryPrefab must have a PlayerEntryRow component.");
                 continue;
             }
 
-            textComponent.text = details;
+            bool isLocal = (connIds[i] == localCid);
+            row.Bind(
+                names[i],
+                readies[i],
+                isLocal,
+                onLocalToggleChanged: (bool val) =>
+                {
+                    var lp = FindLocalLobbyPlayer();
+                    if (lp != null) lp.SetReady(val); // call ServerRpc
+                }
+            );
         }
 
-        // Only the host (server) can start the game
-        if (InstanceFinder.IsServerStarted)
-        {
-            startGameButton.interactable = NetworkManagerLobby.Instance.AllPlayersReady();
-        }
+        // Only the host sees Start, and it’s enabled only if everyone is ready
+        bool isHost = InstanceFinder.IsServerStarted;
+        startGameButton.gameObject.SetActive(isHost);
+        startGameButton.interactable = isHost && NetworkManagerLobby.Instance.AllPlayersReady();
+    }
+
+    private NetworkLobbyPlayer FindLocalLobbyPlayer()
+    {
+        foreach (var obj in InstanceFinder.ClientManager.Objects.Spawned.Values)
+            if (obj.IsOwner && obj.TryGetComponent(out NetworkLobbyPlayer p))
+                return p;
+        return null;
     }
 
     private void OnReadyClicked()
@@ -79,7 +101,6 @@ public class LobbyUI : MonoBehaviour
                 return;
             }
         }
-
         Debug.LogError("ReadyClicked: Local player not found!");
     }
 
@@ -89,38 +110,45 @@ public class LobbyUI : MonoBehaviour
         {
             Debug.Log("All players ready. Switching to game scene...");
 
-            SceneLoadData loadData = new SceneLoadData("MainGameScene")
+            var loadData = new FishNet.Managing.Scened.SceneLoadData("MainGameScene")
             {
-                ReplaceScenes = ReplaceOption.All
+                ReplaceScenes = FishNet.Managing.Scened.ReplaceOption.All
             };
-            
+
             InstanceFinder.SceneManager.LoadGlobalScenes(loadData);
             CloseAllPanels();
         }
     }
-    
+
     private void CloseAllPanels()
     {
         lobbyPanel.SetActive(false);
     }
 
-
     private void QuitLobby()
     {
         if (InstanceFinder.IsServerStarted)
-        {
             InstanceFinder.ServerManager.StopConnection(true); // Stop server & all clients
-        }
 
         if (InstanceFinder.IsClientStarted)
-        {
             InstanceFinder.ClientManager.StopConnection(); // Stop client
-        }
 
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
 #else
         Application.Quit();
 #endif
+    }
+
+    // NEW: copy button handler (optional)
+    private void CopyRoomCodeToClipboard()
+    {
+        if (roomCodeText == null) return;
+
+        // Expecting "Room Code: ABCDEF"
+        string raw = roomCodeText.text;
+        string code = raw.Replace("Room Code:", "").Trim();
+        GUIUtility.systemCopyBuffer = code;
+        Debug.Log($"[LobbyUI] Copied room code: {code}");
     }
 }

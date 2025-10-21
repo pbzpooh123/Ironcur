@@ -1,6 +1,6 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI;           // <-- add this
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class MatchResultsUI : MonoBehaviour
@@ -13,7 +13,7 @@ public class MatchResultsUI : MonoBehaviour
     public GameObject rowPrefab;
 
     [Header("Controls")]
-    public Button readyButton;          // <-- assign in Inspector
+    public Button readyButton;
 
     [Header("Scenes")]
     [SerializeField] private string leaderboardSceneName = "Leaderboard";
@@ -22,7 +22,7 @@ public class MatchResultsUI : MonoBehaviour
     {
         Instance = this;
         if (root != null) root.SetActive(false);
-        if (readyButton != null) readyButton.interactable = false; // disabled until animation done
+        if (readyButton != null) readyButton.interactable = false;
     }
 
     public void Show(string[] names, int[] startMoney, int[] bailouts, int[] finalScores)
@@ -30,12 +30,11 @@ public class MatchResultsUI : MonoBehaviour
         if (root != null && !root.activeSelf) root.SetActive(true);
         if (!gameObject.activeInHierarchy) gameObject.SetActive(true);
 
-        // Make sure the button is wired exactly once
         if (readyButton != null)
         {
             readyButton.onClick.RemoveListener(OnReadyClicked);
             readyButton.onClick.AddListener(OnReadyClicked);
-            readyButton.interactable = false; // enable after rows animate
+            readyButton.interactable = false;
         }
 
         StopAllCoroutines();
@@ -46,9 +45,15 @@ public class MatchResultsUI : MonoBehaviour
     {
         yield return null;
 
-        // clear
+        // clear old rows
         for (int i = rowsParent.childCount - 1; i >= 0; i--)
             Destroy(rowsParent.GetChild(i).gameObject);
+
+        // compute a shared max (avoid 0)
+        int globalMax = 0;
+        for (int i = 0; i < finalScores.Length; i++)
+            if (finalScores[i] > globalMax) globalMax = finalScores[i];
+        if (globalMax <= 0) globalMax = 1;
 
         // build rows
         for (int i = 0; i < names.Length; i++)
@@ -58,15 +63,14 @@ public class MatchResultsUI : MonoBehaviour
 
             var row = go.GetComponent<ResultsEntryUI>();
             if (row != null)
-                row.Bind(names[i], startMoney[i], bailouts[i], finalScores[i], i);
+                row.Bind(names[i], startMoney[i], bailouts[i], finalScores[i], i, globalMax);
 
             yield return null;
         }
 
-        // (Optional) wait a short moment so all bar tweens start
+        // let all tweens start
         yield return new WaitForSeconds(0.25f);
 
-        // now allow the player to continue
         if (readyButton != null) readyButton.interactable = true;
     }
 
@@ -75,9 +79,8 @@ public class MatchResultsUI : MonoBehaviour
     {
         if (_sentReady) return;
         _sentReady = true;
-        if (readyButton != null) readyButton.interactable = false; // avoid double taps
+        if (readyButton != null) readyButton.interactable = false;
 
-        // Tell the server “I’m done watching results”
         if (TurnManager.Instance != null)
             TurnManager.Instance.CmdFinalResultsReady();
         else

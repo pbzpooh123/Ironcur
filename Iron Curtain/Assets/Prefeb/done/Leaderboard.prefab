@@ -281,7 +281,7 @@ GameObject:
   - component: {fileID: 2684678739373556555}
   - component: {fileID: 6275930482075484569}
   m_Layer: 5
-  m_Name: Image
+  m_Name: Leaderboard
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

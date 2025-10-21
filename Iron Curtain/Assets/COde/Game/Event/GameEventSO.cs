@@ -47,9 +47,10 @@ public class EventEffect
 
     [Header("Ownership (only if targetType = Ownership)")]
     public int ownershipDelta = 0;    // Changes sharePercent for targetName 
-    
+
     [Header("Extra Turn / Movement")]
     public bool grantExtraRoll = false;
+    
 }
 
 [CreateAssetMenu(fileName = "NewGameEvent", menuName = "Game/Event", order = 1)]
@@ -59,6 +60,7 @@ public class GameEventSO : ScriptableObject
     public string eventName;
     [TextArea(3, 5)]
     public string description;
+    public string history;
     public EventType type = EventType.Main;
 
     [Header("Mode")]
@@ -94,5 +96,9 @@ public class GameEventSO : ScriptableObject
     public int highMin = 5;           
     public int highGainAmount = 200;
     public bool affectAllPlayers = true; 
+
+    [Header("Recession (optional)")]
+    public bool triggerRecession = false;
+    [Min(1)] public int recessionRounds = 3;
 
 }

@@ -38,3 +38,9 @@ MonoBehaviour:
   bankCompanyName: Bank
   oddFineAmount: 500
   oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1

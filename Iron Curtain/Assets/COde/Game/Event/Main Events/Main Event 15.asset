@@ -16,85 +16,25 @@ MonoBehaviour:
   description: "Global Economic Recession: Stock Market Crash and Trade Disruption\n\nAll
     players: Revenue from all businesses (except Food & Beverage Production) \u201350%
     for 3 turns due to reduced consumer spending"
+  history: 
   type: 1
-  effects:
-  - targetType: 0
-    targetName: Steel & Iron Production
-    moneyDelta: 150
-    multiplier: -0.5
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 0
-    targetName: Oil & Gas Production
-    moneyDelta: 250
-    multiplier: -0.5
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 0
-    targetName: Food & Beverage Production
-    moneyDelta: 120
-    multiplier: 0
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 0
-    targetName: Basic Electronics Production
-    moneyDelta: 180
-    multiplier: -0.5
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 0
-    targetName: Technology R&D
-    moneyDelta: 200
-    multiplier: -0.5
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 0
-    targetName: Weapon Manufacturing
-    moneyDelta: 500
-    multiplier: -0.5
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 0
-    targetName: Transportation & Logistics
-    moneyDelta: 200
-    multiplier: -0.5
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 0
-    targetName: Real Estate
-    moneyDelta: 220
-    multiplier: -0.5
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 0
-    targetName: Banking & Finance
-    moneyDelta: 280
-    multiplier: -0.5
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 0
-    targetName: Communication Company (Early Era)
-    moneyDelta: 160
-    multiplier: -0.5
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
+  effects: []
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 1
+  recessionRounds: 3
