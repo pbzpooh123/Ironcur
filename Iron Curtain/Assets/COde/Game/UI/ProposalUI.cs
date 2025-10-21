@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class ProposalUI : MonoBehaviour
 {
@@ -65,6 +66,27 @@ public class ProposalUI : MonoBehaviour
                 ui.Setup(company, currentPawn);
         }
     }
+
+    [Header("Hint")]
+    public GameObject hintPanel;
+    public TMP_Text hintTitle;
+    public TMP_Text hintBody;
+
+
+    public void ShowFirstTimeHint()
+    {
+        if (hintPanel == null) return;
+        hintTitle.text = "How proposals work";
+        hintBody.text =
+            "• Pick a company you don’t own.\n" +
+            "• Enter % and price you’ll pay.\n" +
+            "• You can’t exceed 100% total.\n" +
+            "• Owner can’t sell more than they own.\n" +
+            "• If accepted, shares move and cash transfers.";
+        hintPanel.SetActive(true);
+    }
+
+    public void OnHintGotIt() => hintPanel?.SetActive(false);
 
 
     private void CloseAndNotifyServer()

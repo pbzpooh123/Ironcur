@@ -32,6 +32,9 @@ public class CompanyRecord
     public Dictionary<PlayerPawn, int> ownershipPercents = new Dictionary<PlayerPawn, int>();
     public List<Proposal> proposals = new List<Proposal>();
 
+    private readonly HashSet<int> _proposalHintShown = new();
+    private readonly HashSet<int> _reviewHintShown   = new();
+
    public CompanyRecord(string name, int cost, PlayerPawn creator)
     {
         companyName = name;
@@ -69,6 +72,8 @@ public class MarketManager : NetworkBehaviour
     public Dictionary<string, CompanyRecord> companies = new Dictionary<string, CompanyRecord>();
 
     private readonly Dictionary<PlayerPawn, HashSet<string>> _submittedThisTurn = new();
+    private readonly HashSet<int> _proposalHintShown = new();
+    private readonly HashSet<int> _reviewHintShown = new();
     [Header("Proposal Policy")]
     [Tooltip("If true, allow accept even when proposer lacks money by triggering bailouts automatically.")]
     public bool AllowDebtOnAccept = true;
@@ -318,7 +323,13 @@ public class MarketManager : NetworkBehaviour
     public void ShowProposalForPawn(PlayerPawn pawn)
     {
         if (pawn == null || pawn.Owner == null) return;
-        if (pawn.jailTurnsLeft.Value > 0) return;   // jailed → block proposal
+        if (pawn.jailTurnsLeft.Value > 0) return;  
+        
+         if (!_proposalHintShown.Contains(pawn.Owner.ClientId))
+            {
+                _proposalHintShown.Add(pawn.Owner.ClientId);
+                TargetShowProposalHint(pawn.Owner);
+            }
         TargetShowProposalUI(pawn.Owner);
     }
 
@@ -376,7 +387,13 @@ public class MarketManager : NetworkBehaviour
     public void ShowReviewForPawn(PlayerPawn owner)
     {
         if (owner == null || owner.Owner == null) return;
-        if (owner.jailTurnsLeft.Value > 0) return;  // jailed → block review
+        if (owner.jailTurnsLeft.Value > 0) return; 
+
+        if (!_reviewHintShown.Contains(owner.Owner.ClientId))
+            {
+                _reviewHintShown.Add(owner.Owner.ClientId);
+                TargetShowReviewHint(owner.Owner);
+            }
         TargetShowReviewUI(owner.Owner);
     }
 
@@ -849,6 +866,8 @@ public class MarketManager : NetworkBehaviour
     public void OnMatchEnded()
     {
         _submittedThisTurn.Clear();
+        _proposalHintShown.Clear();
+        _reviewHintShown.Clear();
         _globalTrendPctPerRound = 0f;
         RpcCloseMarketUI();
     }
@@ -1083,5 +1102,33 @@ public class MarketManager : NetworkBehaviour
             comp.baseCost = Mathf.Max(1, Mathf.RoundToInt(comp.baseCost * k));
         }
     }
+
+    [TargetRpc]
+private void TargetShowProposalHint(FishNet.Connection.NetworkConnection conn)
+{
+    // Prefer a dedicated hint in the Proposal UI if available
+    if (ProposalUI.Instance != null) {
+        ProposalUI.Instance.ShowFirstTimeHint();
+        return;
+    }
+    // Fallback: side panel
+    EventUI.Instance?.SideeventShow(
+        "Proposal tip:\n• Choose a company you don’t own.\n• Enter % you want and the price you’ll pay.\n• You can’t exceed 100% total and owner can’t sell more than they have.", 
+        true
+    );
+}
+
+[TargetRpc]
+private void TargetShowReviewHint(FishNet.Connection.NetworkConnection conn)
+{
+    if (ReviewUI.Instance != null) {
+        ReviewUI.Instance.ShowFirstTimeHint();
+        return;
+    }
+    EventUI.Instance?.SideeventShow(
+        "Review tip:\n• Review offers made to your companies.\n• Accept to transfer shares for cash; Reject to keep them.\n• Majority (>60%) can change tile owner color.",
+        true
+    );
+}
 
 }

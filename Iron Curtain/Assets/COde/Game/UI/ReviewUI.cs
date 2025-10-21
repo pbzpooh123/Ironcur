@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class ReviewUI : MonoBehaviour
 {
@@ -11,6 +12,11 @@ public class ReviewUI : MonoBehaviour
     public Transform listParent;
     public GameObject reviewEntryPrefab;
     public Button closeButton;
+
+    [Header("Hint")]
+    public GameObject hintPanel;
+    public TMP_Text hintTitle;
+    public TMP_Text hintBody;
 
     private PlayerPawn currentPawn;
 
@@ -126,4 +132,18 @@ public class ReviewUI : MonoBehaviour
     }
 
     public void Hide() => CloseAndNotifyServer();
+
+    public void ShowFirstTimeHint()
+    {
+        if (hintPanel == null) return;
+        hintTitle.text = "How review works";
+        hintBody.text =
+            "• See all offers made to your companies.\n" +
+            "• Accept to sell % and receive cash.\n" +
+            "• Reject to keep your shares.\n" +
+            "• Majority (>60%) can flip tile ownership color.";
+        hintPanel.SetActive(true);
+    }
+
+    public void OnHintGotIt() => hintPanel?.SetActive(false);
 }
