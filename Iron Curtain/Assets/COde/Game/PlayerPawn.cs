@@ -181,12 +181,47 @@ public class PlayerPawn : NetworkBehaviour
     {
         if (!TurnManager.Instance.CanRoll(this)) return;
 
-        int roll = Random.Range(2, 13);
-        lastRoll.Value = roll;
+        // ทอยลูกเต๋า 2 ลูก
+        int final1 = Random.Range(1, 7);
+        int final2 = Random.Range(1, 7);
+        int total = final1 + final2;
+        lastRoll.Value = total;
 
-        // Rule hooks (e.g., Odd Fine)
-        EventManager.Instance?.OnServerPlayerRolled(this, roll);
+        // เรียก event ต่าง ๆ บน server (ถ้ามี)
+        EventManager.Instance?.OnServerPlayerRolled(this, total);
 
+        // ให้ Client ของเจ้าของโชว์อนิเมชันลูกเต๋า แล้วค่อยเดินหมาก
+        TargetShowDiceAndMove(Owner, final1, final2);
+    }
+
+    [TargetRpc]
+    private void TargetShowDiceAndMove(NetworkConnection conn, int final1, int final2)
+    {
+        if (DiceUI.Instance != null)
+        {
+            // เรียกโชว์อนิเมชันเต๋า แล้วพอจบค่อยให้เดิน
+            DiceUI.Instance.ShowDiceRollingWithCallback(final1, final2, () =>
+            {
+                CmdMoveAfterDice(final1 + final2);
+            });
+        }
+        else
+        {
+            // ถ้า UI หาย ให้เดินทันที
+            CmdMoveAfterDice(final1 + final2);
+        }
+    }
+
+    [ServerRpc]
+    private void CmdMoveAfterDice(int total)
+    {
+        RpcMoveSteps(total);
+    }
+
+    [ServerRpc]
+    private void CmdNotifyDiceAnimationDone(int roll)
+    {
+        // เดินหมากเมื่ออนิเมชันจบ
         RpcMoveSteps(roll);
     }
 

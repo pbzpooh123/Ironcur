@@ -122,6 +122,106 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &4575119
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4575120}
+  - component: {fileID: 4575123}
+  - component: {fileID: 4575122}
+  - component: {fileID: 4575121}
+  m_Layer: 5
+  m_Name: DiceUI
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &4575120
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4575119}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 0.83206, y: 0.83206, z: 0.83206}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 306356295}
+  - {fileID: 1231822432}
+  m_Father: {fileID: 1024428425}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -207, y: 9}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &4575121
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4575119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b453de83b8222f4f8c7bd48f617255a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  diceLeft: {fileID: 306356293}
+  diceRight: {fileID: 1231822433}
+  diceFaces:
+  - {fileID: 21300000, guid: 62785aab5c6fc2040890cf13dbc52e0d, type: 3}
+  - {fileID: 21300000, guid: a6e621738f726cf4ebf5203635c0b293, type: 3}
+  - {fileID: 21300000, guid: 36ffde98266718b49a3b5cdc3c06cf2c, type: 3}
+  - {fileID: 21300000, guid: 5590cc251b9f085448d6de5d02c304df, type: 3}
+  - {fileID: 21300000, guid: aacbdc595eb5aa247ad49196d03be97c, type: 3}
+  - {fileID: 21300000, guid: c1b0e6938b38c344996f7be7f4ec647d, type: 3}
+  resultText: {fileID: 0}
+--- !u!114 &4575122
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4575119}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 0}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &4575123
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4575119}
+  m_CullTransparentMesh: 1
 --- !u!1 &11162269
 GameObject:
   m_ObjectHideFlags: 0
@@ -2161,7 +2261,7 @@ GameObject:
   - component: {fileID: 306356294}
   - component: {fileID: 306356293}
   m_Layer: 5
-  m_Name: Dice
+  m_Name: DiceLeft
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2212,16 +2312,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 306356292}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.83206, y: 0.83206, z: 0.83206}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1024428425}
+  m_Father: {fileID: 4575120}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -207, y: 9}
+  m_AnchoredPosition: {x: 0.000030517578, y: 0.000018119812}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &312578718
@@ -8545,8 +8645,7 @@ RectTransform:
   - {fileID: 2025619131}
   - {fileID: 1223464909}
   - {fileID: 1759074409}
-  - {fileID: 306356295}
-  - {fileID: 1231822432}
+  - {fileID: 4575120}
   - {fileID: 1434215764}
   - {fileID: 1070390113}
   - {fileID: 1932486401}
@@ -9115,7 +9214,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 6
+  tileType: 4
   companyName: 
   owner: {fileID: 0}
   companyCost: 100
@@ -10441,7 +10540,7 @@ GameObject:
   - component: {fileID: 1231822434}
   - component: {fileID: 1231822433}
   m_Layer: 5
-  m_Name: Dice (1)
+  m_Name: DiceRight
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -10454,16 +10553,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1231822431}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.83206, y: 0.83206, z: 0.83206}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1024428425}
+  m_Father: {fileID: 4575120}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -12, y: 9}
+  m_AnchoredPosition: {x: 234.35811, y: 0.000018119812}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1231822433
