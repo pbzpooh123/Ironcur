@@ -184,12 +184,56 @@ public class PlayerPawn : NetworkBehaviour
         int d1 = Random.Range(1, 7); // upper bound exclusive for int
         int d2 = Random.Range(1, 7);
         int total = d1 + d2;
-
+        lastRoll.Value = total;
         // Rule hooks (e.g., Odd Fine)
+        
         EventManager.Instance?.OnServerPlayerRolled(this, total);
 
-        RpcShowDice(d1, d2);
-        RpcMoveSteps(total);
+        //RpcShowDice(d1, d2);
+        //RpcMoveSteps(total);
+        TargetShowDiceAndMove(Owner, d1, d2, total);
+    }
+
+    [TargetRpc]
+    private void TargetShowDiceAndMove(NetworkConnection conn, int d1, int d2, int totalSteps)
+    {
+        // เมธอดนี้จะรันเฉพาะบน Client ที่เป็นเจ้าของ Pawn (Owner) เท่านั้น
+
+        // 1. ตรวจสอบว่ามี UI ลูกเต๋าหรือไม่
+        if (DiceUI.Instance != null)
+        {
+            // 2. สั่งให้ DiceUI แสดงอนิเมชันลูกเต๋า
+            //    และกำหนดโค้ดที่จะทำงานเมื่ออนิเมชันเสร็จสิ้น (Callback)
+            DiceUI.Instance.ShowDiceRollingWithCallback(d1, d2, () =>
+            {
+                // 🔥 โค้ดในส่วนนี้จะถูกเรียกเมื่ออนิเมชันลูกเต๋าเสร็จแล้ว (ประมาณ 2.5 วินาที) 🔥
+
+                // 3. เมื่ออนิเมชันจบแล้ว ให้ Server สั่งการเคลื่อนที่
+                //    เราต้องใช้ ServerRpc เพื่อให้ Server สั่ง RpcMoveSteps ให้ทุกคนเห็น
+                CmdStartMovement(totalSteps); 
+            
+                // หมายเหตุ: ถ้าคุณไม่ใช้ ServerRpc ตัวใหม่ (CmdStartMovement)
+                // คุณต้องแน่ใจว่า RpcMoveSteps ถูกเรียกจาก Server เท่านั้น
+                // แต่เนื่องจาก RpcMoveSteps มี ObserversRpc การเรียกตรง ๆ จาก TargetRpc อาจเกิดปัญหา
+                // ดังนั้น เราจะสร้าง CmdStartMovement ขึ้นมาในขั้นตอนถัดไป
+            });
+        }
+        else
+        {
+            // Fallback: หากหา UI ไม่พบ ให้ข้ามอนิเมชันและสั่งเคลื่อนที่ทันที
+            CmdStartMovement(totalSteps);
+        }
+    }
+
+    [ServerRpc]
+    private void CmdStartMovement(int steps)
+    {
+        if (!IsServer) return;
+    
+        // ตรวจสอบความถูกต้องอีกครั้ง (ถ้าจำเป็น)
+
+        // สั่งให้ทุก Client เริ่มการเคลื่อนที่
+        RpcMoveSteps(steps); 
     }
 
     [ServerRpc]
@@ -621,9 +665,16 @@ public class PlayerPawn : NetworkBehaviour
     }
 
     [ObserversRpc]
-    private void RpcShowDice(int d1, int d2)
+private void RpcShowDice(int d1, int d2)
+{
+    if (DiceUI.Instance != null)
     {
-        if (DiceUI.Instance != null)
-            DiceUI.Instance.Show(d1, d2);
+        // ใช้อันนี้แทน และส่ง callback ว่าจะให้ทำอะไรต่อหลังจากอนิเมชันจบ
+        DiceUI.Instance.ShowDiceRollingWithCallback(d1, d2, () =>
+        {
+            // อาจจะทำอะไรบางอย่างหลังจากลูกเต๋าหยุดแล้ว เช่น
+            Debug.Log("Dice animation finished on client.");
+        });
     }
+}
 }

@@ -6,37 +6,56 @@ public class DiceUI : MonoBehaviour
 {
     public static DiceUI Instance;
 
-    [Header("Assign 6 sprites in order: index 0 = face 1, ... index 5 = face 6")]
-    public Sprite[] faces = new Sprite[6];
+    [Header("Dice UI Elements")]
+    public Image diceLeft;
+    public Image diceRight;
+    public Sprite[] diceFaces; // Sprite ของเต๋า 1–6
+    public Text resultText;
 
-    [Header("Assign two Image components for each die")]
-    public Image dieA;
-    public Image dieB;
-
-    [Header("Optional")]
-    public float showSeconds = 1.0f;   // how long the dice stay visible
-
-    void Awake() => Instance = this;
-
-    public void Show(int d1, int d2)
+    private void Awake()
     {
-        if (dieA == null || dieB == null || faces == null || faces.Length < 6) return;
-        d1 = Mathf.Clamp(d1, 1, 6);
-        d2 = Mathf.Clamp(d2, 1, 6);
-
-        dieA.enabled = true;
-        dieB.enabled = true;
-        dieA.sprite = faces[d1 - 1];
-        dieB.sprite = faces[d2 - 1];
-
-        StopAllCoroutines();
-        StartCoroutine(AutoHide());
+        Instance = this;
+        gameObject.SetActive(false);
     }
 
-    private IEnumerator AutoHide()
+    public void ShowDiceRollingWithCallback(int final1, int final2, System.Action onComplete)
     {
-        yield return new WaitForSeconds(showSeconds);
-        if (dieA != null) dieA.enabled = false;
-        if (dieB != null) dieB.enabled = false;
+        gameObject.SetActive(true);
+        StartCoroutine(AnimateDiceWithCallback(final1, final2, onComplete));
     }
+
+    private IEnumerator AnimateDiceWithCallback(int final1, int final2, System.Action onComplete)
+    {
+        float rollTime = 0.2f;
+        float t = 0f;
+
+        while (t < rollTime)
+        {
+            int r1 = Random.Range(1, 7);
+            int r2 = Random.Range(1, 7);
+            diceLeft.sprite = diceFaces[r1 - 1];
+            diceRight.sprite = diceFaces[r2 - 1];
+            t += Time.deltaTime;
+            yield return new WaitForSeconds(0.05f);
+        }
+
+        diceLeft.sprite = diceFaces[Mathf.Clamp(final1 - 1, 0, 5)];
+        diceRight.sprite = diceFaces[Mathf.Clamp(final2 - 1, 0, 5)];
+        if (resultText != null)
+            resultText.text = $"Total: {final1 + final2}";
+
+        yield return new WaitForSeconds(2f);
+
+        gameObject.SetActive(false);
+
+        // 🔥 เรียก Callback เมื่อจบอนิเมชัน
+        onComplete?.Invoke();
+    }
+    public void Show(int final1, int final2)
+    {
+        // เรียกใช้เมธอดเดิม โดยส่ง null เป็น callback
+        ShowDiceRollingWithCallback(final1, final2, null);
+    }
+
+   
 }
