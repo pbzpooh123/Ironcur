@@ -13,18 +13,37 @@ MonoBehaviour:
   m_Name: Main Event 17
   m_EditorClassIdentifier: 
   eventName: Major Natural Disaster
-  description: 'Unexpected Natural Disaster
-
-
-    All players: Must pay $100M emergency
-    maintenance per business they own'
+  description: 'All players: Must pay $100M emergency maintenance per business they
+    own'
+  history: 'Unexpected Natural Disaster '
   type: 1
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
   effects:
   - targetType: 3
     targetName: 
     moneyDelta: -100
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 0
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

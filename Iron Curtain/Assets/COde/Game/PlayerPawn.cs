@@ -181,13 +181,15 @@ public class PlayerPawn : NetworkBehaviour
     {
         if (!TurnManager.Instance.CanRoll(this)) return;
 
-        int roll = Random.Range(2, 13);
-        lastRoll.Value = roll;
+        int d1 = Random.Range(1, 7); // upper bound exclusive for int
+        int d2 = Random.Range(1, 7);
+        int total = d1 + d2;
 
         // Rule hooks (e.g., Odd Fine)
-        EventManager.Instance?.OnServerPlayerRolled(this, roll);
+        EventManager.Instance?.OnServerPlayerRolled(this, total);
 
-        RpcMoveSteps(roll);
+        RpcShowDice(d1, d2);
+        RpcMoveSteps(total);
     }
 
     [ServerRpc]
@@ -618,5 +620,10 @@ public class PlayerPawn : NetworkBehaviour
         return new List<PortfolioItemDTO>(_clientPortfolio);
     }
 
-
+    [ObserversRpc]
+    private void RpcShowDice(int d1, int d2)
+    {
+        if (DiceUI.Instance != null)
+            DiceUI.Instance.Show(d1, d2);
+    }
 }

@@ -13,9 +13,10 @@ MonoBehaviour:
   m_Name: Main Event 8
   m_EditorClassIdentifier: 
   eventName: Cuban Missile Crisis
-  description: "U.S. Discovers Soviet Missiles in Cuba\n\nFood & Beverage Production:
-    +50% revenue (due to panic buying and stockpiling)\n\nReal Estate: \u201350%
-    revenue\n\nBanking & Finance: All players must pay a $500 penalty"
+  description: "Food & Beverage Production: +50% revenue (due to panic buying and
+    stockpiling)\nReal Estate: \u201350% revenue\nBanking & Finance: All players
+    must pay a $500 penalty"
+  history: U.S. Discovers Soviet Missiles in Cuba
   type: 1
   mode: 0
   requiredCompanyName: 
@@ -55,3 +56,15 @@ MonoBehaviour:
     skipTurn: 0
     ownershipDelta: 0
     grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

@@ -15,6 +15,15 @@ public class TurnUI : MonoBehaviour
 
     private PlayerPawn myPawn;
 
+    public TMP_Text nextEventText;
+
+    public static TurnUI Instance;
+
+    void Awake()
+    {
+        Instance = this;
+    }
+
     private void Start()
     {
         if (rollDiceButton != null) rollDiceButton.onClick.AddListener(OnRollDiceClicked);
@@ -111,4 +120,10 @@ public class TurnUI : MonoBehaviour
         yield return new WaitForSeconds(seconds);
         if (messageTMP != null) messageTMP.text = "";
     }
+
+    public void SetNextMainEventName(string name)
+{
+    if (nextEventText != null)
+        nextEventText.text = $"Next Main Event: {name}";
+}
 }

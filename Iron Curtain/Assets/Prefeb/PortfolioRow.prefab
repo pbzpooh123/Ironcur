@@ -95,7 +95,7 @@ MonoBehaviour:
   companyText: {fileID: 1315609974769767024}
   percentText: {fileID: 3149951341315097504}
   multiplierText: {fileID: 1854592035354155741}
-  incomeText: {fileID: 7933997930037101253}
+  estPayoutText: {fileID: 7933997930037101253}
 --- !u!1 &2097242784058767091
 GameObject:
   m_ObjectHideFlags: 0

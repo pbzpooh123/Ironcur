@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventName: Oil Crisis
   description: 'Oil & Gas Production: +300% revenue during the crisis'
-  history: 
+  history: Oil Crisis
   type: 1
   mode: 0
   requiredCompanyName: 

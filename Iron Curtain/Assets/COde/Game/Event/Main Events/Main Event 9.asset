@@ -13,30 +13,49 @@ MonoBehaviour:
   m_Name: Main Event 9
   m_EditorClassIdentifier: 
   eventName: Vietnam War
-  description: 'United States Fully Engages in the Vietnam War
+  description: 'Steel & Iron Production: +100% revenue for the duration of the war
 
-
-    Steel & Iron
-    Production: +100% revenue for the duration of the war
-
-
-    Weapon Manufacturing:
-    +200% revenue for the duration of the war'
+    Weapon
+    Manufacturing: +200% revenue for the duration of the war'
+  history: United States Fully Engages in the Vietnam War
   type: 1
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
   effects:
   - targetType: 0
     targetName: Steel & Iron Production
     moneyDelta: 150
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 2
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
   - targetType: 0
     targetName: Weapon Manufacturing
     moneyDelta: 500
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 2
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

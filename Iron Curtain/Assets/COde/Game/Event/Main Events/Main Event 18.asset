@@ -13,19 +13,37 @@ MonoBehaviour:
   m_Name: Main Event 18
   m_EditorClassIdentifier: 
   eventName: Global Peace Summit
-  description: 'World Leaders Hold Major Conference to Reduce Conflict and Promote
-    Sustainable Development
-
-
-    All players: Receive a $100M bonus to support economic
-    recovery'
+  description: 'All players: Receive a $100M bonus to support economic recovery'
+  history: 'World Leaders Hold Major Conference to Reduce Conflict and Promote Sustainable
+    Development '
   type: 1
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
   effects:
   - targetType: 3
     targetName: 
     moneyDelta: 100
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 0
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

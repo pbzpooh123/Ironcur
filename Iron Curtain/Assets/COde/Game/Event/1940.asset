@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15c2cc496a3281a438ed4786ab005e32, type: 3}
   m_Name: 1940
   m_EditorClassIdentifier: 
-  timelineName: 1940 - 1960
+  timelineName: 1940 - 1950
   mainEvents:
   - {fileID: 11400000, guid: 0191c79e1aa2560468791fafa5d8d971, type: 2}
   - {fileID: 11400000, guid: 70aec3bae71546e4badb421051a9b94d, type: 2}

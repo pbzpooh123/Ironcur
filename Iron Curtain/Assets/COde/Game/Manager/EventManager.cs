@@ -121,7 +121,7 @@ public class EventManager : NetworkBehaviour
         _currentTimelineIndex = Random.Range(0, timelines.Count);
         var name = timelines[_currentTimelineIndex]?.timelineName ?? "Unknown Era";
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(conn, $"Timeline selected: {name}", false);
+            TargetShowMainEvent(conn, $"Timeline selected: {name}", "", false);
         RpcSetTimelineName(name);
     }
 
@@ -262,11 +262,15 @@ public class EventManager : NetworkBehaviour
         TickBankOddFineExpiration();
         SelectTimelineIfNeeded();
 
-        GameEventSO e = PickMainEventFromTimeline();
+        GameEventSO e = PickMainEventFromTimeline(); 
+        RpcUpdateNextMainEventUI(PeekNextMainEventName());
+
         string msg = (e != null) ? $"{e.eventName}\n\n{e.description}" : $"Main Event at Round {round}!";
+        foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
+            TargetShowMainEvent(conn, msg, "", true);
 
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(conn, msg, true);
+            TargetShowMainEvent(conn, msg, "", true);
 
         _resume = ResumeContext.Main;
         _resumeTilePawn = null;
@@ -341,10 +345,10 @@ public class EventManager : NetworkBehaviour
     /* ================= POPUPS & ACK ================= */
 
     [TargetRpc]
-    private void TargetShowMainEvent(NetworkConnection conn, string message, bool pauseAll)
+    private void TargetShowMainEvent(NetworkConnection conn, string message,string messageHistory, bool pauseAll)
     {
         if (EventUI.Instance != null)
-            EventUI.Instance.MaineventShow(message, pauseAll);
+            EventUI.Instance.MaineventShow(message, messageHistory, pauseAll);
     }
 
     [TargetRpc]
@@ -530,7 +534,7 @@ public class EventManager : NetworkBehaviour
         if (owner == null)
         {
             foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowMainEvent(c, $"No one owns {comp}; event skipped.", false);
+                TargetShowMainEvent(c, $"No one owns {comp}; event skipped.", "", false);
             ResumeAfterEvent();
             return;
         }
@@ -546,7 +550,7 @@ public class EventManager : NetworkBehaviour
         if (targets.Count == 0)
         {
             foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowMainEvent(c, $"No opponents to challenge {owner.playerName.Value}; event skipped.", false);
+                TargetShowMainEvent(c, $"No opponents to challenge {owner.playerName.Value}; event skipped.", "", false);
             ResumeAfterEvent();
             return;
         }
@@ -590,7 +594,7 @@ public class EventManager : NetworkBehaviour
 
         string summary = sb.ToString();
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(c, summary, false);
+            TargetShowMainEvent(c, summary, "", false);
 
         ResumeAfterEvent();
     }
@@ -1059,7 +1063,7 @@ public class EventManager : NetworkBehaviour
         }
 
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(c, $"Benefactor Donation: Everyone paid ${amountEach}M to {receiver.playerName.Value}.", false);
+            TargetShowMainEvent(c, $"Benefactor Donation: Everyone paid ${amountEach}M to {receiver.playerName.Value}.", "", false);
 
         ResumeAfterEvent();
     }
@@ -1076,7 +1080,7 @@ public class EventManager : NetworkBehaviour
             : -1;
 
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(conn, $"Odd Roll Fine ACTIVE: {_bankCompanyName} collects ${_bankOddFineAmount}M on odd rolls.", false);
+            TargetShowMainEvent(conn, $"Odd Roll Fine ACTIVE: {_bankCompanyName} collects ${_bankOddFineAmount}M on odd rolls.", "", false);
     }
 
     [Server]
@@ -1089,7 +1093,7 @@ public class EventManager : NetworkBehaviour
         {
             _bankOddFineActive = false;
             foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowMainEvent(conn, $"Odd Roll Fine EXPIRED.", false);
+                TargetShowMainEvent(conn, $"Odd Roll Fine EXPIRED.", "", false);
         }
     }
 
@@ -1166,7 +1170,7 @@ public class EventManager : NetworkBehaviour
         _proposalBlockExpiresAtRound = Mathf.Max(_proposalBlockExpiresAtRound, newExpiry);
 
         foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(c, $"Proposals disabled for {rounds} round(s).", false);
+            TargetShowMainEvent(c, $"Proposals disabled for {rounds} round(s).", "", false);
     }
 
     /* ================= FORCED ROLL TIER ================= */
@@ -1360,7 +1364,7 @@ public class EventManager : NetworkBehaviour
 
                 foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
                     TargetShowMainEvent(conn,
-                        $"Odd Roll Fine: {roller.playerName.Value} pays ${pay}M to {bankOwner.playerName.Value}.",
+                        $"Odd Roll Fine: {roller.playerName.Value} pays ${pay}M to {bankOwner.playerName.Value}.",  "",
                         false);
             }
         }
@@ -1382,15 +1386,40 @@ public class EventManager : NetworkBehaviour
         var tl = GetCurrentTimeline();
         string name = tl?.timelineName ?? "Classic";
         RpcSetTimelineName(name);
+
+        // NEW: seed “next main event” name
+        RpcUpdateNextMainEventUI(PeekNextMainEventName());
     }
 
 
-    [Server] private IEnumerator CoRecession(int rounds)
+    [Server]
+    private IEnumerator CoRecession(int rounds)
     {
-        MarketManager.Instance.ServerSetGlobalTrend(-2f); 
-        MarketManager.Instance.ServerBoostAllPayouts(0.8f, rounds); 
+        MarketManager.Instance.ServerSetGlobalTrend(-2f);
+        MarketManager.Instance.ServerBoostAllPayouts(0.8f, rounds);
         int end = TurnManager.Instance.roundCount.Value + rounds;
         while (TurnManager.Instance.roundCount.Value < end) yield return null;
         MarketManager.Instance.ServerSetGlobalTrend(0f);
     }
+
+    [Server]
+    public string PeekNextMainEventName()
+    {
+        // Ensure the deck exists and matches current timeline
+        if (_mainEventDeck.Count == 0 ||
+            (_deckTimelineIndex != _currentTimelineIndex && _deckTimelineIndex >= 0))
+            BuildEventDeck();
+
+        if (_mainEventDeck.Count == 0) return "—";
+        var next = _mainEventDeck[0];
+        return (next != null) ? next.eventName : "—";
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcUpdateNextMainEventUI(string nextName)
+    {
+        // If you have a dedicated label:
+        TurnUI.Instance.SetNextMainEventName(nextName);
+    }
+    
 }

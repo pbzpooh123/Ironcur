@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Main Event 10
   m_EditorClassIdentifier: 
   eventName: SALT I
-  description: "U.S. and Soviet Union Sign Strategic Arms Limitation Agreement\n\nWeapon
-    Manufacturing: \u201375% revenue for 5 turns"
+  description: "Weapon Manufacturing: \u201375% revenue for 5 turns"
+  history: U.S. and Soviet Union Sign Strategic Arms Limitation Agreement
   type: 1
   mode: 0
   requiredCompanyName: 
@@ -38,3 +38,11 @@ MonoBehaviour:
   bankCompanyName: Bank
   oddFineAmount: 500
   oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

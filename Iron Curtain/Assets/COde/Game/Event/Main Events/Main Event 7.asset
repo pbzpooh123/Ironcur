@@ -13,15 +13,37 @@ MonoBehaviour:
   m_Name: Main Event 7
   m_EditorClassIdentifier: 
   eventName: Berlin Wall Construction
-  description: "East Germany Constructs the Berlin Wall\n\nCommunication Company
-    (Early Era): \u201325% revenue for 3 turns due to communication restrictions"
+  description: "Communication Company (Early Era): \u201325% revenue for 3 turns
+    due to communication restrictions"
+  history: East Germany Constructs the Berlin Wall
   type: 1
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
   effects:
   - targetType: 0
     targetName: Communication Company (Early Era)
     moneyDelta: 160
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: -0.25
     duration: 3
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

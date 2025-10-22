@@ -13,43 +13,58 @@ MonoBehaviour:
   m_Name: Main Event 13
   m_EditorClassIdentifier: 
   eventName: Beginning of the Collapse of the Soviet Union
-  description: "Economic Turmoil and Gorbachev's Reforms (Perestroika & Glasnost)
-    Begin to Take Effect\n\nWeapon Manufacturing: \u2013100% revenue (factories temporarily
-    closed) and players receive 50% refund of purchase cost\n\nReal Estate: +100%
-    revenue for 5 turns\n\nBanking & Finance: May choose to seize 1 property from
-    bankrupt players (if any)\n\nCommunication Company (Early Era): Players may collect
-    50% higher rent from players allied with the Communist bloc (per in-game events)"
+  description: "Weapon Manufacturing: \u2013100% revenue and players receive 50%
+    refund of purchase cost\nReal Estate: +100% revenue for 5 turns"
+  history: Economic Turmoil and Gorbachev's Reforms (Perestroika & Glasnost) Begin
+    to Take Effect
   type: 1
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
   effects:
   - targetType: 0
     targetName: Weapon Manufacturing
     moneyDelta: 500
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: -1
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
   - targetType: 0
     targetName: Real Estate
     moneyDelta: 220
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 0
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-  - targetType: 0
-    targetName: Banking & Finance
-    moneyDelta: 280
-    multiplier: 0
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
   - targetType: 0
     targetName: Communication Company (Early Era)
     moneyDelta: 160
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 0
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

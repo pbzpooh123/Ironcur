@@ -13,11 +13,8 @@ MonoBehaviour:
   m_Name: Main Event 3
   m_EditorClassIdentifier: 
   eventName: NATO
-  description: 'Formation of the North Atlantic Military Alliance
-
-
-    Weapon Manufacturing:
-    +50% revenue'
+  description: 'Weapon Manufacturing: +50% revenue'
+  history: Formation of the North Atlantic Military Alliance
   type: 1
   mode: 5
   requiredCompanyName: 
@@ -47,3 +44,5 @@ MonoBehaviour:
   highMin: 5
   highGainAmount: 500
   affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

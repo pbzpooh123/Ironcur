@@ -13,19 +13,27 @@ MonoBehaviour:
   m_Name: Main Event 16
   m_EditorClassIdentifier: 
   eventName: Rise of the Internet & Information Age
-  description: 'The Internet Becomes Widespread, Transforming Daily Life
-
-
-    All
-    other companies: +20% permanent revenue due to leveraging new data and networks
-    to improve operations'
+  description: 'All other companies: +20% permanent revenue due to leveraging new
+    data and networks to improve operations'
+  history: 'The Internet Becomes Widespread, Transforming Daily Life '
   type: 1
-  effects:
-  - targetType: 3
-    targetName: 
-    moneyDelta: 0
-    multiplier: 0.2
-    duration: 0
-    skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
+  effects: []
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

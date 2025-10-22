@@ -13,42 +13,69 @@ MonoBehaviour:
   m_Name: Main Event 12
   m_EditorClassIdentifier: 
   eventName: Strategic Defense Initiative
-  description: "U.S. Announces Space-Based Missile Defense Development Program\n\nOil
-    & Gas Production: \u201310% revenue (due to focus on alternative energy)\n\nBasic
-    Electronics Production: +50% revenue for the duration of the program\n\nTechnology
+  description: "Oil & Gas Production: \u201310% revenue (due to focus on alternative
+    energy)\nBasic Electronics Production: +50% revenue for the duration of the program\n\nTechnology
     R&D: +100% revenue for the duration of the program\n\nCommunication Company (Early
     Era): +25% revenue for 5 turns"
+  history: 'U.S. Announces Space-Based Missile Defense Development Program '
   type: 1
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
   effects:
   - targetType: 0
     targetName: Oil & Gas Production
     moneyDelta: 250
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: -0.1
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
   - targetType: 0
     targetName: Basic Electronics Production
     moneyDelta: 180
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 0.5
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
   - targetType: 0
     targetName: Technology R&D
     moneyDelta: 200
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 1
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
   - targetType: 0
     targetName: Communication Company (Early Era)
     moneyDelta: 160
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 0.25
     duration: 5
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

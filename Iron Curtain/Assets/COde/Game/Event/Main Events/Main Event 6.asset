@@ -13,24 +13,49 @@ MonoBehaviour:
   m_Name: Main Event 6
   m_EditorClassIdentifier: 
   eventName: Sputnik Launch
-  description: "Soviet Union Launches the World\u2019s First Satellite\n\nBasic Electronics
-    Production: +25% revenue for 3 turns\n\nTechnology R&D: +100% revenue during
-    this turn"
+  description: 'Basic Electronics Production: +25% revenue for 3 turns
+
+    Technology
+    R&D: +100% revenue during this turn'
+  history: "Soviet Union Launches the World\u2019s First Satellite "
   type: 1
+  mode: 0
+  requiredCompanyName: 
+  payOnOdd: 0
+  entryFee: 0
+  tieSplitPot: 1
+  restrictToOpponents: 1
+  requireCompanyOwner: 0
   effects:
   - targetType: 0
     targetName: Basic Electronics Production
     moneyDelta: 180
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 0.25
     duration: 3
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
   - targetType: 0
     targetName: Technology R&D
     moneyDelta: 200
+    randomMoneyMin: 0
+    randomMoneyMax: 0
     multiplier: 1
     duration: 0
     skipTurn: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
+    ownershipDelta: 0
+    grantExtraRoll: 0
+  enableBankOddFine: 0
+  bankCompanyName: Bank
+  oddFineAmount: 500
+  oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

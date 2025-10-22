@@ -9,6 +9,7 @@ public class EventUI : MonoBehaviour
     [Header("Main Event")]
     public GameObject Mainpanel;
     public TMP_Text eventText;
+    public TMP_Text HistoryText;
     public Button okButton;
 
     [Header("Side Event")]
@@ -26,10 +27,11 @@ public class EventUI : MonoBehaviour
         Sidepanel.SetActive(false);
     }
 
-    public void MaineventShow(string msg, bool pauseAll)
+    public void MaineventShow(string msg, string msgHistory, bool pauseAll)
     {
         Mainpanel.SetActive(true);
         eventText.text = msg;
+        HistoryText.text = msgHistory;
         waitingForAll = pauseAll;
         readyCount = 0;
 

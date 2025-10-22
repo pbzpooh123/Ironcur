@@ -26,8 +26,8 @@ public class PortfolioUI : MonoBehaviour
     private PlayerPawn _current;
 
     // cache for paging
-    private List<(string company, int percent, float multiplier, int baseCost)> _itemsCache
-        = new List<(string, int, float, int)>();
+    private List<(string company, int percent, float multiplier, int currentPrice)> _itemsCache
+    = new List<(string, int, float, int)>();
     private int _pageIndex = 0; // 0-based
 
     private void Awake()
@@ -102,18 +102,18 @@ public class PortfolioUI : MonoBehaviour
         // Rebuild cache with baseCost resolved
         _itemsCache.Clear();
 
-        foreach (var it in snap)
-        {
-            int baseCost = 0;
-            if (MarketManager.Instance != null &&
-                MarketManager.Instance.companies.TryGetValue(it.company, out var comp) &&
-                comp != null)
+            foreach (var it in snap)
             {
-                baseCost = comp.baseCost;
-            }
+                int currentPrice = 0;
+                if (MarketManager.Instance != null &&
+                    MarketManager.Instance.companies.TryGetValue(it.company, out var comp) &&
+                    comp != null)
+                {
+                    currentPrice = comp.currentPrice; // <-- use market price
+                }
 
-            _itemsCache.Add((it.company, it.percent, Mathf.Max(0.01f, it.multiplier), baseCost));
-        }
+                _itemsCache.Add((it.company, it.percent, Mathf.Max(0.01f, it.multiplier), currentPrice));
+            }
 
         // Sort by percent desc then company name
         _itemsCache.Sort((a, b) =>
@@ -125,14 +125,20 @@ public class PortfolioUI : MonoBehaviour
         // Update header (use totals across ALL items, not just page)
         int totalPercent = 0;
         int totalEstPayout = 0;
+
+        // read yield from MarketManager (fallback to 10% if missing)
+        float yieldPct = 0.10f;
+        if (MarketManager.Instance != null)
+            yieldPct = Mathf.Clamp01(MarketManager.Instance.dividendYield);
+
         foreach (var it in _itemsCache)
-        {
-            int baseIncome = Mathf.RoundToInt(it.baseCost * 0.1f);
-            float ownRatio = Mathf.Clamp01(it.percent / 100f);
-            int est = Mathf.RoundToInt(baseIncome * ownRatio * it.multiplier);
-            totalPercent += it.percent;
-            totalEstPayout += est;
-        }
+            {
+                int baseIncome = Mathf.RoundToInt(it.currentPrice * yieldPct);   // <-- currentPrice * yield
+                float ownRatio = Mathf.Clamp01(it.percent / 100f);
+                int est = Mathf.RoundToInt(baseIncome * ownRatio * it.multiplier);
+                totalPercent += it.percent;
+                totalEstPayout += est;
+            }
 
         if (titleText)   titleText.text = $"{_current.playerName.Value}'s Portfolio";
         if (summaryText) summaryText.text = $"{_itemsCache.Count} companies • Total % = {totalPercent} • Est. payout = ${totalEstPayout}";
@@ -166,7 +172,7 @@ public class PortfolioUI : MonoBehaviour
             if (!go.activeSelf) go.SetActive(true);
 
             var row = go.GetComponent<PortfolioRow>();
-            row?.Bind(it.company, it.percent, it.multiplier, it.baseCost);
+            row?.Bind(it.company, it.percent, it.multiplier, it.currentPrice);
         }
 
         UpdatePageLabel(_pageIndex + 1, GetMaxPageIndex() + 1);

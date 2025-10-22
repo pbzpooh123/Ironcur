@@ -13,10 +13,9 @@ MonoBehaviour:
   m_Name: Main Event 15
   m_EditorClassIdentifier: 
   eventName: Global Economic Crisis
-  description: "Global Economic Recession: Stock Market Crash and Trade Disruption\n\nAll
-    players: Revenue from all businesses (except Food & Beverage Production) \u201350%
-    for 3 turns due to reduced consumer spending"
-  history: 
+  description: "All players: Revenue from all businesses (except Food & Beverage
+    Production) \u201350% for 3 turns due to reduced consumer spending"
+  history: 'Global Economic Recession: Stock Market Crash and Trade Disruption  '
   type: 1
   mode: 0
   requiredCompanyName: 

@@ -38,7 +38,7 @@ public class TurnManager : NetworkBehaviour
     // Main event single-fire guard.
     private int _lastMainEventRoundFired = -1;
 
-    private const int maxrounds = 13;
+    private const int maxrounds = 25;
     private bool _gameEnded = false;
     public readonly SyncVar<int> remainingRounds = new();
     public bool IsGameEnded => _gameEnded;
@@ -65,7 +65,11 @@ public class TurnManager : NetworkBehaviour
         base.OnStartServer();
         roundCount.Value = 1;
         remainingRounds.Value = maxrounds;
-        RpcUpdateRoundUI(RoundsRemaining(), RoundsUntilNextMainEvent());
+        RpcUpdateRoundUI(
+        RoundsRemaining(),
+        RoundsUntilNextMainEvent(),
+        EventManager.Instance ? EventManager.Instance.PeekNextMainEventName() : "—"
+        );
         StartCoroutine(DelayedStart());
         EventManager.Instance?.ServerSelectTimelineAndAnnounce();
 
@@ -436,11 +440,15 @@ public class TurnManager : NetworkBehaviour
             MarketManager.Instance?.OnRoundAdvanced(roundCount.Value);
 
             remainingRounds.Value = Mathf.Max(remainingRounds.Value - 1, 0);
-            RpcUpdateRoundUI(remainingRounds.Value, RoundsUntilNextMainEvent());
+            RpcUpdateRoundUI(
+                remainingRounds.Value,
+                RoundsUntilNextMainEvent(),
+                EventManager.Instance ? EventManager.Instance.PeekNextMainEventName() : "—"
+            );
 
             if (remainingRounds.Value <= 0)
             {
-                EndMatch($"Completed {maxrounds} rounds");
+                EndMatch($"Completed {maxrounds} Turns");
                 return;
             }
 
@@ -461,17 +469,29 @@ public class TurnManager : NetworkBehaviour
     }
 
     [ObserversRpc(BufferLast = true)]
-    private void RpcUpdateRoundUI(int roundsLeft, int eventIn)
+    private void RpcUpdateRoundUI(int roundsLeft, int eventIn, string nextEventName)
     {
         if (roundtext != null)
-            roundtext.text = $"Rounds left: {roundsLeft}   (Main event in {eventIn})";
+        {
+            if (eventIn <= 0)
+                roundtext.text = $"Rounds left: {roundsLeft}   (Main event this round: {nextEventName})";
+            else
+                roundtext.text = $"Rounds left: {roundsLeft}   (Main event in {eventIn} rounds)";
+        }
+
+        // Optional: also mirror to a dedicated label on TurnUI
+        TurnUI.Instance?.SetNextMainEventName(nextEventName);
     }
 
     /// <summary> Called by EventManager AFTER main event finishes. </summary>
     [Server]
     public void ServerStartTurnAfterMainEvent()
     {
-        RpcUpdateRoundUI(RoundsRemaining(), RoundsUntilNextMainEvent());
+        RpcUpdateRoundUI(
+            remainingRounds.Value,
+            RoundsUntilNextMainEvent(),
+            EventManager.Instance ? EventManager.Instance.PeekNextMainEventName() : "—"
+        );
         SetPhase(TurnPhase.None);
         StartTurn();
     }
