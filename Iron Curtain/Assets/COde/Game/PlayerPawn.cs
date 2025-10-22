@@ -160,7 +160,7 @@ public class PlayerPawn : NetworkBehaviour
     [TargetRpc]
     private void TargetNotifyBailout(NetworkConnection conn, int marks, int currentMoney)
     {
-        Debug.Log($"Bailout! You now have ${currentMoney} and {marks} bailout mark(s).");
+        infoPanel?.UpdateBailoutMarks(marks);
     }
 
     /* ---------- Turn UI ---------- */
@@ -189,38 +189,21 @@ public class PlayerPawn : NetworkBehaviour
         
         EventManager.Instance?.OnServerPlayerRolled(this, total);
 
-        //RpcShowDice(d1, d2);
-        //RpcMoveSteps(total);
         TargetShowDiceAndMove(Owner, d1, d2, total);
     }
 
     [TargetRpc]
     private void TargetShowDiceAndMove(NetworkConnection conn, int d1, int d2, int totalSteps)
     {
-        // เมธอดนี้จะรันเฉพาะบน Client ที่เป็นเจ้าของ Pawn (Owner) เท่านั้น
-
-        // 1. ตรวจสอบว่ามี UI ลูกเต๋าหรือไม่
         if (DiceUI.Instance != null)
         {
-            // 2. สั่งให้ DiceUI แสดงอนิเมชันลูกเต๋า
-            //    และกำหนดโค้ดที่จะทำงานเมื่ออนิเมชันเสร็จสิ้น (Callback)
             DiceUI.Instance.ShowDiceRollingWithCallback(d1, d2, () =>
             {
-                // 🔥 โค้ดในส่วนนี้จะถูกเรียกเมื่ออนิเมชันลูกเต๋าเสร็จแล้ว (ประมาณ 2.5 วินาที) 🔥
-
-                // 3. เมื่ออนิเมชันจบแล้ว ให้ Server สั่งการเคลื่อนที่
-                //    เราต้องใช้ ServerRpc เพื่อให้ Server สั่ง RpcMoveSteps ให้ทุกคนเห็น
                 CmdStartMovement(totalSteps); 
-            
-                // หมายเหตุ: ถ้าคุณไม่ใช้ ServerRpc ตัวใหม่ (CmdStartMovement)
-                // คุณต้องแน่ใจว่า RpcMoveSteps ถูกเรียกจาก Server เท่านั้น
-                // แต่เนื่องจาก RpcMoveSteps มี ObserversRpc การเรียกตรง ๆ จาก TargetRpc อาจเกิดปัญหา
-                // ดังนั้น เราจะสร้าง CmdStartMovement ขึ้นมาในขั้นตอนถัดไป
             });
         }
         else
         {
-            // Fallback: หากหา UI ไม่พบ ให้ข้ามอนิเมชันและสั่งเคลื่อนที่ทันที
             CmdStartMovement(totalSteps);
         }
     }
@@ -230,9 +213,6 @@ public class PlayerPawn : NetworkBehaviour
     {
         if (!IsServer) return;
     
-        // ตรวจสอบความถูกต้องอีกครั้ง (ถ้าจำเป็น)
-
-        // สั่งให้ทุก Client เริ่มการเคลื่อนที่
         RpcMoveSteps(steps); 
     }
 

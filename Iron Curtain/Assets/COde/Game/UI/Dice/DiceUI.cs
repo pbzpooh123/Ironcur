@@ -9,7 +9,7 @@ public class DiceUI : MonoBehaviour
     [Header("Dice UI Elements")]
     public Image diceLeft;
     public Image diceRight;
-    public Sprite[] diceFaces; // Sprite ของเต๋า 1–6
+    public Sprite[] diceFaces; 
     public Text resultText;
 
     private void Awake()
@@ -44,16 +44,14 @@ public class DiceUI : MonoBehaviour
         if (resultText != null)
             resultText.text = $"Total: {final1 + final2}";
 
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(1f);
 
         gameObject.SetActive(false);
 
-        // 🔥 เรียก Callback เมื่อจบอนิเมชัน
         onComplete?.Invoke();
     }
     public void Show(int final1, int final2)
     {
-        // เรียกใช้เมธอดเดิม โดยส่ง null เป็น callback
         ShowDiceRollingWithCallback(final1, final2, null);
     }
 

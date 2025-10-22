@@ -27,11 +27,11 @@ public class EventUI : MonoBehaviour
         Sidepanel.SetActive(false);
     }
 
-    public void MaineventShow(string msg, string msgHistory, bool pauseAll)
+    public void MaineventShow(string title, string body, bool pauseAll)
     {
         Mainpanel.SetActive(true);
-        eventText.text = msg;
-        HistoryText.text = msgHistory;
+        eventText.text = title;   // title line
+        HistoryText.text = body;  // description / body
         waitingForAll = pauseAll;
         readyCount = 0;
 
@@ -41,8 +41,8 @@ public class EventUI : MonoBehaviour
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null)
         {
-            ui.SetRollInteractable(false);   // block roll while popup visible
-            ui.ForceDisableEndTurn();        // keep EndTurn off too
+            ui.SetRollInteractable(false);
+            ui.ForceDisableEndTurn();
         }
     }
 

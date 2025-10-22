@@ -121,7 +121,7 @@ public class EventManager : NetworkBehaviour
         _currentTimelineIndex = Random.Range(0, timelines.Count);
         var name = timelines[_currentTimelineIndex]?.timelineName ?? "Unknown Era";
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(conn, $"Timeline selected: {name}", "", false);
+            TargetShowMainEvent(conn, "Timeline Selected", name, false);
         RpcSetTimelineName(name);
     }
 
@@ -262,15 +262,14 @@ public class EventManager : NetworkBehaviour
         TickBankOddFineExpiration();
         SelectTimelineIfNeeded();
 
-        GameEventSO e = PickMainEventFromTimeline(); 
+        GameEventSO e = PickMainEventFromTimeline();
         RpcUpdateNextMainEventUI(PeekNextMainEventName());
 
-        string msg = (e != null) ? $"{e.eventName}\n\n{e.description}" : $"Main Event at Round {round}!";
-        foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(conn, msg, "", true);
+        string title = (e != null) ? e.eventName : $"Main Event — Round {round}";
+        string body  = (e != null) ? e.description : "—";
 
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(conn, msg, "", true);
+            TargetShowMainEvent(conn, title, body, true);  
 
         _resume = ResumeContext.Main;
         _resumeTilePawn = null;
@@ -345,10 +344,10 @@ public class EventManager : NetworkBehaviour
     /* ================= POPUPS & ACK ================= */
 
     [TargetRpc]
-    private void TargetShowMainEvent(NetworkConnection conn, string message,string messageHistory, bool pauseAll)
+    private void TargetShowMainEvent(NetworkConnection conn, string title, string body, bool pauseAll)
     {
         if (EventUI.Instance != null)
-            EventUI.Instance.MaineventShow(message, messageHistory, pauseAll);
+            EventUI.Instance.MaineventShow(title, body, pauseAll);
     }
 
     [TargetRpc]
@@ -1319,11 +1318,23 @@ public class EventManager : NetworkBehaviour
             {
                 int pay = Mathf.Min(_tierPay, pawn.money.Value);
                 if (pay > 0) pawn.TrySpendMoney(pay);
+                MarketManager.Instance.ServerNerfAllCompaniesOwnedBy(
+                    pawn,
+                    priceDeltaPercent: -20,     // negative is allowed (e.g., -15%)
+                    payoutMultiplier:  0.5f,      // < 1f means nerf payouts
+                    durationRounds:    2
+                );
                 outcome = $"-${pay}";
             }
             else if (roll >= _tierHighMin)
             {
                 pawn.AddMoney(_tierGain);
+                MarketManager.Instance.ServerBoostAllCompaniesOwnedBy(
+                    pawn,
+                    priceDeltaPercent: 20,     // e.g., +20%
+                    payoutMultiplier:  2f,      // > 1f means boost payouts
+                    durationRounds:    2
+                );
                 outcome = $"+${_tierGain}";
             }
             else

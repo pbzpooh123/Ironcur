@@ -11,20 +11,21 @@ public class PlayerInfoPanel : MonoBehaviour
     [Header("Optional")]
     public TMP_Text turnOrderText; 
     
-    [Header("Company Ownership UI")]
-    public Transform ownershipListParent;       // container for entries
-    public GameObject ownershipEntryPrefab; 
+    // [Header("Company Ownership UI")]
+    // public Transform ownershipListParent;       // container for entries
+    // public GameObject ownershipEntryPrefab; 
     private readonly Dictionary<string, TMP_Text> ownershipEntries = new();
 
     public void SetInfo(string name, int money = 0)
     {
         if (nameText)     nameText.text = name;
         UpdateMoney(money);
+        UpdateBailoutMarks(0);
     }
 
     public void UpdateMoney(int money)
     {
-        if (profitText) profitText.text = $"Money: {money:0}";
+        if (profitText) profitText.text = $"Money: {money:0} M";
     }
 
     public void SetTurnOrder(int orderIndex) // 1-based
@@ -32,25 +33,25 @@ public class PlayerInfoPanel : MonoBehaviour
         if (turnOrderText) turnOrderText.text = $"Turn #{orderIndex}";
     }
     
-    public void UpdateCompanyOwnership(string companyName, int percent)
-    {
-        if (!ownershipEntries.TryGetValue(companyName, out TMP_Text txt) || txt == null)
-        {
-            var entryObj = Instantiate(ownershipEntryPrefab, ownershipListParent);
-            txt = entryObj.GetComponentInChildren<TMP_Text>();
-            ownershipEntries[companyName] = txt;
-        }
+    // public void UpdateCompanyOwnership(string companyName, int percent)
+    // {
+    //     if (!ownershipEntries.TryGetValue(companyName, out TMP_Text txt) || txt == null)
+    //     {
+    //         var entryObj = Instantiate(ownershipEntryPrefab, ownershipListParent);
+    //         txt = entryObj.GetComponentInChildren<TMP_Text>();
+    //         ownershipEntries[companyName] = txt;
+    //     }
 
-        if (txt != null)
-        {
-            txt.text = $"{companyName}: {percent}%";
-            txt.gameObject.SetActive(percent > 0); // hide if 0%
-        }
-        else
-        {
-            Debug.LogError($"[PlayerInfoPanel] Prefab {ownershipEntryPrefab.name} has no TMP_Text!");
-        }
-    }
+    //     if (txt != null)
+    //     {
+    //         txt.text = $"{companyName}: {percent}%";
+    //         txt.gameObject.SetActive(percent > 0); // hide if 0%
+    //     }
+    //     else
+    //     {
+    //         Debug.LogError($"[PlayerInfoPanel] Prefab {ownershipEntryPrefab.name} has no TMP_Text!");
+    //     }
+    // }
     
     public TMP_Text bailoutText;
 

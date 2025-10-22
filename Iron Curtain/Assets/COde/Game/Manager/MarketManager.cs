@@ -637,7 +637,7 @@ public class MarketManager : NetworkBehaviour
             pawn.factoryPortfolio[companyName] = rec;
         }
 
-        pawn.infoPanel?.UpdateCompanyOwnership(companyName, newPercent);
+        // pawn.infoPanel?.UpdateCompanyOwnership(companyName, newPercent);
         RpcRefreshLocalPortfolioUI();
         Debug.Log($"[ClientSync] {playerName} now has {newPercent}% of {companyName}");
     }
@@ -665,12 +665,20 @@ public class MarketManager : NetworkBehaviour
     {
         int currentRound = TurnManager.Instance.roundCount.Value;
 
-        foreach (var companyKvp in companies)
+        var totals = new Dictionary<PlayerPawn, int>();
+
+        foreach (var company in companies.Values)
         {
-            var company = companyKvp.Value;
             if (company == null) continue;
 
-            // base pool = yield * currentPrice
+            // decay temp payout buff
+            if (company.payoutMultExpiresAtRound > 0 &&
+                currentRound >= company.payoutMultExpiresAtRound)
+            {
+                company.payoutMult = 1f;
+                company.payoutMultExpiresAtRound = 0;
+            }
+
             int baseIncome = Mathf.RoundToInt(company.currentPrice * dividendYield);
 
             foreach (var kv in company.ownershipPercents)
@@ -679,10 +687,9 @@ public class MarketManager : NetworkBehaviour
                 int percent = kv.Value;
                 if (pawn == null || percent <= 0) continue;
 
-                float ownershipRatio = percent / 100f;
-                float payoutF = baseIncome * ownershipRatio;
+                float payoutF = baseIncome * (percent / 100f);
 
-                // existing per-holder multiplier (your portfolio multiplier)
+                // per-holder multiplier from portfolio
                 if (pawn.factoryPortfolio.TryGetValue(company.companyName, out var rec))
                 {
                     if (rec.multiplierExpiresAt > 0 && currentRound >= rec.multiplierExpiresAt)
@@ -698,10 +705,16 @@ public class MarketManager : NetworkBehaviour
                 payoutF *= company.payoutMult;
 
                 int finalPayout = Mathf.RoundToInt(payoutF);
-                if (finalPayout != 0)
-                    pawn.AddMoney(finalPayout);
+                if (finalPayout == 0) continue;
+
+                if (!totals.ContainsKey(pawn)) totals[pawn] = 0;
+                totals[pawn] += finalPayout;
             }
-        }
+    }
+
+    // 2) Pay each pawn once → one popup (still queued if multiple phases happen)
+    foreach (var kv in totals)
+        kv.Key.AddMoney(kv.Value);
     }
     private TileData FindTileByCompanyName(string companyName)
     {
@@ -929,7 +942,7 @@ public class MarketManager : NetworkBehaviour
         }
 
         // keep UI quiet; only refresh if that UI is already open
-        pawn.infoPanel?.UpdateCompanyOwnership(company, percent);
+        // pawn.infoPanel?.UpdateCompanyOwnership(company, percent);
     }
 
     [Server]

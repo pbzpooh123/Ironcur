@@ -100,8 +100,6 @@ MonoBehaviour:
   nameText: {fileID: 8373539576515487660}
   profitText: {fileID: 8247013670169860833}
   turnOrderText: {fileID: 7933157853146841130}
-  ownershipListParent: {fileID: 8249794165648671014}
-  ownershipEntryPrefab: {fileID: 3455336774626206117, guid: 68fa9a376f8d4b545bdb737375454c0a, type: 3}
   bailoutText: {fileID: 3870340549746616997}
 --- !u!114 &5923547694135254486
 MonoBehaviour:
@@ -131,8 +129,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   anchor: {fileID: 7471322108025677135}
   popupPrefab: {fileID: 1592717669587039832, guid: efbfadc6972a522489a6e1e155ae55bf, type: 3}
-  floatPixels: 48
-  duration: 2
+  floatPixels: 55
+  duration: 3
   plusColor: {r: 0.2, g: 0.85, b: 0.2, a: 1}
   minusColor: {r: 0.9, g: 0.2, b: 0.2, a: 1}
 --- !u!225 &976833868473205106
@@ -389,7 +387,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: -169.3175, w: -36.292915}
+  m_margin: {x: 0, y: 0, z: -358.34784, w: -30.953976}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -410,7 +408,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8249794165648671014
 RectTransform:
   m_ObjectHideFlags: 0
@@ -465,7 +463,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 81, y: -273}
+  m_AnchoredPosition: {x: 540, y: -42}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8394394577897151940
@@ -599,7 +597,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 85.7, y: -150}
+  m_AnchoredPosition: {x: 85.7, y: -207}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4922716951878227106
@@ -693,7 +691,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: -169.3175, w: -36.292915}
+  m_margin: {x: 0, y: 2.1354876, z: -324.4198, w: -13.869308}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -733,7 +731,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 247.3, y: -270}
+  m_AnchoredPosition: {x: 471, y: -267}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6709937041119004111
@@ -774,7 +772,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 1, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -827,7 +825,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: -5.1999283, w: -1.4764805}
+  m_margin: {x: -24.234924, y: 0, z: -92.444954, w: -1.4764805}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
