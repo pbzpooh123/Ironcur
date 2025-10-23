@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -18,7 +19,18 @@ public class ReviewUI : MonoBehaviour
     public TMP_Text hintTitle;
     public TMP_Text hintBody;
 
+    [Header("Paging")]
+    [Tooltip("How many rows to show per page (set to 1 to show one row per page).")]
+    public int rowsPerPage = 1;
+    public TMP_Text pageText;
+    public Button prevButton;
+    public Button nextButton;
+
     private PlayerPawn currentPawn;
+
+    // Flat cache of what we can show (companyName, proposalIndex, Proposal)
+    private readonly List<(string company, int index, Proposal p)> _itemsCache = new();
+    private int _pageIndex = 0;
 
     private void Awake()
     {
@@ -29,6 +41,17 @@ public class ReviewUI : MonoBehaviour
             closeButton.onClick.RemoveAllListeners();
             closeButton.onClick.AddListener(CloseAndNotifyServer);
         }
+
+        if (prevButton != null)
+        {
+            prevButton.onClick.RemoveAllListeners();
+            prevButton.onClick.AddListener(OnPrevPage);
+        }
+        if (nextButton != null)
+        {
+            nextButton.onClick.RemoveAllListeners();
+            nextButton.onClick.AddListener(OnNextPage);
+        }
     }
 
     public void Show(PlayerPawn pawn)
@@ -37,28 +60,27 @@ public class ReviewUI : MonoBehaviour
         panel.SetActive(true);
         StartCoroutine(DelayedRefresh());
 
-        // Disable Roll + EndTurn locally while the review is open.
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null)
         {
             ui.SetEndTurnInteractable(false);
-            ui.SetRollInteractable(false);   // requires TurnUI update below
+            ui.SetRollInteractable(false);
         }
     }
-    
+
     private IEnumerator DelayedRefresh()
     {
         float timeout = 3f;
         while (timeout > 0f)
         {
             timeout -= Time.deltaTime;
-            // Wait until we actually have proposals for this pawn
             bool found = false;
             if (MarketManager.Instance != null && currentPawn != null)
             {
                 foreach (var c in MarketManager.Instance.companies.Values)
                 {
-                    if (c != null && c.owner == currentPawn && c.proposals != null && c.proposals.Count > 0)
+                    if (c != null && (c.owner == currentPawn || c.ownerName == currentPawn.playerName.Value)
+                        && c.proposals != null && c.proposals.Count > 0)
                     {
                         found = true;
                         break;
@@ -72,33 +94,19 @@ public class ReviewUI : MonoBehaviour
         Refresh();
     }
 
-
     public void Refresh()
     {
-        Debug.Log("[ReviewUI] Refresh start");
         if (panel == null || !panel.activeSelf) return;
+        if (MarketManager.Instance == null || currentPawn == null) return;
 
-        if (MarketManager.Instance == null)
-        {
-            Debug.LogWarning("[ReviewUI] MarketManager not ready yet.");
-            return;
-        }
-        if (currentPawn == null)
-        {
-            Debug.LogWarning("[ReviewUI] currentPawn is null; skipping refresh.");
-            return;
-        }
-
-        foreach (Transform child in listParent)
-            Destroy(child.gameObject);
+        // rebuild cache
+        _itemsCache.Clear();
 
         var myName = currentPawn.playerName.Value;
-        int shown = 0;
         foreach (var company in MarketManager.Instance.companies.Values)
         {
             if (company == null) continue;
 
-            // ---- NEW: tolerate null owner; fallback to ownerName match ----
             bool isOwner =
                 (company.owner != null && company.owner == currentPawn) ||
                 (!string.IsNullOrEmpty(company.ownerName) && company.ownerName == myName);
@@ -107,28 +115,82 @@ public class ReviewUI : MonoBehaviour
             if (company.proposals == null || company.proposals.Count == 0) continue;
 
             for (int i = 0; i < company.proposals.Count; i++)
-            {
-                var p = company.proposals[i];
-                var go = Instantiate(reviewEntryPrefab, listParent);
-                var entry = go.GetComponent<ReviewEntry>();
-                if (entry != null)
-                    entry.Setup(company.companyName, i, p);
-                shown++;
-            }
+                _itemsCache.Add((company.companyName, i, company.proposals[i]));
         }
 
-        Debug.Log($"[ReviewUI] Entries shown = {shown}");
+        _pageIndex = 0;
+        RenderPageOnly();
     }
 
+    private void RenderPageOnly()
+    {
+        // clear rows
+        for (int i = listParent.childCount - 1; i >= 0; i--)
+            Destroy(listParent.GetChild(i).gameObject);
+
+        if (_itemsCache.Count == 0)
+        {
+            UpdatePageLabel(0, 0);
+            SetPagerInteractable(false);
+            return;
+        }
+
+        int pageSize = Mathf.Max(1, rowsPerPage); // set to 1 to force single row
+        int start = _pageIndex * pageSize;
+        int endExclusive = Mathf.Min(start + pageSize, _itemsCache.Count);
+
+        for (int i = start; i < endExclusive; i++)
+        {
+            var it = _itemsCache[i];
+            var go = Instantiate(reviewEntryPrefab, listParent);
+            var entry = go.GetComponent<ReviewEntry>();
+            if (entry != null)
+                entry.Setup(it.company, it.index, it.p);
+        }
+
+        UpdatePageLabel(_pageIndex + 1, GetMaxPageIndex() + 1);
+        SetPagerInteractable(true);
+    }
+
+    private void OnPrevPage()
+    {
+        if (_itemsCache.Count == 0) return;
+        _pageIndex = Mathf.Max(0, _pageIndex - 1);
+        RenderPageOnly();
+    }
+
+    private void OnNextPage()
+    {
+        if (_itemsCache.Count == 0) return;
+        _pageIndex = Mathf.Min(GetMaxPageIndex(), _pageIndex + 1);
+        RenderPageOnly();
+    }
+
+    private int GetMaxPageIndex()
+    {
+        int pageSize = Mathf.Max(1, rowsPerPage);
+        return (_itemsCache.Count == 0) ? 0 : Mathf.Max(0, (_itemsCache.Count - 1) / pageSize);
+    }
+
+    private void UpdatePageLabel(int current, int total)
+    {
+        if (pageText != null)
+            pageText.text = (total <= 0) ? "Page 0 / 0" : $"Page {current} / {total}";
+        if (prevButton != null) prevButton.interactable = (_itemsCache.Count > 0 && _pageIndex > 0);
+        if (nextButton != null) nextButton.interactable = (_itemsCache.Count > 0 && _pageIndex < GetMaxPageIndex());
+    }
+
+    private void SetPagerInteractable(bool on)
+    {
+        if (prevButton != null) prevButton.gameObject.SetActive(on);
+        if (nextButton != null) nextButton.gameObject.SetActive(on);
+        if (pageText != null) pageText.gameObject.SetActive(on);
+    }
 
     private void CloseAndNotifyServer()
     {
         panel.SetActive(false);
-
-        // Tell server we finished review → TurnManager will phase → Rolling.
         MarketManager.Instance?.CmdNotifyReviewClosed();
-
-        // Do NOT re-enable roll/endTurn here. The server will send the correct UI state.
     }
 
     public void Hide() => CloseAndNotifyServer();

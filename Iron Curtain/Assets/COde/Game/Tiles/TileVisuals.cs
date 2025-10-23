@@ -28,6 +28,7 @@ public class TileVisuals : MonoBehaviour
 
         if (mainRenderer != null)
         {
+            Debug.Log($"[TileVisuals] ShowOwnedByColor colorIndex={colorIndex} color={c}");
             // use the claimed sprite and tint slightly toward the owner color for tone
             mainRenderer.sprite = claimedSprite ? claimedSprite : mainRenderer.sprite;
             var tone = Color.Lerp(Color.white, c, ownedToneLerp);

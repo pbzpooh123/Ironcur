@@ -374,6 +374,8 @@ public class TurnManager : NetworkBehaviour
         }
         else
         {
+            foreach (var tile in FindObjectsOfType<TileData>())
+                tile.RefreshVisuals();
             Debug.Log("[TurnManager] No extra roll → ProceedToProposal()");
             ProceedToProposal();
         }

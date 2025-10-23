@@ -913,8 +913,8 @@ public class EventManager : NetworkBehaviour
 
                     MarketManager.Instance.ServerNerfAllCompaniesOwnedBy(
                     target,
-                    priceDeltaPercent: -15f,
-                    payoutMultiplier: 0.65f,
+                    priceDeltaPercent: -35f,
+                    payoutMultiplier: 0.55f,
                     durationRounds: 2
                     );
                 }

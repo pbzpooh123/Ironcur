@@ -15,11 +15,12 @@ MonoBehaviour:
   eventName: Your Business Gains Media Attention!
   description: 'Effect: All players roll the dice. The highest roller receives $1000M,
     others receive $100M'
+  history: 
   type: 0
   mode: 0
   requiredCompanyName: 
   payOnOdd: 0
-  entryFee: 100
+  entryFee: 1000
   tieSplitPot: 1
   restrictToOpponents: 0
   requireCompanyOwner: 0
@@ -28,3 +29,11 @@ MonoBehaviour:
   bankCompanyName: Bank
   oddFineAmount: 500
   oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3

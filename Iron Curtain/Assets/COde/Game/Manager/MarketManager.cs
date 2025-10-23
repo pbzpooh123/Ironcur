@@ -450,53 +450,46 @@ public class MarketManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void CmdSubmitProposal(string companyName, int percent, int price, NetworkConnection caller = null)
     {
-        if (caller == null)
-        {
-            return;
-        }
+        if (caller == null) return;
+
         var proposer = GameManager.Instance.Players.Find(p => p.Owner == caller);
         if (proposer == null) return;
-        if (EventManager.Instance != null && EventManager.Instance.IsProposalBlockedNow())
-        {
-            Debug.LogWarning("[Market] Proposal blocked this round.");
-            return;
-        }
+        if (EventManager.Instance != null && EventManager.Instance.IsProposalBlockedNow()) return;
 
         if (!companies.TryGetValue(companyName, out var company)) return;
-        if (company.owner == proposer) return; // cannot propose to self
+        if (company.owner == proposer) return;
 
-        price = Mathf.Max(1, price);
+        price   = Mathf.Max(1, price);
 
         if (!_submittedThisTurn.TryGetValue(proposer, out var set))
+            _submittedThisTurn[proposer] = set = new HashSet<string>();
+        if (set.Contains(companyName)) return;
+
+        int sellerAvail = company.GetOwnership(company.owner);
+        if (sellerAvail <= 0) return;
+
+        int buyerHas  = company.GetOwnership(proposer);
+        int buyerRoom = Mathf.Max(0, 100 - buyerHas);
+
+        int maxTransfer = Mathf.Min(percent, sellerAvail, buyerRoom);
+        if (maxTransfer <= 0)
         {
-            set = new HashSet<string>();
-            _submittedThisTurn[proposer] = set;
-        }
-        if (set.Contains(companyName))
-        {
-            Debug.LogWarning($"[Market] {proposer.playerName.Value} already proposed to {companyName} this turn.");
+            Debug.LogWarning($"[Market] Proposal has no transferable % (sellerAvail={sellerAvail}, buyerRoom={buyerRoom}).");
             return;
         }
 
-        int ownerAvailable = company.GetOwnership(company.owner);
-        if (ownerAvailable <= 0)
-        {
-            Debug.LogWarning($"[Market] No owner share left to sell in {companyName}.");
-            return;
-        }
-        percent = Mathf.Min(percent, ownerAvailable);
-
-        company.proposals.Add(new Proposal
-        {
+        company.proposals.Add(new Proposal {
             proposer = proposer,
-            percent = percent,
-            price = price
+            percent  = maxTransfer,
+            price    = price
         });
 
         set.Add(companyName);
         SyncProposalsToClients(companyName);
-        Debug.Log($"[Market] {proposer.playerName.Value} proposed {percent}% of {companyName} for ${price}");
+        Debug.Log($"[Market] {proposer.playerName.Value} proposed {maxTransfer}% of {companyName} for ${price}");
     }
+
+
 
     /* ================= Accept/Reject Proposal ================= */
 
@@ -531,67 +524,75 @@ public class MarketManager : NetworkBehaviour
         if (!companies.TryGetValue(companyName, out var company)) return;
         var prevOwner = company.owner;
 
-        if (accepted)
+        if (!accepted)
         {
-            bool paid;
-            if (!AllowDebtOnAccept)
-            {
-                // Strict accept: proposer must afford NOW
-                if (proposal.proposer.money.Value < proposal.price)
-                {
-                    Debug.LogWarning($"[Market] Accept failed: proposer {proposal.proposer.playerName.Value} lacks funds (${proposal.price}).");
-                    return; // proposal remains pending
-                }
-                paid = proposal.proposer.TrySpendMoney(proposal.price);
-            }
-            else
-            {
-                // Debt mode: auto-bailout until proposer can pay (capped)
-                paid = TryPayWithBailouts(proposal.proposer, proposal.price);
-            }
+            Debug.Log($"[Market] Proposal rejected for {companyName}");
+            return;
+        }
 
-            if (!paid)
+        // --- 1) Figure out how many % can actually transfer right now 
+        int sellerAvail = company.GetOwnership(prevOwner);                 // what seller still owns
+        int buyerHas   = company.GetOwnership(proposal.proposer);          // what buyer already has
+        int buyerRoom  = Mathf.Max(0, 100 - buyerHas);                     // how much buyer can still get
+
+        int transfer = Mathf.Min(proposal.percent, sellerAvail, buyerRoom);
+        if (transfer <= 0)
+        {
+            Debug.LogWarning($"[Market] Accept aborted: no transferable % (sellerAvail={sellerAvail}, buyerRoom={buyerRoom}).");
+            return; // nothing to transfer -> do not take/pay money
+        }
+
+        // --- 2) Ensure payment (with or without debt) BEFORE applying ownership ---
+        bool paid;
+        if (!AllowDebtOnAccept)
+        {
+            if (proposal.proposer.money.Value < proposal.price)
             {
-                Debug.LogWarning($"[Market] Accept failed: proposer could not pay ${proposal.price} even after bailouts.");
+                Debug.LogWarning($"[Market] Accept failed: proposer {proposal.proposer.playerName.Value} lacks funds (${proposal.price}).");
                 return;
             }
-
-            // Owner gets paid
-            prevOwner.AddMoney(proposal.price);
-
-            // Transfer ownership
-            int fromOwner = company.GetOwnership(prevOwner);
-            int transfer = Mathf.Min(proposal.percent, fromOwner);
-
-            company.SetOwnership(prevOwner, fromOwner - transfer);
-            int newShare = company.GetOwnership(proposal.proposer) + transfer;
-            company.SetOwnership(proposal.proposer, newShare);
-
-            // Majority takeover
-            var majority = company.GetMajorityOwner();
-            if (majority != prevOwner)
-            {
-                company.owner = majority;
-                RpcUpdateTileOwner(companyName, majority.playerName.Value, majority.colorIndex.Value);
-            }
-
-            proposal.proposer.ServerBroadcastPortfolio();
-            prevOwner.ServerBroadcastPortfolio();
-            if (company.owner != prevOwner) // majority takeover changed owner
-                company.owner.ServerBroadcastPortfolio();
-            // Sync
-            RpcSyncOwnership(companyName, proposal.proposer.playerName.Value, company.GetOwnership(proposal.proposer));
-            RpcSyncOwnership(companyName, prevOwner.playerName.Value, company.GetOwnership(prevOwner));
-            if (company.owner != prevOwner)
-                RpcSyncOwnership(companyName, company.owner.playerName.Value, company.GetOwnership(company.owner));
-
-            Debug.Log($"[Market] Proposal accepted: {proposal.proposer.playerName.Value} now has {newShare}% of {companyName}");
+            paid = proposal.proposer.TrySpendMoney(proposal.price);
         }
         else
         {
-            Debug.Log($"[Market] Proposal rejected for {companyName}");
+            paid = TryPayWithBailouts(proposal.proposer, proposal.price);
         }
+
+        if (!paid)
+        {
+            Debug.LogWarning($"[Market] Accept failed: proposer could not pay ${proposal.price} even after bailouts.");
+            return;
+        }
+
+        // --- 3) Pay seller and transfer ownership ---
+        prevOwner.AddMoney(proposal.price);
+
+        company.SetOwnership(prevOwner, sellerAvail - transfer);
+        int newBuyerShare = buyerHas + transfer;
+        company.SetOwnership(proposal.proposer, newBuyerShare);
+
+        // Majority takeover?
+        var majority = company.GetMajorityOwner();
+        if (majority != prevOwner)
+        {
+            company.owner = majority;
+            RpcUpdateTileOwner(companyName, majority.playerName.Value, majority.colorIndex.Value);
+        }
+
+        // Sync portfolios & UI
+        proposal.proposer.ServerBroadcastPortfolio();
+        prevOwner.ServerBroadcastPortfolio();
+        if (company.owner != prevOwner)
+            company.owner.ServerBroadcastPortfolio();
+
+        RpcSyncOwnership(companyName, proposal.proposer.playerName.Value, company.GetOwnership(proposal.proposer));
+        RpcSyncOwnership(companyName, prevOwner.playerName.Value, company.GetOwnership(prevOwner));
+        if (company.owner != prevOwner)
+            RpcSyncOwnership(companyName, company.owner.playerName.Value, company.GetOwnership(company.owner));
+
+        Debug.Log($"[Market] Proposal accepted: {proposal.proposer.playerName.Value} +{transfer}% ({newBuyerShare}% total) of {companyName}");
     }
+
 
     [Server]
     private bool TryPayWithBailouts(PlayerPawn p, int amount)
@@ -637,23 +638,46 @@ public class MarketManager : NetworkBehaviour
             pawn.factoryPortfolio[companyName] = rec;
         }
 
-        // pawn.infoPanel?.UpdateCompanyOwnership(companyName, newPercent);
         RpcRefreshLocalPortfolioUI();
         Debug.Log($"[ClientSync] {playerName} now has {newPercent}% of {companyName}");
     }
 
-    [ObserversRpc]
-    private void RpcUpdateTileOwner(string companyName, string newOwnerName,int colorIndex)
+    [ObserversRpc(BufferLast = true)]
+    private void RpcUpdateTileOwner(string companyName, string newOwnerName, int colorIndex)
     {
-        var tile = GameManager.Instance.FindTileByCompanyName(companyName);
-        var pawn = GameManager.Instance.Players.Find(p => p.playerName.Value == newOwnerName);
-        if (tile != null)
-            tile.owner = pawn;
+        StartCoroutine(CoApplyTileOwnerVisual(companyName, newOwnerName, colorIndex));
+    }
+
+    private IEnumerator CoApplyTileOwnerVisual(string companyName, string newOwnerName, int colorIndex)
+    {
+        // wait up to ~2s for board / tile to exist on clients (late joiners, slow spawns)
+        float t = 2f;
+        TileData tile = null;
+        while (t > 0f && (tile = FindTileByCompanyName(companyName)) == null)
+        {
+            t -= Time.deltaTime;
+            yield return null;
+        }
+        if (tile == null)
+        {
+            Debug.LogWarning($"[RpcUpdateTileOwner] Tile '{companyName}' not found on client.");
+            yield break;
+        }
+
+        // Try to bind pawn, but do NOT gate visuals on it
+        var pawn = GameManager.Instance?.Players.Find(p => p.playerName.Value == newOwnerName);
+        tile.owner = pawn; // ok if null; purely cosmetic client-side
+
+        bool hasOwner = !string.IsNullOrEmpty(newOwnerName);
 
         if (tile.visuals != null)
         {
-           if (pawn == null) tile.visuals.ShowUnclaimed();
-           else tile.visuals.ShowOwnedByColor(colorIndex);
+            if (!hasOwner) tile.visuals.ShowUnclaimed();
+            else           tile.visuals.ShowOwnedByColor(colorIndex); // paint even if pawn == null
+        }
+        else
+        {
+            Debug.LogWarning($"[RpcUpdateTileOwner] No visuals for '{companyName}' on client.");
         }
     }
 
