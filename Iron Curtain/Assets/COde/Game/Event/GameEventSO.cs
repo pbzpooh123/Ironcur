@@ -34,7 +34,7 @@ public class EventEffect
     public string targetName;         // For Factory  effects
 
     [Header("Money")]
-    public int moneyDelta = 0;       
+    public int moneyDelta = 0;
     public int randomMoneyMin = 0;    // Additional random money range (min ≤ max)
     public int randomMoneyMax = 0;
 
@@ -50,7 +50,7 @@ public class EventEffect
 
     [Header("Extra Turn / Movement")]
     public bool grantExtraRoll = false;
-    
+
 }
 
 [CreateAssetMenu(fileName = "NewGameEvent", menuName = "Game/Event", order = 1)]
@@ -100,5 +100,17 @@ public class GameEventSO : ScriptableObject
     [Header("Recession (optional)")]
     public bool triggerRecession = false;
     [Min(1)] public int recessionRounds = 3;
+
+    [System.Serializable]
+    public class SectorImpact
+    {
+        public string sector;       // e.g. "Weapons"
+        public float priceMult = 1; // e.g. 6f  (= +500% price)
+        public float payoutMult = 1;// e.g. 1.3f (= +30% payouts)
+        public int durationRounds = 2;
+    }
+
+    public List<SectorImpact> sectorImpacts = new List<SectorImpact>();
+
 
 }

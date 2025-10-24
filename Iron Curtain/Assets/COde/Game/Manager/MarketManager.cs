@@ -29,23 +29,24 @@ public class CompanyRecord
     public float payoutMult = 1f;
     public int payoutMultExpiresAtRound = 0;
 
+    public string sector;
+
     public Dictionary<PlayerPawn, int> ownershipPercents = new Dictionary<PlayerPawn, int>();
     public List<Proposal> proposals = new List<Proposal>();
 
     private readonly HashSet<int> _proposalHintShown = new();
     private readonly HashSet<int> _reviewHintShown   = new();
 
-   public CompanyRecord(string name, int cost, PlayerPawn creator)
+   public CompanyRecord(string name, int cost, PlayerPawn creator, string sectorTag = null)
     {
-        companyName = name;
-        baseCost = cost;
+        companyName  = name;
+        baseCost     = cost;
         currentPrice = cost;
-        owner = creator;
-        ownerName = (creator != null) ? creator.playerName.Value : null;
-
-        if (creator != null)
-            ownershipPercents[creator] = 100;
-    }  
+        owner        = creator;
+        ownerName    = (creator != null) ? creator.playerName.Value : null;
+        sector       = sectorTag;
+        if (creator != null) ownershipPercents[creator] = 100;
+    } 
 
     public int GetOwnership(PlayerPawn pawn)
     {
@@ -124,105 +125,64 @@ public class MarketManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
     {
-        if (conn == null)
-        {
-            Debug.LogWarning("[Market] CmdBuyCompany called with null conn.");
-            return;
-        }
-
-        // Resolve the caller's pawn on the server.
         var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
-        if (pawn == null)
-        {
-            Debug.LogWarning("[Market] CmdBuyCompany: Could not resolve pawn for caller.");
-            return;
-        }
-
-        Debug.Log($"[Market] CmdBuyCompany received from {pawn.playerName.Value}, tile={tileIndex}");
-
-
         var tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
-        if (tile == null)
-        {
-            Debug.LogWarning("[Market] CmdBuyCompany: TileData null.");
-            return;
-        }
-        if (tile.owner != null)
-        {
-            Debug.LogWarning("[Market] CmdBuyCompany: tile already owned.");
-            return;
-        }
-
-        // Cost check.
-        if (!pawn.TrySpendMoney(tile.companyCost))
-        {
-            Debug.LogWarning($"[Market] CmdBuyCompany: {pawn.playerName.Value} cannot afford ${tile.companyCost}.");
-            return;
-        }
+        // surge-aware cost (see step 3)
+        float priceMult = EventManager.Instance ? EventManager.Instance.GetActiveSectorPriceMult(tile.sector) : 1f;
+        int effectiveCost = Mathf.RoundToInt(tile.companyCost * priceMult);
+        if (!pawn.TrySpendMoney(effectiveCost)) return;
 
         string key = tile.companyName;
         if (!companies.ContainsKey(key))
         {
-            var record = new CompanyRecord(key, tile.companyCost, pawn);
+            var record = new CompanyRecord(key, /*base*/ effectiveCost, pawn, tile.sector);
+            record.currentPrice = effectiveCost;
             companies[key] = record;
             tile.owner = pawn;
 
-            
-            RpcAddCompany(key, tile.companyCost, pawn.playerName.Value);
-            RpcUpdateTileOwner(companyName: key, newOwnerName: pawn.playerName.Value, colorIndex: pawn.colorIndex.Value);
-            pawn.ServerBroadcastPortfolio();
-            Debug.Log($"[Market] {pawn.playerName.Value} founded company {key}");
-        }
-        else
-        {
-            // In case you landed on an existing company with no owner (edge case)
-            var rec = companies[key];
-            rec.owner = pawn;
-            rec.ownerName = pawn.playerName.Value;
-            rec.ownershipPercents.Clear();
-            rec.ownershipPercents[pawn] = 100;
-            tile.owner = pawn;
-            RpcAddCompany(key, rec.baseCost, pawn.playerName.Value);
-            Debug.Log($"[Market] {pawn.playerName.Value} took ownership of existing company {key}");
-        }
+            // seed payout aura if sector surge active
+            if (EventManager.Instance != null)
+            {
+                var (active, payoutMult, expiresAt) = EventManager.Instance.GetActiveSectorPayoutAura(tile.sector);
+                if (active && !Mathf.Approximately(payoutMult, 1f))
+                {
+                    record.payoutMult = payoutMult;
+                    record.payoutMultExpiresAtRound = expiresAt;
+                }
+            }
 
-        // Continue your tile flow on the server (optional; your InvestmentUI already notifies).
-        TurnManager.Instance.ServerOnTileActionComplete(pawn);
+            // NOTE: RpcAddCompany now includes sector
+            RpcAddCompany(key, record.baseCost, pawn.playerName.Value, tile.sector);
+            RpcUpdateTileOwner(key, pawn.playerName.Value, pawn.colorIndex.Value);
+            pawn.ServerBroadcastPortfolio();
+        }
     }
 
 
     [ObserversRpc]
-    private void RpcAddCompany(string companyName, int baseCost, string ownerName)
+    private void RpcAddCompany(string companyName, int baseCost, string ownerName, string sector) // CHANGED
     {
-        Debug.Log($"[RpcAddCompany] company={companyName}, ownerName={ownerName}");
-
         var ownerPawn = FindPawnByName(ownerName);
 
         if (!companies.TryGetValue(companyName, out var rec))
         {
-            rec = new CompanyRecord(companyName, baseCost, ownerPawn);
+            rec = new CompanyRecord(companyName, baseCost, ownerPawn, sector); // pass sector
             rec.ownerName = ownerName;
 
-            // If we already found the pawn, set explicit 100% and portfolio entry
             if (ownerPawn != null)
             {
                 rec.owner = ownerPawn;
                 rec.ownershipPercents.Clear();
                 rec.ownershipPercents[ownerPawn] = 100;
-
-                // NEW: silently seed portfolio
                 EnsurePortfolioEntry(ownerPawn, companyName, 100);
             }
-
             companies[companyName] = rec;
-
-            if (ownerPawn == null)
-                StartCoroutine(RebindOwnerLater(companyName, ownerName));
+            if (ownerPawn == null) StartCoroutine(RebindOwnerLater(companyName, ownerName));
         }
         else
         {
             rec.ownerName = ownerName;
-
+            rec.sector = sector; // keep sector in sync
             if (rec.owner == null)
             {
                 if (ownerPawn != null)
@@ -230,27 +190,14 @@ public class MarketManager : NetworkBehaviour
                     rec.owner = ownerPawn;
                     rec.ownershipPercents.Clear();
                     rec.ownershipPercents[ownerPawn] = 100;
-
-                    // NEW: silently seed portfolio
                     EnsurePortfolioEntry(ownerPawn, companyName, 100);
                 }
-                else
-                {
-                    StartCoroutine(RebindOwnerLater(companyName, ownerName));
-                }
-            }
-            else
-            {
-                // already has an owner, keep it consistent
-                if (ownerPawn == rec.owner)
-                    EnsurePortfolioEntry(ownerPawn, companyName, 100);
+                else StartCoroutine(RebindOwnerLater(companyName, ownerName));
             }
         }
 
-        if (ProposalUI.Instance != null && ProposalUI.Instance.panel.activeSelf)
-            ProposalUI.Instance.Refresh();
-        if (ReviewUI.Instance != null && ReviewUI.Instance.panel.activeSelf)
-            ReviewUI.Instance.Refresh();
+        ProposalUI.Instance?.Refresh();
+        ReviewUI.Instance?.Refresh();
         RpcRefreshLocalPortfolioUI();
     }
 

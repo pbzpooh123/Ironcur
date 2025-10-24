@@ -7,6 +7,8 @@ public class TileData : MonoBehaviour
     public TileType tileType;
     public string companyName;
 
+    public string sector;
+
     // Investment-specific data
     public PlayerPawn owner;        
     public int companyCost = 100;   

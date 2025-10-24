@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: Side Event 6
   m_EditorClassIdentifier: 
   eventName: Your Business Is Hit by a Cyber Attack!
-  description: 'Effect: Choose 1 player. They must pay 10% ransom to you to restore
-    normal operations'
+  description: Choose 1 player. They must pay 10% ransom to you to restore normal
+    operations
+  history: 
   type: 0
   mode: 0
   requiredCompanyName: 
@@ -28,3 +29,12 @@ MonoBehaviour:
   bankCompanyName: Bank
   oddFineAmount: 500
   oddFineDurationRounds: 3
+  blockProposalRounds: 1
+  lowMax: 2
+  lowPayAmount: 200
+  highMin: 5
+  highGainAmount: 200
+  affectAllPlayers: 1
+  triggerRecession: 0
+  recessionRounds: 3
+  sectorImpacts: []

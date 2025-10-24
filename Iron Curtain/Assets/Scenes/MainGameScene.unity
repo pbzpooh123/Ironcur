@@ -625,6 +625,81 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!1 &48728675
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 48728676}
+  - component: {fileID: 48728678}
+  - component: {fileID: 48728677}
+  m_Layer: 5
+  m_Name: BG (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &48728676
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 48728675}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 3.9792202, y: 0.70301, z: 0.70301}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1024428425}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -141, y: 418}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &48728677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 48728675}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 77f2de6252d44d4409641d7a64b91bff, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &48728678
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 48728675}
+  m_CullTransparentMesh: 1
 --- !u!1 &63942926
 GameObject:
   m_ObjectHideFlags: 0
@@ -707,6 +782,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 4
   companyName: 1
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -1193,6 +1269,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Banking II
+  sector: 
   owner: {fileID: 0}
   companyCost: 440
   baseFactoryIncome: 220
@@ -1381,6 +1458,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -1435,6 +1513,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 4
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -2427,6 +2506,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Steel II
+  sector: 
   owner: {fileID: 0}
   companyCost: 440
   baseFactoryIncome: 220
@@ -2898,6 +2978,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Transportation & Logistics
+  sector: 
   owner: {fileID: 0}
   companyCost: 400
   baseFactoryIncome: 200
@@ -3546,6 +3627,81 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 346867409}
   m_CullTransparentMesh: 1
+--- !u!1 &348282389
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 348282390}
+  - component: {fileID: 348282392}
+  - component: {fileID: 348282391}
+  m_Layer: 5
+  m_Name: New paper
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &348282390
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 348282389}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 3.558254, y: 5.930355, z: 4.0899}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1024428425}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -758, y: -35}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &348282391
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 348282389}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: bee90a133ad96994a9f4fa8280c1d1a3, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &348282392
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 348282389}
+  m_CullTransparentMesh: 1
 --- !u!1 &370241638
 GameObject:
   m_ObjectHideFlags: 0
@@ -3982,6 +4138,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 4
   companyName: 444
+  sector: 
   owner: {fileID: 0}
   companyCost: 4444
   baseFactoryIncome: 44
@@ -4240,6 +4397,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 4
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -4589,14 +4747,14 @@ RectTransform:
   m_GameObject: {fileID: 461890608}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 9.9096, y: 1, z: 1}
+  m_LocalScale: {x: 6.016804, y: 1.4454, z: 1.4454}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 658993356}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 428}
+  m_AnchoredPosition: {x: 0, y: 437}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &461890610
@@ -4619,7 +4777,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 120bb0486ce4c5e4a9990c7b3f87e0df, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 81728702d122def40b7cb3e94bea5f8e, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -4806,7 +4964,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -4859,7 +5017,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -198.87628, y: 4.1662674, z: -196.13757, w: 4.4696712}
+  m_margin: {x: -77.57358, y: -15.638277, z: -73.18454, w: 4.4696712}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -4919,6 +5077,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 4
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -5182,6 +5341,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 3
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
@@ -5457,6 +5617,81 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 575685019}
   m_CullTransparentMesh: 1
+--- !u!1 &597732747
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 597732748}
+  - component: {fileID: 597732750}
+  - component: {fileID: 597732749}
+  m_Layer: 5
+  m_Name: BG
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!224 &597732748
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 597732747}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 11.558963, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1024428425}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: -13, y: 489}
+  m_SizeDelta: {x: 100, y: 100}
+  m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &597732749
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 597732747}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_Sprite: {fileID: 21300000, guid: 77f2de6252d44d4409641d7a64b91bff, type: 3}
+  m_Type: 0
+  m_PreserveAspect: 0
+  m_FillCenter: 1
+  m_FillMethod: 4
+  m_FillAmount: 1
+  m_FillClockwise: 1
+  m_FillOrigin: 0
+  m_UseSpriteMesh: 0
+  m_PixelsPerUnitMultiplier: 1
+--- !u!222 &597732750
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 597732747}
+  m_CullTransparentMesh: 1
 --- !u!1 &602629532
 GameObject:
   m_ObjectHideFlags: 0
@@ -5677,6 +5912,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 4
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -5731,6 +5967,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 4
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -5919,6 +6156,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 3
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -6129,10 +6367,10 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1665179796}
+  - {fileID: 461890609}
   - {fileID: 470679121}
   - {fileID: 1367563965}
   - {fileID: 924155819}
-  - {fileID: 461890609}
   m_Father: {fileID: 1024428425}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -6964,6 +7202,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 1
+  sector: 
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
@@ -7101,6 +7340,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -7721,6 +7961,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Communication Company
+  sector: 
   owner: {fileID: 0}
   companyCost: 320
   baseFactoryIncome: 160
@@ -7909,6 +8150,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Weapon Manufacturing
+  sector: 
   owner: {fileID: 0}
   companyCost: 800
   baseFactoryIncome: 500
@@ -8172,6 +8414,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -8348,6 +8591,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 4
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -8685,7 +8929,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: -157.06445, w: -471.7268}
+  m_margin: {x: 16.310974, y: -14.498657, z: -135.31635, w: -498.91187}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -8995,6 +9239,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Technology R&D
+  sector: 
   owner: {fileID: 0}
   companyCost: 600
   baseFactoryIncome: 200
@@ -10089,6 +10334,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Real Estate
+  sector: 
   owner: {fileID: 0}
   companyCost: 440
   baseFactoryIncome: 220
@@ -10204,6 +10450,9 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 597732748}
+  - {fileID: 48728676}
+  - {fileID: 348282390}
   - {fileID: 1451767783}
   - {fileID: 2058663532}
   - {fileID: 889631760}
@@ -10545,6 +10794,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Basic Electronics Production
+  sector: 
   owner: {fileID: 0}
   companyCost: 360
   baseFactoryIncome: 180
@@ -10857,8 +11107,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 6
+  tileType: 0
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
@@ -12865,6 +13116,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 4
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -12919,6 +13171,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 6
   companyName: 44444
+  sector: 
   owner: {fileID: 0}
   companyCost: 444
   baseFactoryIncome: 4444
@@ -13644,6 +13897,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Steel & Iron Production
+  sector: 
   owner: {fileID: 0}
   companyCost: 300
   baseFactoryIncome: 150
@@ -13698,6 +13952,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 25
+  sector: 
   owner: {fileID: 0}
   companyCost: 522
   baseFactoryIncome: 444
@@ -13793,7 +14048,7 @@ MonoBehaviour:
   m_fontSize: 36
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -13826,7 +14081,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_margin: {x: -339.04865, y: 0, z: 0, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -14441,6 +14696,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 4
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
@@ -14562,8 +14818,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4278190080
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -14676,6 +14932,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -14820,6 +15077,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -14874,6 +15132,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Oil & Gas Production
+  sector: 
   owner: {fileID: 0}
   companyCost: 500
   baseFactoryIncome: 250
@@ -15507,6 +15766,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 4
   companyName: 745287
+  sector: 
   owner: {fileID: 0}
   companyCost: 78857
   baseFactoryIncome: 758752
@@ -16349,6 +16609,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -16525,6 +16786,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 12
+  sector: 
   owner: {fileID: 0}
   companyCost: 122
   baseFactoryIncome: 0
@@ -17311,6 +17573,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Food & Beverage Production
+  sector: 
   owner: {fileID: 0}
   companyCost: 200
   baseFactoryIncome: 120
@@ -17539,6 +17802,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 5
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -18486,6 +18750,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -18540,6 +18805,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Banking & Finance
+  sector: 
   owner: {fileID: 0}
   companyCost: 560
   baseFactoryIncome: 280
@@ -18798,6 +19064,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 
+  sector: 
   owner: {fileID: 0}
   companyCost: 0
   baseFactoryIncome: 0
@@ -19228,7 +19495,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 0, z: -157.06445, w: 0}
+  m_margin: {x: 0, y: 0, z: -157.06445, w: 9.316528}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -19258,7 +19525,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -200, y: 412}
+  m_AnchoredPosition: {x: -219, y: 412}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2062596617
@@ -19441,6 +19708,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 1
   companyName: 100
+  sector: 
   owner: {fileID: 0}
   companyCost: 5222
   baseFactoryIncome: 44
@@ -20041,7 +20309,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.size
-      value: 2
+      value: 7
       objectReference: {fileID: 0}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: timelines.Array.data[0]
@@ -20058,27 +20326,27 @@ PrefabInstance:
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[0]
       value: 
-      objectReference: {fileID: 11400000, guid: c782f7d782a90ef4cafc62d72fe6a3ec, type: 2}
+      objectReference: {fileID: 11400000, guid: c228399759521484e832198cfe5897ba, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[1]
       value: 
-      objectReference: {fileID: 11400000, guid: 96e620c678711234bb9d0687caf85712, type: 2}
+      objectReference: {fileID: 11400000, guid: b0518d7e9aae8f04784dd8168f90c71c, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[2]
       value: 
-      objectReference: {fileID: 11400000, guid: 89e7f7d211e9e954aba032917fcb81b4, type: 2}
+      objectReference: {fileID: 11400000, guid: c782f7d782a90ef4cafc62d72fe6a3ec, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[3]
       value: 
-      objectReference: {fileID: 11400000, guid: 89e7f7d211e9e954aba032917fcb81b4, type: 2}
+      objectReference: {fileID: 11400000, guid: 96e620c678711234bb9d0687caf85712, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[4]
       value: 
-      objectReference: {fileID: 11400000, guid: 89e7f7d211e9e954aba032917fcb81b4, type: 2}
+      objectReference: {fileID: 11400000, guid: 23c1f3c51aabf9a4cbf248cf4b9fef86, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[5]
       value: 
-      objectReference: {fileID: 11400000, guid: 89e7f7d211e9e954aba032917fcb81b4, type: 2}
+      objectReference: {fileID: 11400000, guid: 7064c057668b4e64cb6323ef282649d1, type: 2}
     - target: {fileID: 1498389182421337685, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       propertyPath: tileEvents.Array.data[6]
       value: 

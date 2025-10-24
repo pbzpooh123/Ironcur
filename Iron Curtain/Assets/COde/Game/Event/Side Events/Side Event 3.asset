@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Side Event 3
   m_EditorClassIdentifier: 
   eventName: Your Business Gains Media Attention!
-  description: 'Effect: All players roll the dice. The highest roller receives $1000M,
-    others receive $100M'
+  description: All players roll the dice. The highest roller receives $1000M, others
+    receive $100M
   history: 
   type: 0
   mode: 0
@@ -37,3 +37,4 @@ MonoBehaviour:
   affectAllPlayers: 1
   triggerRecession: 0
   recessionRounds: 3
+  sectorImpacts: []

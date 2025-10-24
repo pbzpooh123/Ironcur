@@ -440,6 +440,7 @@ public class TurnManager : NetworkBehaviour
             roundCount.Value++;
 
             MarketManager.Instance?.OnRoundAdvanced(roundCount.Value);
+            EventManager.Instance?.ServerPruneSectorSurges();
 
             remainingRounds.Value = Mathf.Max(remainingRounds.Value - 1, 0);
             RpcUpdateRoundUI(
