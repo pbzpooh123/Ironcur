@@ -780,11 +780,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 4
+  tileType: 2
   companyName: 1
-  sector: 
+  sector: Steel
   owner: {fileID: 0}
-  companyCost: 0
+  companyCost: 200
   baseFactoryIncome: 0
   taxFlat: 0
   taxPercent: 0
@@ -4136,11 +4136,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 4
+  tileType: 2
   companyName: 444
-  sector: 
+  sector: Steel
   owner: {fileID: 0}
-  companyCost: 4444
+  companyCost: 250
   baseFactoryIncome: 44
   taxFlat: 0
   taxPercent: 0
@@ -7200,9 +7200,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 2
   companyName: 1
-  sector: 
+  sector: Steel
   owner: {fileID: 0}
   companyCost: 100
   baseFactoryIncome: 50
@@ -7961,7 +7961,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Communication Company
-  sector: 
+  sector: Steel
   owner: {fileID: 0}
   companyCost: 320
   baseFactoryIncome: 160
@@ -9089,6 +9089,7 @@ GameObject:
   - component: {fileID: 898104848}
   - component: {fileID: 898104847}
   - component: {fileID: 898104846}
+  - component: {fileID: 898104850}
   m_Layer: 0
   m_Name: GameObject (1)
   m_TagString: Untagged
@@ -9193,6 +9194,30 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &898104850
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 898104845}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80dca4ecab1e22d41b155868038450be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  startVisible: 0
+  sector: Steel
+  priceMult: 1.5
+  payoutMult: 1.25
+  durationRounds: 3
+  giveCashEach: 1000
+  boostPriceDeltaPct: 20
+  boostPayoutMult: 1.5
+  boostDuration: 2
+  nerfPriceDeltaPct: -20
+  nerfPayoutMult: 0.5
+  nerfDuration: 2
 --- !u!1 &903583031
 GameObject:
   m_ObjectHideFlags: 0
@@ -13897,7 +13922,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Steel & Iron Production
-  sector: 
+  sector: Steel
   owner: {fileID: 0}
   companyCost: 300
   baseFactoryIncome: 150
@@ -13950,11 +13975,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 2
   companyName: 25
-  sector: 
+  sector: Steel
   owner: {fileID: 0}
-  companyCost: 522
+  companyCost: 300
   baseFactoryIncome: 444
   taxFlat: 0
   taxPercent: 0
@@ -16784,9 +16809,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 2
   companyName: 12
-  sector: 
+  sector: Steel
   owner: {fileID: 0}
   companyCost: 122
   baseFactoryIncome: 0
@@ -17573,7 +17598,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Food & Beverage Production
-  sector: 
+  sector: Steel
   owner: {fileID: 0}
   companyCost: 200
   baseFactoryIncome: 120
@@ -19706,11 +19731,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 1
+  tileType: 2
   companyName: 100
-  sector: 
+  sector: Steel
   owner: {fileID: 0}
-  companyCost: 5222
+  companyCost: 250
   baseFactoryIncome: 44
   taxFlat: 0
   taxPercent: 0

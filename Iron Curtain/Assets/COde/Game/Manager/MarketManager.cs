@@ -127,7 +127,6 @@ public class MarketManager : NetworkBehaviour
     {
         var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
         var tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
-        // surge-aware cost (see step 3)
         float priceMult = EventManager.Instance ? EventManager.Instance.GetActiveSectorPriceMult(tile.sector) : 1f;
         int effectiveCost = Mathf.RoundToInt(tile.companyCost * priceMult);
         if (!pawn.TrySpendMoney(effectiveCost)) return;
@@ -140,7 +139,13 @@ public class MarketManager : NetworkBehaviour
             companies[key] = record;
             tile.owner = pawn;
 
-            // seed payout aura if sector surge active
+            // 🔸 Seed buyer's portfolio on the SERVER first
+            EnsurePortfolioEntry(pawn, key, 100);
+
+            // 🔸 Tell everyone the % so UIs and client snapshots are consistent
+            RpcSyncOwnership(key, pawn.playerName.Value, 100);
+
+            // Carry over any active sector aura
             if (EventManager.Instance != null)
             {
                 var (active, payoutMult, expiresAt) = EventManager.Instance.GetActiveSectorPayoutAura(tile.sector);
@@ -151,13 +156,35 @@ public class MarketManager : NetworkBehaviour
                 }
             }
 
-            // NOTE: RpcAddCompany now includes sector
+            // Visuals + client-side add (kept for robustness)
             RpcAddCompany(key, record.baseCost, pawn.playerName.Value, tile.sector);
             RpcUpdateTileOwner(key, pawn.playerName.Value, pawn.colorIndex.Value);
+
+            // 🔸 Now broadcast the (correct) server snapshot which includes the row
             pawn.ServerBroadcastPortfolio();
+            // Optional nudge if panel is open
+            RpcRefreshLocalPortfolioUI();
+        }
+        else
+        {
+            // (Optional) if you ever allow buying an unowned existing record:
+            var rec = companies[key];
+            rec.owner      = pawn;
+            rec.ownerName  = pawn.playerName.Value;
+            rec.sector     = tile.sector;
+            rec.ownershipPercents.Clear();
+            rec.ownershipPercents[pawn] = 100;
+            tile.owner = pawn;
+
+            EnsurePortfolioEntry(pawn, key, 100);
+            RpcSyncOwnership(key, pawn.playerName.Value, 100);
+            RpcAddCompany(key, rec.baseCost, pawn.playerName.Value, tile.sector);
+            RpcUpdateTileOwner(key, pawn.playerName.Value, pawn.colorIndex.Value);
+
+            pawn.ServerBroadcastPortfolio();
+            RpcRefreshLocalPortfolioUI();
         }
     }
-
 
     [ObserversRpc]
     private void RpcAddCompany(string companyName, int baseCost, string ownerName, string sector) // CHANGED

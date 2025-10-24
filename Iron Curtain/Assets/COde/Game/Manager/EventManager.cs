@@ -46,6 +46,9 @@ public class EventManager : NetworkBehaviour
     private bool _tierAwaitingCloses = false;
     private readonly HashSet<int> _tierClosed = new();
 
+    private static string Norm(string s) => string.IsNullOrWhiteSpace(s) ? "" : s.Trim().ToLowerInvariant();
+
+
     // ================= UTILS =================
 
     [Server]
@@ -267,7 +270,7 @@ public class EventManager : NetworkBehaviour
         RpcUpdateNextMainEventUI(PeekNextMainEventName());
 
         string title = (e != null) ? e.eventName : $"Main Event — Round {round}";
-        string body = (e != null) ? e.description : "—";
+        string body  = (e != null) ? e.description : "—";
 
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
             TargetShowMainEvent(conn, title, body, true);
@@ -281,55 +284,45 @@ public class EventManager : NetworkBehaviour
             return;
         }
 
-        if (e.mode == EventMode.Simple)
+        // Apply global parts (sector surges etc.) without spawning a new popup
+        ApplyGlobalEventParts(e);
+
+        // Always gate the event by “Ready” when a main popup was shown
+        waitingForAcks = true;
+        playersReady   = 0;
+        requiredReady  = CountConnectedOwnedPlayers();
+
+        switch (e.mode)
         {
-            waitingForAcks = true;
-            playersReady = 0;
-            // FIX: count only owned/connected players
-            requiredReady = CountConnectedOwnedPlayers();
+            case EventMode.Simple:
+                ApplyEventToAll(e);
+                if (e.triggerRecession)
+                    StartCoroutine(CoRecession(Mathf.Max(1, e.recessionRounds)));
+                // CmdPlayerReady() will call ResumeAfterEvent() when everyone clicks Ready
+                break;
 
-            ApplyGlobalEventParts(e);
+            case EventMode.ForcedRollAgainstOwner:
+                DeferUntilAllReady(DeferredMode.ForcedRollAgainstOwner, e);
+                break;
 
-            if (e.mode == EventMode.Simple)
-            {
-                waitingForAcks = true;
-                playersReady = 0;
-                requiredReady = CountConnectedOwnedPlayers();
+            case EventMode.TargetSelect:
+                DeferUntilAllReady(DeferredMode.TargetSelect, e);
+                break;
 
-                ApplyEventToAll(e);                  
-                if (e.triggerRecession) StartCoroutine(CoRecession(Mathf.Max(1, e.recessionRounds)));
-            }
-            else
-            {
-                switch (e.mode)
-                {
-                    case EventMode.ForcedRollAgainstOwner:
-                        DeferUntilAllReady(DeferredMode.ForcedRollAgainstOwner, e);
-                        break;
+            case EventMode.ProposalBlock:
+                DeferUntilAllReady(DeferredMode.ProposalBlock, e);
+                break;
 
-                    case EventMode.TargetSelect:
-                        DeferUntilAllReady(DeferredMode.TargetSelect, e);
-                        break;
+            case EventMode.ForcedRollTier:
+                // After everyone clicks Ready, we’ll open the Tier UI
+                _pendingTierEvent = e;
+                _deferredMode = DeferredMode.None;
+                _deferredEvent = null;
+                break;
 
-                    case EventMode.ProposalBlock:
-                        DeferUntilAllReady(DeferredMode.ProposalBlock, e);
-                        break;
-
-                    case EventMode.ForcedRollTier:
-                        // Show main popup, then wait for ALL Ready, THEN open tier UI.
-                        waitingForAcks = true;
-                        playersReady = 0;
-                        requiredReady = CountConnectedOwnedPlayers();
-                        _pendingTierEvent = e;
-                        _deferredMode = DeferredMode.None;
-                        _deferredEvent = null;
-                        break;
-
-                    default:
-                        DeferUntilAllReady(DeferredMode.ApplyToAllThenResume, e);
-                        break;
-                }
-            }
+            default:
+                DeferUntilAllReady(DeferredMode.ApplyToAllThenResume, e);
+                break;
         }
     }
 
@@ -1463,7 +1456,8 @@ public class EventManager : NetworkBehaviour
     [Server]
     public float GetActiveSectorPriceMult(string sector)
     {
-        if (!string.IsNullOrWhiteSpace(sector) && _sectorSurges.TryGetValue(sector, out var s))
+        sector = Norm(sector);
+        if (!string.IsNullOrEmpty(sector) && _sectorSurges.TryGetValue(sector, out var s))
             if (CurRound() < s.expiresAtRound) return Mathf.Max(0.01f, s.priceMult);
         return 1f;
     }
@@ -1471,7 +1465,8 @@ public class EventManager : NetworkBehaviour
     [Server]
     public (bool active, float payoutMult, int expiresAt) GetActiveSectorPayoutAura(string sector)
     {
-        if (!string.IsNullOrWhiteSpace(sector) && _sectorSurges.TryGetValue(sector, out var s))
+        sector = Norm(sector);
+        if (!string.IsNullOrEmpty(sector) && _sectorSurges.TryGetValue(sector, out var s))
             if (CurRound() < s.expiresAtRound) return (true, s.payoutMult, s.expiresAtRound);
         return (false, 1f, 0);
     }
@@ -1479,33 +1474,32 @@ public class EventManager : NetworkBehaviour
     [Server]
     public void ActivateSectorSurge(string sector, float priceMult, float payoutMult, int durationRounds)
     {
-        if (string.IsNullOrWhiteSpace(sector)) return;
+        sector = Norm(sector);
+        if (string.IsNullOrEmpty(sector)) return;
 
-        // compose if already active (stacking behavior)
         if (_sectorSurges.TryGetValue(sector, out var cur))
         {
-            cur.priceMult *= Mathf.Max(0.01f, priceMult);
-            cur.payoutMult *= Mathf.Max(0f, payoutMult);
-            cur.expiresAtRound = Mathf.Max(cur.expiresAtRound, CurRound() + Mathf.Max(1, durationRounds));
+            cur.priceMult      *= Mathf.Max(0.01f, priceMult);
+            cur.payoutMult     *= Mathf.Max(0f,    payoutMult);
+            cur.expiresAtRound  = Mathf.Max(cur.expiresAtRound, CurRound() + Mathf.Max(1, durationRounds));
             _sectorSurges[sector] = cur;
         }
         else
         {
-            _sectorSurges[sector] = new SectorSurge
-            {
-                priceMult = Mathf.Max(0.01f, priceMult),
-                payoutMult = Mathf.Max(0f, payoutMult),
+            _sectorSurges[sector] = new SectorSurge {
+                priceMult      = Mathf.Max(0.01f, priceMult),
+                payoutMult     = Mathf.Max(0f,    payoutMult),
                 expiresAtRound = CurRound() + Mathf.Max(1, durationRounds)
             };
         }
 
-        // 1) Immediate bump existing companies’ currentPrice and payouts
+        // Immediate effects to existing companies (no extra popup)
         float deltaPct = (_sectorSurges[sector].priceMult - 1f) * 100f;
         foreach (var kv in MarketManager.Instance.companies)
         {
             var c = kv.Value;
             if (c == null) continue;
-            if (!string.Equals(c.sector, sector, System.StringComparison.OrdinalIgnoreCase)) continue;
+            if (Norm(c.sector) != sector) continue;
 
             if (Mathf.Abs(deltaPct) > 0.001f)
                 MarketManager.Instance.ServerBumpCompanyPrice(c.companyName, deltaPct);
@@ -1516,13 +1510,6 @@ public class EventManager : NetworkBehaviour
                     _sectorSurges[sector].payoutMult,
                     _sectorSurges[sector].expiresAtRound - CurRound());
         }
-
-        // Optional: announce
-        foreach (var conn in FishNet.InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(conn,
-                $"Sector Surge: {sector}",
-                $"• Prices x{_sectorSurges[sector].priceMult:0.##}\n• Payouts x{_sectorSurges[sector].payoutMult:0.##}\n• Ends round {_sectorSurges[sector].expiresAtRound}",
-                false);
     }
 
     [Server]
@@ -1534,13 +1521,11 @@ public class EventManager : NetworkBehaviour
     [Server]
     private void ApplyGlobalEventParts(GameEventSO e)
     {
-        if (e == null) return;
-        if (e.sectorImpacts == null) return;
-
+        if (e?.sectorImpacts == null) return;
         foreach (var s in e.sectorImpacts)
         {
             if (string.IsNullOrWhiteSpace(s.sector)) continue;
-            ActivateSectorSurge(s.sector, s.priceMult, s.payoutMult, s.durationRounds);
+            ActivateSectorSurge(Norm(s.sector), s.priceMult, s.payoutMult, s.durationRounds);
         }
     }
 }

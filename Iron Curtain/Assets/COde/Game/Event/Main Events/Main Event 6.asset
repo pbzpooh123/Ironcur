@@ -59,3 +59,8 @@ MonoBehaviour:
   affectAllPlayers: 1
   triggerRecession: 0
   recessionRounds: 3
+  sectorImpacts:
+  - sector: Steel
+    priceMult: 2
+    payoutMult: 2
+    durationRounds: 5
