@@ -637,7 +637,7 @@ GameObject:
   - component: {fileID: 48728678}
   - component: {fileID: 48728677}
   m_Layer: 5
-  m_Name: BG (1)
+  m_Name: BG Timeline
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -654,12 +654,13 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 3.9792202, y: 0.70301, z: 0.70301}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 2058663532}
   m_Father: {fileID: 1024428425}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -141, y: 418}
+  m_AnchoredPosition: {x: -89, y: 151}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &48728677
@@ -780,16 +781,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
-  companyName: 1
-  sector: Steel
+  tileType: 4
+  companyName: 
+  sector: 
   owner: {fileID: 0}
-  companyCost: 200
+  companyCost: 0
   baseFactoryIncome: 0
   taxFlat: 0
   taxPercent: 0
   bonusAmount: 100
-  jailSkipTurns: 2
+  jailSkipTurns: 0
   visuals: {fileID: 2048985258}
 --- !u!1 &69321817
 GameObject:
@@ -1269,7 +1270,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Banking II
-  sector: 
+  sector: Bank II
   owner: {fileID: 0}
   companyCost: 440
   baseFactoryIncome: 220
@@ -2392,8 +2393,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4278236671
+  m_fontColor: {r: 1, g: 0.70980394, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -2506,7 +2507,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Steel II
-  sector: 
+  sector: Steel ll
   owner: {fileID: 0}
   companyCost: 440
   baseFactoryIncome: 220
@@ -2978,7 +2979,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Transportation & Logistics
-  sector: 
+  sector: Logic
   owner: {fileID: 0}
   companyCost: 400
   baseFactoryIncome: 200
@@ -4136,16 +4137,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
-  companyName: 444
-  sector: Steel
+  tileType: 1
+  companyName: 
+  sector: 
   owner: {fileID: 0}
-  companyCost: 250
-  baseFactoryIncome: 44
+  companyCost: 0
+  baseFactoryIncome: 0
   taxFlat: 0
   taxPercent: 0
-  bonusAmount: 100
-  jailSkipTurns: 2
+  bonusAmount: 0
+  jailSkipTurns: 0
   visuals: {fileID: 1177376090}
 --- !u!1 &402207185
 GameObject:
@@ -5629,7 +5630,7 @@ GameObject:
   - component: {fileID: 597732750}
   - component: {fileID: 597732749}
   m_Layer: 5
-  m_Name: BG
+  m_Name: BG Round
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5644,14 +5645,14 @@ RectTransform:
   m_GameObject: {fileID: 597732747}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 11.558963, y: 1, z: 1}
+  m_LocalScale: {x: 8.440537, y: 0.88511, z: 0.88511}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1024428425}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -13, y: 489}
+  m_AnchoredPosition: {x: -35, y: 460}
   m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &597732749
@@ -7200,16 +7201,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
+  tileType: 1
   companyName: 1
-  sector: Steel
+  sector: 
   owner: {fileID: 0}
-  companyCost: 100
-  baseFactoryIncome: 50
+  companyCost: 0
+  baseFactoryIncome: 0
   taxFlat: 0
   taxPercent: 0
-  bonusAmount: 100
-  jailSkipTurns: 2
+  bonusAmount: 0
+  jailSkipTurns: 0
   visuals: {fileID: 2048985258}
 --- !u!1 &774712083
 GameObject:
@@ -7961,14 +7962,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Communication Company
-  sector: Steel
+  sector: Commu
   owner: {fileID: 0}
   companyCost: 320
   baseFactoryIncome: 160
   taxFlat: 0
   taxPercent: 0
-  bonusAmount: 100
-  jailSkipTurns: 2
+  bonusAmount: 0
+  jailSkipTurns: 0
   visuals: {fileID: 1177376090}
 --- !u!1 &847709261
 GameObject:
@@ -8150,7 +8151,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Weapon Manufacturing
-  sector: 
+  sector: Weapon
   owner: {fileID: 0}
   companyCost: 800
   baseFactoryIncome: 500
@@ -8876,7 +8877,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 0.493, g: 0.34894153, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -8893,10 +8894,10 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
-  m_fontSizeBase: 36
+  m_fontSize: 50
+  m_fontSizeBase: 50
   m_fontWeight: 400
-  m_enableAutoSizing: 1
+  m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
@@ -9264,7 +9265,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Technology R&D
-  sector: 
+  sector: Techo
   owner: {fileID: 0}
   companyCost: 600
   baseFactoryIncome: 200
@@ -10359,7 +10360,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Real Estate
-  sector: 
+  sector: Real Estate
   owner: {fileID: 0}
   companyCost: 440
   baseFactoryIncome: 220
@@ -10476,10 +10477,9 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 597732748}
+  - {fileID: 1451767783}
   - {fileID: 48728676}
   - {fileID: 348282390}
-  - {fileID: 1451767783}
-  - {fileID: 2058663532}
   - {fileID: 889631760}
   - {fileID: 2025619131}
   - {fileID: 1223464909}
@@ -10819,7 +10819,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Basic Electronics Production
-  sector: 
+  sector: Electo
   owner: {fileID: 0}
   companyCost: 360
   baseFactoryIncome: 180
@@ -13975,16 +13975,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
-  companyName: 25
-  sector: Steel
+  tileType: 1
+  companyName: 
+  sector: 
   owner: {fileID: 0}
-  companyCost: 300
-  baseFactoryIncome: 444
+  companyCost: 0
+  baseFactoryIncome: 0
   taxFlat: 0
   taxPercent: 0
-  bonusAmount: 100
-  jailSkipTurns: 2
+  bonusAmount: 0
+  jailSkipTurns: 0
   visuals: {fileID: 413554620}
 --- !u!1 &1367563964
 GameObject:
@@ -14607,8 +14607,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4278236415
+  m_fontColor: {r: 1, g: 0.70634925, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -14789,7 +14789,7 @@ GameObject:
   - component: {fileID: 1451767785}
   - component: {fileID: 1451767784}
   m_Layer: 5
-  m_Name: Text (TMP)
+  m_Name: Text Round
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -14802,16 +14802,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1451767782}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.8851101, y: 0.88511, z: 0.88511}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1024428425}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -203, y: 487}
+  m_AnchoredPosition: {x: -145.17085, y: 460.22974}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1451767784
@@ -14843,8 +14843,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4278190080
-  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
+    rgba: 4278212990
+  m_fontColor: {r: 0.49411765, g: 0.34901962, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -14897,7 +14897,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -221.65482, y: 0, z: -627.43726, w: 0}
+  m_margin: {x: -221.65482, y: 0, z: -476.6292, w: 0}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -15157,7 +15157,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Oil & Gas Production
-  sector: 
+  sector: Oil
   owner: {fileID: 0}
   companyCost: 500
   baseFactoryIncome: 250
@@ -16809,16 +16809,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
-  companyName: 12
-  sector: Steel
+  tileType: 1
+  companyName: 
+  sector: 
   owner: {fileID: 0}
-  companyCost: 122
+  companyCost: 0
   baseFactoryIncome: 0
   taxFlat: 0
   taxPercent: 0
-  bonusAmount: 100
-  jailSkipTurns: 2
+  bonusAmount: 0
+  jailSkipTurns: 0
   visuals: {fileID: 2048985258}
 --- !u!1 &1702722822
 GameObject:
@@ -17598,14 +17598,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Food & Beverage Production
-  sector: Steel
+  sector: Food
   owner: {fileID: 0}
   companyCost: 200
   baseFactoryIncome: 120
   taxFlat: 0
   taxPercent: 0
-  bonusAmount: 100
-  jailSkipTurns: 2
+  bonusAmount: 0
+  jailSkipTurns: 0
   visuals: {fileID: 413554620}
 --- !u!1 &1837240889
 GameObject:
@@ -17977,8 +17977,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4281479730
-  m_fontColor: {r: 0.19607843, g: 0.19607843, b: 0.19607843, a: 1}
+    rgba: 4278236671
+  m_fontColor: {r: 1, g: 0.70980394, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -18830,7 +18830,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tileType: 2
   companyName: Banking & Finance
-  sector: 
+  sector: Bank
   owner: {fileID: 0}
   companyCost: 560
   baseFactoryIncome: 280
@@ -19431,7 +19431,7 @@ GameObject:
   - component: {fileID: 2058663531}
   - component: {fileID: 2058663530}
   m_Layer: 5
-  m_Name: Text (TMP) (1)
+  m_Name: Text Timeline
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -19467,7 +19467,7 @@ MonoBehaviour:
   m_fontColor32:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColor: {r: 0.49411765, g: 0.34901962, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -19541,17 +19541,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2058663529}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.25130552, y: 1.4224548, z: 1.4224548}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1024428425}
+  m_Father: {fileID: 48728676}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -219, y: 412}
-  m_SizeDelta: {x: 200, y: 50}
+  m_AnchoredPosition: {x: -15.580948, y: -9.957123}
+  m_SizeDelta: {x: 200, y: 46.897}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &2062596617
 GameObject:
@@ -19731,16 +19731,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d983f63e27932404785ad8284218dd62, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  tileType: 2
-  companyName: 100
-  sector: Steel
+  tileType: 1
+  companyName: 
+  sector: 
   owner: {fileID: 0}
-  companyCost: 250
-  baseFactoryIncome: 44
+  companyCost: 0
+  baseFactoryIncome: 0
   taxFlat: 0
   taxPercent: 0
-  bonusAmount: 100
-  jailSkipTurns: 2
+  bonusAmount: 0
+  jailSkipTurns: 0
   visuals: {fileID: 413554620}
 --- !u!1 &2070655659
 GameObject:

@@ -26,7 +26,7 @@ public class DiceUI : MonoBehaviour
 
     private IEnumerator AnimateDiceWithCallback(int final1, int final2, System.Action onComplete)
     {
-        float rollTime = 0.2f;
+        float rollTime = 0.1f;
         float t = 0f;
 
         while (t < rollTime)
