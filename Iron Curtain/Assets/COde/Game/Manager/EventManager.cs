@@ -12,6 +12,7 @@ public class EventManager : NetworkBehaviour
     private int playersReady = 0;
     private int requiredReady = 0;
     private bool waitingForAcks = false;
+    private readonly HashSet<int> _readyCids = new();   // NEW: de-dupe Ready clicks
 
     private enum ResumeContext { None, Tile, Main }
     private ResumeContext _resume = ResumeContext.None;
@@ -20,10 +21,6 @@ public class EventManager : NetworkBehaviour
     [Header("Event Databases")]
     public List<GameEventSO> tileEvents = new();
     public List<GameEventSO> mainEvents = new();
-
-    private bool _compFixedPayoutMode = false;
-    private int _compWinnerPayout = 0;
-    private int _compOtherPayout = 0;
 
     private bool _bankOddFineActive = false;
     private string _bankCompanyName = "Bank";
@@ -48,8 +45,22 @@ public class EventManager : NetworkBehaviour
 
     private static string Norm(string s) => string.IsNullOrWhiteSpace(s) ? "" : s.Trim().ToLowerInvariant();
 
+    /* ================= LIFECYCLE HOOKS ================= */
 
-    // ================= UTILS =================
+    public override void OnStartServer()
+    {
+        base.OnStartServer();
+        ServerSelectTimelineAndAnnounce();
+    }
+
+    public override void OnStartClient()
+    {
+        base.OnStartClient();
+        if (!IsServerInitialized)
+            CmdRequestSeed(); 
+    }
+
+    /* ================= UTILS ================= */
 
     [Server]
     private int CountConnectedOwnedPlayers()
@@ -65,7 +76,7 @@ public class EventManager : NetworkBehaviour
     }
 
     /* ================= TIMELINE HELPERS ================= */
-    
+
     private List<GameEventSO> _mainEventDeck = new();
     private int _deckTimelineIndex = -1;
 
@@ -103,7 +114,6 @@ public class EventManager : NetworkBehaviour
     [Server]
     private GameEventSO DrawMainEventNoRepeat()
     {
-        // If deck not built or timeline changed, rebuild.
         if (_mainEventDeck.Count == 0 ||
             (_deckTimelineIndex != _currentTimelineIndex && _deckTimelineIndex >= 0))
             BuildEventDeck();
@@ -144,7 +154,7 @@ public class EventManager : NetworkBehaviour
         return DrawMainEventNoRepeat();
     }
 
-    /* ================= TILE EVENTS (NOT TIMELINE-BOUND) ================= */
+    /* ================= TILE EVENTS ================= */
 
     [Server]
     public void TriggerTileEvent(PlayerPawn pawn)
@@ -180,20 +190,16 @@ public class EventManager : NetworkBehaviour
         else if (e.eventName == "Your Business Gains Media Attention!")
         {
             TurnManager.Instance.ServerBeginTileAction(pawn);
-
             _resume = ResumeContext.Tile;
             _resumeTilePawn = pawn;
-
             StartMediaAttentionAllRoll(winPayout: 1000, otherPayout: 100);
             return;
         }
         else if (e.eventName == "Your Business Is Hit by a Cyber Attack!")
         {
             TurnManager.Instance.ServerBeginTileAction(pawn);
-
             _resume = ResumeContext.Tile;
             _resumeTilePawn = pawn;
-
             StartCyberAttackTargetSelect(chooser, 0.10f);
             return;
         }
@@ -210,14 +216,16 @@ public class EventManager : NetworkBehaviour
     private PlayerPawn _tileFlowPawn;
     private int _tileStepOpenCount = 0;
 
-    [Server] private void BeginTileFlow(PlayerPawn pawn)
+    [Server]
+    private void BeginTileFlow(PlayerPawn pawn)
     {
         _tileFlowPawn = pawn;
         _tileStepOpenCount = 0;
         TurnManager.Instance.ServerBeginTileAction(pawn);
     }
 
-    [Server] private void ShowStep(PlayerPawn pawn, string msg)
+    [Server]
+    private void ShowStep(PlayerPawn pawn, string msg)
     {
         _tileStepOpenCount++;
         if (pawn?.Owner != null)
@@ -267,11 +275,12 @@ public class EventManager : NetworkBehaviour
         SelectTimelineIfNeeded();
 
         GameEventSO e = PickMainEventFromTimeline();
-        var (n, h) = PeekNextMainEventInfo(); 
+
+        var (n, h) = PeekNextMainEventInfo();
         RpcUpdateNextMainEventUI(n, h);
 
         string title = (e != null) ? e.eventName : $"Main Event — Round {round}";
-        string body  = (e != null) ? e.description : "—";
+        string body = (e != null) ? e.description : "—";
 
         foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
             TargetShowMainEvent(conn, title, body, true);
@@ -288,10 +297,11 @@ public class EventManager : NetworkBehaviour
         // Apply global parts (sector surges etc.) without spawning a new popup
         ApplyGlobalEventParts(e);
 
-        // Always gate the event by “Ready” when a main popup was shown
+        // Gate by “Ready”
         waitingForAcks = true;
-        playersReady   = 0;
-        requiredReady  = CountConnectedOwnedPlayers();
+        _readyCids.Clear();                        // NEW
+        playersReady = 0;
+        requiredReady = CountConnectedOwnedPlayers();
 
         switch (e.mode)
         {
@@ -299,7 +309,6 @@ public class EventManager : NetworkBehaviour
                 ApplyEventToAll(e);
                 if (e.triggerRecession)
                     StartCoroutine(CoRecession(Mathf.Max(1, e.recessionRounds)));
-                // CmdPlayerReady() will call ResumeAfterEvent() when everyone clicks Ready
                 break;
 
             case EventMode.ForcedRollAgainstOwner:
@@ -315,7 +324,6 @@ public class EventManager : NetworkBehaviour
                 break;
 
             case EventMode.ForcedRollTier:
-                // After everyone clicks Ready, we’ll open the Tier UI
                 _pendingTierEvent = e;
                 _deferredMode = DeferredMode.None;
                 _deferredEvent = null;
@@ -330,8 +338,8 @@ public class EventManager : NetworkBehaviour
     private void DeferUntilAllReady(DeferredMode mode, GameEventSO e)
     {
         waitingForAcks = true;
+        _readyCids.Clear();                        // NEW
         playersReady = 0;
-        // FIX: count only owned/connected players
         requiredReady = CountConnectedOwnedPlayers();
         _deferredMode = mode;
         _deferredEvent = e;
@@ -339,7 +347,6 @@ public class EventManager : NetworkBehaviour
     }
 
     private enum DeferredMode { None, ForcedRollAgainstOwner, Competition, TargetSelect, ProposalBlock, ApplyToAllThenResume }
-
     private DeferredMode _deferredMode = DeferredMode.None;
     private GameEventSO _deferredEvent = null;
 
@@ -356,20 +363,18 @@ public class EventManager : NetworkBehaviour
     private void TargetShowSideEvent(NetworkConnection conn, string message, bool pauseAll)
     {
         if (EventUI.Instance != null)
-        {
             EventUI.Instance.SideeventShow(message, pauseAll);
-        }
     }
 
     [ServerRpc(RequireOwnership = false)]
     public void CmdPlayerReady(NetworkConnection conn = null)
     {
-        if (!waitingForAcks) return;
+        if (!waitingForAcks || conn == null) return;
+        if (_readyCids.Contains(conn.ClientId)) return;  // NEW: de-dupe
+        _readyCids.Add(conn.ClientId);
 
-        // helpful log
-        Debug.Log($"[EventManager] CmdPlayerReady from cid={conn?.ClientId}  -> {playersReady + 1}/{requiredReady}");
-
-        playersReady++;
+        playersReady = _readyCids.Count;
+        Debug.Log($"[EventManager] Ready from cid={conn.ClientId} -> {playersReady}/{requiredReady}");
 
         if (playersReady >= requiredReady)
         {
@@ -392,23 +397,13 @@ public class EventManager : NetworkBehaviour
 
                 switch (mode)
                 {
-                    case DeferredMode.ForcedRollAgainstOwner:
-                        StartForcedRollAgainstOwner(e);
-                        return;
-                    case DeferredMode.TargetSelect:
-                        StartTargetSelect(e);
-                        return;
-                    case DeferredMode.ProposalBlock:
-                        EnableProposalBlockForRounds(Mathf.Max(1, e.blockProposalRounds));
-                        ResumeAfterEvent();
-                        return;
-                    case DeferredMode.ApplyToAllThenResume:
-                        ApplyEventToAll(e);
-                        ResumeAfterEvent();
-                        return;
+                    case DeferredMode.ForcedRollAgainstOwner: StartForcedRollAgainstOwner(e); return;
+                    case DeferredMode.TargetSelect: StartTargetSelect(e); return;
+                    case DeferredMode.ProposalBlock: EnableProposalBlockForRounds(Mathf.Max(1, e.blockProposalRounds)); ResumeAfterEvent(); return;
+                    case DeferredMode.ApplyToAllThenResume: ApplyEventToAll(e); ResumeAfterEvent(); return;
                 }
             }
-            
+
             ResumeAfterEvent();
         }
     }
@@ -435,7 +430,7 @@ public class EventManager : NetworkBehaviour
         _resumeTilePawn = null;
     }
 
-    /* ================= SIMPLE EFFECTS ================= */
+    /* ================= APPLY EFFECTS ================= */
 
     [Server]
     private void ApplyEventToAll(GameEventSO e)
@@ -455,8 +450,8 @@ public class EventManager : NetworkBehaviour
         foreach (var effect in e.effects)
         {
             int totalMoney = effect.moneyDelta;
-                totalMoney += Random.Range(effect.randomMoneyMin, effect.randomMoneyMax + 1);
-                pawn.AddMoney(totalMoney);
+            totalMoney += Random.Range(effect.randomMoneyMin, effect.randomMoneyMax + 1);
+            pawn.AddMoney(totalMoney);
 
             if (effect.skipTurn)
                 TurnManager.Instance.MarkSkipTurn(pawn, Mathf.Max(1, effect.duration));
@@ -464,26 +459,27 @@ public class EventManager : NetworkBehaviour
             if (effect.grantExtraRoll)
                 extraRollGranted = true;
 
+            // Pay per company owned (with optional sector filter or majority only)
             if (effect.payPerCompany > 0)
-                {
-                    int ownedCount = MarketManager.Instance.ServerCountCompaniesOwnedBy(
-                        pawn,
-                        effect.sectorFilter,
-                        effect.onlyMajority
-                    );
+            {
+                int ownedCount = MarketManager.Instance.ServerCountCompaniesOwnedBy(
+                    pawn,
+                    effect.sectorFilter,
+                    effect.onlyMajority
+                );
 
-                    int totalFine = ownedCount * effect.payPerCompany;
-                    if (totalFine > 0)
-                    {
-                        int pay = Mathf.Min(totalFine, pawn.money.Value);
+                int totalFine = ownedCount * effect.payPerCompany;
+                if (totalFine > 0)
+                {
+                    int pay = Mathf.Min(totalFine, pawn.money.Value);
                     if (pay > 0) pawn.TrySpendMoney(pay);
-                        
-                        foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
-                            TargetShowSideEvent(c,
-                                $"{pawn.playerName.Value} pays ${pay}M ({effect.payPerCompany}×{ownedCount} company/companies).",
-                                false);
-                    }
+
+                    foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
+                        TargetShowSideEvent(c,
+                            $"{pawn.playerName.Value} pays ${pay}M ({effect.payPerCompany}×{ownedCount} company/companies).",
+                            false);
                 }
+            }
 
             switch (effect.targetType)
             {
@@ -527,13 +523,10 @@ public class EventManager : NetworkBehaviour
         }
 
         if (extraRollGranted)
-        {
             TurnManager.Instance.QueueExtraRoll(pawn, 1);
-            Debug.Log($"[Event] {pawn.playerName.Value} gains an extra roll!");
-        }
     }
 
-    /* ================= SPECIAL MODES ================= */
+    /* ================= SPECIAL MODES (subset kept) ================= */
 
     [Server]
     private void StartForcedRollAgainstOwner(GameEventSO e)
@@ -617,6 +610,481 @@ public class EventManager : NetworkBehaviour
         string summary = sb.ToString();
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
             TargetShowMainEvent(c, summary, "", false);
+
+        ResumeAfterEvent();
+    }
+
+    /* ================= MEDIA / TIER (unchanged portions omitted for brevity) ================= */
+    // ... keep your existing Media and Tier grid UI code here ...
+
+    /* ================= BANK ODD FINE HOOK ================= */
+
+    [Server]
+    public void OnServerPlayerRolled(PlayerPawn roller, int roll)
+    {
+        if (!_bankOddFineActive || roller == null) return;
+        if ((roll % 2) == 0) return;
+
+        if (MarketManager.Instance.TryGetMajorityOwner(_bankCompanyName, out var bankOwner))
+        {
+            if (bankOwner != null && bankOwner != roller)
+            {
+                int pay = Mathf.Min(_bankOddFineAmount, roller.money.Value);
+                if (pay > 0)
+                {
+                    roller.TrySpendMoney(pay);
+                    bankOwner.AddMoney(pay);
+                }
+
+                foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
+                    TargetShowMainEvent(conn,
+                        $"Odd Roll Fine: {roller.playerName.Value} pays ${pay}M to {bankOwner.playerName.Value}.", "",
+                        false);
+            }
+        }
+    }
+
+    /* ================= TIMELINE UI SYNC ================= */
+
+    private string _timelineName = "—";
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcSetTimelineName(string tl)
+    {
+        _timelineName = string.IsNullOrWhiteSpace(tl) ? "—" : tl;
+        TimelineUI.Instance?.SetTimeline(_timelineName);
+    }
+
+    [Server]
+    public void ServerSelectTimelineAndAnnounce()
+    {
+        SelectTimelineIfNeeded();
+        var tl = GetCurrentTimeline();
+        string name = tl?.timelineName ?? "Classic";
+        RpcSetTimelineName(name);
+
+        var (n, h) = PeekNextMainEventInfo();
+        RpcUpdateNextMainEventUI(n, h);
+    }
+
+    /* Late-join seed: client asks for state and server replies directly */
+    [ServerRpc(RequireOwnership = false)]
+    private void CmdRequestSeed(NetworkConnection conn = null)
+    {
+        if (conn == null) return;
+        var (nextName, nextHistory) = PeekNextMainEventInfo();
+        TargetSeedState(conn, _timelineName, nextName, nextHistory);
+    }
+
+    [TargetRpc]
+    private void TargetSeedState(NetworkConnection conn, string timeline, string nextName, string nextHistory)
+    {
+        TimelineUI.Instance?.SetTimeline(string.IsNullOrWhiteSpace(timeline) ? "—" : timeline);
+        TurnUI.Instance?.SetNextMainEvent(nextName, nextHistory);
+    }
+
+    [Server]
+    private IEnumerator CoRecession(int rounds)
+    {
+        MarketManager.Instance.ServerSetGlobalTrend(-2f);
+        MarketManager.Instance.ServerBoostAllPayouts(0.8f, rounds);
+        int end = TurnManager.Instance.roundCount.Value + rounds;
+        while (TurnManager.Instance.roundCount.Value < end) yield return null;
+        MarketManager.Instance.ServerSetGlobalTrend(0f);
+    }
+
+    [Server]
+    private (string name, string history) PeekNextMainEventInfo()
+    {
+        if (_mainEventDeck.Count == 0 ||
+            (_deckTimelineIndex != _currentTimelineIndex && _deckTimelineIndex >= 0))
+            BuildEventDeck();
+
+        if (_mainEventDeck.Count == 0) return ("—", "");
+
+        var next = _mainEventDeck[0];
+        if (next == null) return ("—", "");
+
+        var name = string.IsNullOrWhiteSpace(next.eventName) ? "—" : next.eventName;
+        var history = !string.IsNullOrWhiteSpace(next.history)
+                        ? next.history
+                        : (next.description ?? "");
+
+        return (name, history);
+    }
+
+    [Server]
+    public string PeekNextMainEventName()
+    {
+        var (name, _) = PeekNextMainEventInfo();
+        return name;
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcUpdateNextMainEventUI(string nextName, string nextHistory)
+    {
+        TurnUI.Instance.SetNextMainEvent(nextName, nextHistory);
+    }
+
+    /* ================= SURGES ================= */
+
+    private struct SectorSurge
+    {
+        public float priceMult;      // affects buy cost & immediate price bump
+        public float payoutMult;     // company-level payout multiplier
+        public int expiresAtRound; // absolute round number
+    }
+    private readonly Dictionary<string, SectorSurge> _sectorSurges = new();
+
+    private int CurRound() => TurnManager.Instance?.roundCount.Value ?? 1;
+
+    [Server]
+    private void PruneSectorSurges()
+    {
+        int now = CurRound();
+        var rm = new List<string>();
+        foreach (var kv in _sectorSurges)
+            if (now >= kv.Value.expiresAtRound) rm.Add(kv.Key);
+        foreach (var s in rm) _sectorSurges.Remove(s);
+    }
+
+    [Server]
+    public float GetActiveSectorPriceMult(string sector)
+    {
+        sector = Norm(sector);
+        if (!string.IsNullOrEmpty(sector) && _sectorSurges.TryGetValue(sector, out var s))
+            if (CurRound() < s.expiresAtRound) return Mathf.Max(0.01f, s.priceMult);
+        return 1f;
+    }
+
+    [Server]
+    public (bool active, float payoutMult, int expiresAt) GetActiveSectorPayoutAura(string sector)
+    {
+        sector = Norm(sector);
+        if (!string.IsNullOrEmpty(sector) && _sectorSurges.TryGetValue(sector, out var s))
+            if (CurRound() < s.expiresAtRound) return (true, s.payoutMult, s.expiresAtRound);
+        return (false, 1f, 0);
+    }
+
+    [Server]
+    public void ActivateSectorSurge(string sector, float priceMult, float payoutMult, int durationRounds)
+    {
+        sector = Norm(sector);
+        if (string.IsNullOrEmpty(sector)) return;
+
+        if (_sectorSurges.TryGetValue(sector, out var cur))
+        {
+            cur.priceMult *= Mathf.Max(0.01f, priceMult);
+            cur.payoutMult *= Mathf.Max(0f, payoutMult);
+            cur.expiresAtRound = Mathf.Max(cur.expiresAtRound, CurRound() + Mathf.Max(1, durationRounds));
+            _sectorSurges[sector] = cur;
+        }
+        else
+        {
+            _sectorSurges[sector] = new SectorSurge
+            {
+                priceMult = Mathf.Max(0.01f, priceMult),
+                payoutMult = Mathf.Max(0f, payoutMult),
+                expiresAtRound = CurRound() + Mathf.Max(1, durationRounds)
+            };
+        }
+
+        // Immediate effects to existing companies (no extra popup)
+        float deltaPct = (_sectorSurges[sector].priceMult - 1f) * 100f;
+        foreach (var kv in MarketManager.Instance.companies)
+        {
+            var c = kv.Value;
+            if (c == null) continue;
+            if (Norm(c.sector) != sector) continue;
+
+            if (Mathf.Abs(deltaPct) > 0.001f)
+                MarketManager.Instance.ServerBumpCompanyPrice(c.companyName, deltaPct);
+
+            if (!Mathf.Approximately(_sectorSurges[sector].payoutMult, 1f))
+                MarketManager.Instance.ServerBoostCompanyPayouts(
+                    c.companyName,
+                    _sectorSurges[sector].payoutMult,
+                    _sectorSurges[sector].expiresAtRound - CurRound());
+        }
+    }
+
+    [Server]
+    public void ServerPruneSectorSurges() => PruneSectorSurges();
+
+    [Server]
+    private void ApplyGlobalEventParts(GameEventSO e)
+    {
+        if (e?.sectorImpacts == null) return;
+        foreach (var s in e.sectorImpacts)
+        {
+            if (string.IsNullOrWhiteSpace(s.sector)) continue;
+            ActivateSectorSurge(Norm(s.sector), s.priceMult, s.payoutMult, s.durationRounds);
+        }
+    }
+
+    /* ================= MATCH END HOOK ================= */
+
+    [Server]
+    public void OnMatchEnded()
+    {
+        waitingForAcks = false;
+        playersReady = 0;
+        requiredReady = 0;
+        _readyCids.Clear();
+
+        _resume = ResumeContext.None;
+        _resumeTilePawn = null;
+
+        _bankOddFineActive = false;
+        _bankOddFineExpiresAtRound = -1;
+
+        _currentTimelineIndex = -1;
+
+        _tierActive = false;
+        _tierAwaitingCloses = false;
+        _tierClosed.Clear();
+        _pendingTierEvent = null;
+        _mainEventDeck.Clear();
+        _deckTimelineIndex = -1;
+
+        RpcCloseEventUIs();
+        RpcSetTimelineName("—");
+        RpcUpdateNextMainEventUI("—", "");
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcCloseEventUIs()
+    {
+        if (EventUI.Instance != null)
+            EventUI.Instance.gameObject.SetActive(false);
+
+        if (TargetSelectUI.Instance != null)
+            TargetSelectUI.Instance.gameObject.SetActive(false);
+
+        ForcedRollTierUI.Instance?.Hide();
+    }
+
+    // --- Proposal block state ---
+    private int _proposalBlockExpiresAtRound = -1;
+
+    public bool IsProposalBlockedNow()
+    {
+        var tm = TurnManager.Instance;
+        if (tm == null) return false;
+        return (_proposalBlockExpiresAtRound >= 0 &&
+                tm.roundCount.Value <= _proposalBlockExpiresAtRound);
+    }
+
+    [Server]
+    private void EnableProposalBlockForRounds(int rounds)
+    {
+        var tm = TurnManager.Instance;
+        if (tm == null) return;
+        int cur = Mathf.Max(1, tm.roundCount.Value);
+        int newExpiry = cur + Mathf.Max(1, rounds) - 1; // inclusive
+        _proposalBlockExpiresAtRound = Mathf.Max(_proposalBlockExpiresAtRound, newExpiry);
+
+        foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
+            TargetShowMainEvent(c, $"Proposals disabled for {rounds} round(s).", "", false);
+    }
+    /* ================= FORCED ROLL TIER ================= */
+
+    [Server]
+    private void StartForcedRollTier(GameEventSO e)
+    {
+        _tierActive = true;
+        _tierAwaitingCloses = false;
+        _tierClosed.Clear();
+        _tierParticipants.Clear();
+        _tierRolls.Clear();
+
+        _tierLowMax = Mathf.Clamp(e.lowMax, 1, 5);
+        _tierHighMin = Mathf.Clamp(e.highMin, 2, 6);
+        _tierPay = Mathf.Max(0, e.lowPayAmount);
+        _tierGain = Mathf.Max(0, e.highGainAmount);
+
+        var list = new List<PlayerPawn>();
+        if (e.affectAllPlayers || TurnManager.Instance?.GetCurrentPawn() == null)
+            list.AddRange(GameManager.Instance.Players);
+        else
+            list.Add(TurnManager.Instance.GetCurrentPawn());
+
+        var ids = new List<int>();
+        var names = new List<string>();
+        foreach (var p in list)
+        {
+            if (p?.Owner == null) continue;
+            ids.Add(p.Owner.ClientId);
+            names.Add(p.playerName.Value);
+            _tierParticipants.Add(p.Owner.ClientId);
+        }
+
+        string header = $"{e.eventName}\n1–{_tierLowMax}: pay ${_tierPay} • {_tierHighMin}–6: +${_tierGain} • else: no change";
+
+        // FIX: pass isMedia = false (do NOT force Media mode for Tier)
+        foreach (var kv in InstanceFinder.ServerManager.Clients)
+            TargetShowForcedRollTier(kv.Value, header, ids.ToArray(), names.ToArray(), kv.Key, false);
+    }
+
+    // Overload that lets us force the roll mode per-client when showing Tier vs Media
+    [TargetRpc]
+    private void TargetShowForcedRollTier(NetworkConnection conn, string header, int[] cids, string[] names, int localCid, bool isMedia)
+    {
+        ForcedRollTierUI.CurrentRollMode = isMedia
+            ? ForcedRollTierUI.RollMode.Media
+            : ForcedRollTierUI.RollMode.Tier;
+
+        var map = new Dictionary<int, string>();
+        for (int i = 0; i < cids.Length; i++)
+            map[cids[i]] = (i < names.Length ? names[i] : ("P" + cids[i]));
+
+        ForcedRollTierUI.Instance?.Show(header, new List<int>(cids), map, localCid);
+    }
+
+    [TargetRpc]
+    private void TargetTierRolling(NetworkConnection conn, int cid)
+    {
+        ForcedRollTierUI.Instance?.SetRolling(cid);
+    }
+
+    [TargetRpc]
+    private void TargetTierRolled(NetworkConnection conn, int cid, int roll, string outcome)
+    {
+        ForcedRollTierUI.Instance?.SetRolled(cid, roll, outcome);
+    }
+
+    [ObserversRpc]
+    private void RpcCloseForcedRollTier()
+    {
+        ForcedRollTierUI.Instance?.Hide();
+    }
+
+    [TargetRpc]
+    private void TargetTierEnableClose(NetworkConnection conn)
+    {
+        ForcedRollTierUI.Instance?.EnableCloseForLocal();
+    }
+
+    [Server]
+    private void ResolveForcedRollTier()
+    {
+        _tierActive = false;
+
+        _tierAwaitingCloses = true;
+        _tierClosed.Clear();
+
+        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
+            TargetTierEnableClose(c);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdTierClientClosed(NetworkConnection conn = null)
+    {
+        if (conn == null || !_tierAwaitingCloses) return;
+
+        int cid = conn.ClientId;
+        if (!_tierParticipants.Contains(cid)) return;
+        if (_tierClosed.Contains(cid)) return;
+
+        _tierClosed.Add(cid);
+        BroadcastTierCloseStatus(_tierClosed.Count, _tierParticipants.Count);
+
+        if (_tierClosed.Count >= _tierParticipants.Count)
+        {
+            RpcCloseForcedRollTier();
+            _tierAwaitingCloses = false;
+            ResumeAfterEvent();
+        }
+    }
+
+    [Server]
+    private void BroadcastTierCloseStatus(int have, int total)
+    {
+        RpcUpdateTierCloseStatus(have, total);
+    }
+
+    [ObserversRpc]
+    private void RpcUpdateTierCloseStatus(int have, int total)
+    {
+        ForcedRollTierUI.Instance?.UpdateCloseStatus(have, total);
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdRequestTierRoll(NetworkConnection conn = null)
+    {
+        if (!_tierActive || conn == null) return;
+
+        int cid = conn.ClientId;
+        if (!_tierParticipants.Contains(cid)) return;
+        if (_tierRolls.ContainsKey(cid)) return;
+
+        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
+            TargetTierRolling(c, cid);
+
+        int roll = UnityEngine.Random.Range(1, 7);
+        _tierRolls[cid] = roll;
+
+        var pawn = conn.FirstObject?.GetComponent<PlayerPawn>();
+        string outcome;
+
+        if (pawn != null)
+        {
+            if (roll <= _tierLowMax)
+            {
+                int pay = Mathf.Min(_tierPay, pawn.money.Value);
+                if (pay > 0) pawn.TrySpendMoney(pay);
+                MarketManager.Instance.ServerNerfAllCompaniesOwnedBy(
+                    pawn,
+                    priceDeltaPercent: -20,     // negative is allowed (e.g., -15%)
+                    payoutMultiplier: 0.5f,      // < 1f means nerf payouts
+                    durationRounds: 2
+                );
+                outcome = $"-${pay}";
+            }
+            else if (roll >= _tierHighMin)
+            {
+                pawn.AddMoney(_tierGain);
+                MarketManager.Instance.ServerBoostAllCompaniesOwnedBy(
+                    pawn,
+                    priceDeltaPercent: 20,     // e.g., +20%
+                    payoutMultiplier: 2f,      // > 1f means boost payouts
+                    durationRounds: 2
+                );
+                outcome = $"+${_tierGain}";
+            }
+            else
+            {
+                outcome = "no change";
+            }
+        }
+        else
+        {
+            outcome = "no change";
+        }
+
+        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
+            TargetTierRolled(c, cid, roll, outcome);
+
+        if (_tierRolls.Count >= _tierParticipants.Count)
+            ResolveForcedRollTier();
+    }
+
+    private IEnumerator CoBenefactorDonationTile(PlayerPawn receiver, int amountEach)
+    {
+        yield return null;
+        foreach (var p in GameManager.Instance.Players)
+        {
+            if (p == null || p == receiver) continue;
+            int pay = Mathf.Min(amountEach, p.money.Value);
+            if (pay > 0)
+            {
+                p.TrySpendMoney(pay);
+                receiver.AddMoney(pay);
+            }
+        }
+
+        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
+            TargetShowSideEvent(receiver.Owner, $"Benefactor Donation: Others paid you up to ${amountEach}M each.", false);
 
         ResumeAfterEvent();
     }
@@ -1044,52 +1512,6 @@ public class EventManager : NetworkBehaviour
         }
     }
 
-    private IEnumerator CoBenefactorDonationTile(PlayerPawn receiver, int amountEach)
-    {
-        yield return null;
-        foreach (var p in GameManager.Instance.Players)
-        {
-            if (p == null || p == receiver) continue;
-            int pay = Mathf.Min(amountEach, p.money.Value);
-            if (pay > 0)
-            {
-                p.TrySpendMoney(pay);
-                receiver.AddMoney(pay);
-            }
-        }
-
-        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowSideEvent(receiver.Owner, $"Benefactor Donation: Others paid you up to ${amountEach}M each.", false);
-
-        ResumeAfterEvent();
-    }
-
-    [Server]
-    private void StartBenefactorDonationMain(PlayerPawn receiver, int amountEach)
-    {
-        if (receiver == null)
-        {
-            ResumeAfterEvent();
-            return;
-        }
-
-        foreach (var p in GameManager.Instance.Players)
-        {
-            if (p == null || p == receiver) continue;
-            int pay = Mathf.Min(amountEach, p.money.Value);
-            if (pay > 0)
-            {
-                p.TrySpendMoney(pay);
-                receiver.AddMoney(pay);
-            }
-        }
-
-        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(c, $"Benefactor Donation: Everyone paid ${amountEach}M to {receiver.playerName.Value}.", "", false);
-
-        ResumeAfterEvent();
-    }
-
     [Server]
     private void EnableBankOddFine(string companyName, int amount, int duration)
     {
@@ -1116,452 +1538,6 @@ public class EventManager : NetworkBehaviour
             _bankOddFineActive = false;
             foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
                 TargetShowMainEvent(conn, $"Odd Roll Fine EXPIRED.", "", false);
-        }
-    }
-
-    // ======== MATCH END HOOK ========
-    [Server]
-    public void OnMatchEnded()
-    {
-        waitingForAcks = false;
-        playersReady = 0;
-        requiredReady = 0;
-
-        _resume = ResumeContext.None;
-        _resumeTilePawn = null;
-
-        _compEvent = null;
-        _compParticipants.Clear();
-        _compRolls.Clear();
-        _compPot = 0;
-        _compFixedPayoutMode = false;
-        _compWinnerPayout = 0;
-        _compOtherPayout = 0;
-
-        _tsEvent = null;
-        _tsChooser = null;
-        _tsCyberAttackMode = false;
-        _tsRansomRate = 0f;
-
-        _bankOddFineActive = false;
-        _bankOddFineExpiresAtRound = -1;
-
-        _currentTimelineIndex = -1;
-
-        _tierActive = false;
-        _tierAwaitingCloses = false;
-        _tierClosed.Clear();
-        _pendingTierEvent = null;
-        _mainEventDeck.Clear();
-        _deckTimelineIndex = -1;
-
-        RpcCloseEventUIs();
-        RpcSetTimelineName("—");
-    }
-
-    [ObserversRpc(BufferLast = true)]
-    private void RpcCloseEventUIs()
-    {
-        if (EventUI.Instance != null)
-            EventUI.Instance.gameObject.SetActive(false);
-
-        if (TargetSelectUI.Instance != null)
-            TargetSelectUI.Instance.gameObject.SetActive(false);
-
-        ForcedRollTierUI.Instance?.Hide();
-    }
-
-    // --- Proposal block state ---
-    private int _proposalBlockExpiresAtRound = -1;
-
-    public bool IsProposalBlockedNow()
-    {
-        var tm = TurnManager.Instance;
-        if (tm == null) return false;
-        return (_proposalBlockExpiresAtRound >= 0 &&
-                tm.roundCount.Value <= _proposalBlockExpiresAtRound);
-    }
-
-    [Server]
-    private void EnableProposalBlockForRounds(int rounds)
-    {
-        var tm = TurnManager.Instance;
-        if (tm == null) return;
-        int cur = Mathf.Max(1, tm.roundCount.Value);
-        int newExpiry = cur + Mathf.Max(1, rounds) - 1; // inclusive
-        _proposalBlockExpiresAtRound = Mathf.Max(_proposalBlockExpiresAtRound, newExpiry);
-
-        foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
-            TargetShowMainEvent(c, $"Proposals disabled for {rounds} round(s).", "", false);
-    }
-
-    /* ================= FORCED ROLL TIER ================= */
-
-    [Server]
-    private void StartForcedRollTier(GameEventSO e)
-    {
-        _tierActive = true;
-        _tierAwaitingCloses = false;
-        _tierClosed.Clear();
-        _tierParticipants.Clear();
-        _tierRolls.Clear();
-
-        _tierLowMax = Mathf.Clamp(e.lowMax, 1, 5);
-        _tierHighMin = Mathf.Clamp(e.highMin, 2, 6);
-        _tierPay = Mathf.Max(0, e.lowPayAmount);
-        _tierGain = Mathf.Max(0, e.highGainAmount);
-
-        var list = new List<PlayerPawn>();
-        if (e.affectAllPlayers || TurnManager.Instance?.GetCurrentPawn() == null)
-            list.AddRange(GameManager.Instance.Players);
-        else
-            list.Add(TurnManager.Instance.GetCurrentPawn());
-
-        var ids = new List<int>();
-        var names = new List<string>();
-        foreach (var p in list)
-        {
-            if (p?.Owner == null) continue;
-            ids.Add(p.Owner.ClientId);
-            names.Add(p.playerName.Value);
-            _tierParticipants.Add(p.Owner.ClientId);
-        }
-
-        string header = $"{e.eventName}\n1–{_tierLowMax}: pay ${_tierPay} • {_tierHighMin}–6: +${_tierGain} • else: no change";
-
-        // FIX: pass isMedia = false (do NOT force Media mode for Tier)
-        foreach (var kv in InstanceFinder.ServerManager.Clients)
-            TargetShowForcedRollTier(kv.Value, header, ids.ToArray(), names.ToArray(), kv.Key, false);
-    }
-
-    // Overload that lets us force the roll mode per-client when showing Tier vs Media
-    [TargetRpc]
-    private void TargetShowForcedRollTier(NetworkConnection conn, string header, int[] cids, string[] names, int localCid, bool isMedia)
-    {
-        ForcedRollTierUI.CurrentRollMode = isMedia
-            ? ForcedRollTierUI.RollMode.Media
-            : ForcedRollTierUI.RollMode.Tier;
-
-        var map = new Dictionary<int, string>();
-        for (int i = 0; i < cids.Length; i++)
-            map[cids[i]] = (i < names.Length ? names[i] : ("P" + cids[i]));
-
-        ForcedRollTierUI.Instance?.Show(header, new List<int>(cids), map, localCid);
-    }
-
-    [TargetRpc]
-    private void TargetTierRolling(NetworkConnection conn, int cid)
-    {
-        ForcedRollTierUI.Instance?.SetRolling(cid);
-    }
-
-    [TargetRpc]
-    private void TargetTierRolled(NetworkConnection conn, int cid, int roll, string outcome)
-    {
-        ForcedRollTierUI.Instance?.SetRolled(cid, roll, outcome);
-    }
-
-    [ObserversRpc]
-    private void RpcCloseForcedRollTier()
-    {
-        ForcedRollTierUI.Instance?.Hide();
-    }
-
-    [TargetRpc]
-    private void TargetTierEnableClose(NetworkConnection conn)
-    {
-        ForcedRollTierUI.Instance?.EnableCloseForLocal();
-    }
-
-    [Server]
-    private void ResolveForcedRollTier()
-    {
-        _tierActive = false;
-
-        _tierAwaitingCloses = true;
-        _tierClosed.Clear();
-
-        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetTierEnableClose(c);
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void CmdTierClientClosed(NetworkConnection conn = null)
-    {
-        if (conn == null || !_tierAwaitingCloses) return;
-
-        int cid = conn.ClientId;
-        if (!_tierParticipants.Contains(cid)) return;
-        if (_tierClosed.Contains(cid)) return;
-
-        _tierClosed.Add(cid);
-        BroadcastTierCloseStatus(_tierClosed.Count, _tierParticipants.Count);
-
-        if (_tierClosed.Count >= _tierParticipants.Count)
-        {
-            RpcCloseForcedRollTier();
-            _tierAwaitingCloses = false;
-            ResumeAfterEvent();
-        }
-    }
-
-    [Server]
-    private void BroadcastTierCloseStatus(int have, int total)
-    {
-        RpcUpdateTierCloseStatus(have, total);
-    }
-
-    [ObserversRpc]
-    private void RpcUpdateTierCloseStatus(int have, int total)
-    {
-        ForcedRollTierUI.Instance?.UpdateCloseStatus(have, total);
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void CmdRequestTierRoll(NetworkConnection conn = null)
-    {
-        if (!_tierActive || conn == null) return;
-
-        int cid = conn.ClientId;
-        if (!_tierParticipants.Contains(cid)) return;
-        if (_tierRolls.ContainsKey(cid)) return;
-
-        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetTierRolling(c, cid);
-
-        int roll = UnityEngine.Random.Range(1, 7);
-        _tierRolls[cid] = roll;
-
-        var pawn = conn.FirstObject?.GetComponent<PlayerPawn>();
-        string outcome;
-
-        if (pawn != null)
-        {
-            if (roll <= _tierLowMax)
-            {
-                int pay = Mathf.Min(_tierPay, pawn.money.Value);
-                if (pay > 0) pawn.TrySpendMoney(pay);
-                MarketManager.Instance.ServerNerfAllCompaniesOwnedBy(
-                    pawn,
-                    priceDeltaPercent: -20,     // negative is allowed (e.g., -15%)
-                    payoutMultiplier:  0.5f,      // < 1f means nerf payouts
-                    durationRounds:    2
-                );
-                outcome = $"-${pay}";
-            }
-            else if (roll >= _tierHighMin)
-            {
-                pawn.AddMoney(_tierGain);
-                MarketManager.Instance.ServerBoostAllCompaniesOwnedBy(
-                    pawn,
-                    priceDeltaPercent: 20,     // e.g., +20%
-                    payoutMultiplier:  2f,      // > 1f means boost payouts
-                    durationRounds:    2
-                );
-                outcome = $"+${_tierGain}";
-            }
-            else
-            {
-                outcome = "no change";
-            }
-        }
-        else
-        {
-            outcome = "no change";
-        }
-
-        foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetTierRolled(c, cid, roll, outcome);
-
-        if (_tierRolls.Count >= _tierParticipants.Count)
-            ResolveForcedRollTier();
-    }
-
-    /* ================= BANK ODD FINE HOOK ================= */
-
-    [Server]
-    public void OnServerPlayerRolled(PlayerPawn roller, int roll)
-    {
-        if (!_bankOddFineActive || roller == null) return;
-        if ((roll % 2) == 0) return;
-
-        if (MarketManager.Instance.TryGetMajorityOwner(_bankCompanyName, out var bankOwner))
-        {
-            if (bankOwner != null && bankOwner != roller)
-            {
-                int pay = Mathf.Min(_bankOddFineAmount, roller.money.Value);
-                if (pay > 0)
-                {
-                    roller.TrySpendMoney(pay);
-                    bankOwner.AddMoney(pay);
-                }
-
-                foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
-                    TargetShowMainEvent(conn,
-                        $"Odd Roll Fine: {roller.playerName.Value} pays ${pay}M to {bankOwner.playerName.Value}.",  "",
-                        false);
-            }
-        }
-    }
-
-    private string _timelineName = "—";
-
-    [ObserversRpc(BufferLast = true)]
-    private void RpcSetTimelineName(string tl)
-    {
-        _timelineName = string.IsNullOrWhiteSpace(tl) ? "—" : tl;
-        TimelineUI.Instance?.SetTimeline(_timelineName);
-    }
-
-    [Server]
-    public void ServerSelectTimelineAndAnnounce()
-    {
-        SelectTimelineIfNeeded();
-        var tl = GetCurrentTimeline();
-        string name = tl?.timelineName ?? "Classic";
-        RpcSetTimelineName(name);
-
-        var (n, h) = PeekNextMainEventInfo();            // CHANGED
-        RpcUpdateNextMainEventUI(n, h); 
-    }
-
-
-    [Server]
-    private IEnumerator CoRecession(int rounds)
-    {
-        MarketManager.Instance.ServerSetGlobalTrend(-2f);
-        MarketManager.Instance.ServerBoostAllPayouts(0.8f, rounds);
-        int end = TurnManager.Instance.roundCount.Value + rounds;
-        while (TurnManager.Instance.roundCount.Value < end) yield return null;
-        MarketManager.Instance.ServerSetGlobalTrend(0f);
-    }
-
-    [Server]
-    private (string name, string history) PeekNextMainEventInfo()
-    {
-        if (_mainEventDeck.Count == 0 ||
-            (_deckTimelineIndex != _currentTimelineIndex && _deckTimelineIndex >= 0))
-            BuildEventDeck();
-
-        if (_mainEventDeck.Count == 0) return ("—", "");
-
-        var next = _mainEventDeck[0];
-        if (next == null) return ("—", "");
-
-        var name = string.IsNullOrWhiteSpace(next.eventName) ? "—" : next.eventName;
-        var history = !string.IsNullOrWhiteSpace(next.history)
-                        ? next.history
-                        : (next.description ?? "");
-
-        return (name, history);
-    }
-
-    [Server]
-    public string PeekNextMainEventName()
-    {
-        var (name, _) = PeekNextMainEventInfo();
-        return name;
-    }
-
-    [ObserversRpc(BufferLast = true)]
-    private void RpcUpdateNextMainEventUI(string nextName, string nextHistory)
-    {
-        // If you have a dedicated label:
-        TurnUI.Instance.SetNextMainEvent(nextName, nextHistory);
-    }
-    
-    private struct SectorSurge {
-        public float priceMult;      // affects buy cost & immediate price bump
-        public float payoutMult;     // company-level payout multiplier
-        public int   expiresAtRound; // absolute round number
-    }
-    private readonly Dictionary<string, SectorSurge> _sectorSurges = new();
-
-    private int CurRound() => TurnManager.Instance?.roundCount.Value ?? 1;
-
-    [Server]
-    private void PruneSectorSurges()
-    {
-        int now = CurRound();
-        var rm = new List<string>();
-        foreach (var kv in _sectorSurges)
-            if (now >= kv.Value.expiresAtRound) rm.Add(kv.Key);
-        foreach (var s in rm) _sectorSurges.Remove(s);
-    }
-
-    [Server]
-    public float GetActiveSectorPriceMult(string sector)
-    {
-        sector = Norm(sector);
-        if (!string.IsNullOrEmpty(sector) && _sectorSurges.TryGetValue(sector, out var s))
-            if (CurRound() < s.expiresAtRound) return Mathf.Max(0.01f, s.priceMult);
-        return 1f;
-    }
-
-    [Server]
-    public (bool active, float payoutMult, int expiresAt) GetActiveSectorPayoutAura(string sector)
-    {
-        sector = Norm(sector);
-        if (!string.IsNullOrEmpty(sector) && _sectorSurges.TryGetValue(sector, out var s))
-            if (CurRound() < s.expiresAtRound) return (true, s.payoutMult, s.expiresAtRound);
-        return (false, 1f, 0);
-    }
-
-    [Server]
-    public void ActivateSectorSurge(string sector, float priceMult, float payoutMult, int durationRounds)
-    {
-        sector = Norm(sector);
-        if (string.IsNullOrEmpty(sector)) return;
-
-        if (_sectorSurges.TryGetValue(sector, out var cur))
-        {
-            cur.priceMult      *= Mathf.Max(0.01f, priceMult);
-            cur.payoutMult     *= Mathf.Max(0f,    payoutMult);
-            cur.expiresAtRound  = Mathf.Max(cur.expiresAtRound, CurRound() + Mathf.Max(1, durationRounds));
-            _sectorSurges[sector] = cur;
-        }
-        else
-        {
-            _sectorSurges[sector] = new SectorSurge {
-                priceMult      = Mathf.Max(0.01f, priceMult),
-                payoutMult     = Mathf.Max(0f,    payoutMult),
-                expiresAtRound = CurRound() + Mathf.Max(1, durationRounds)
-            };
-        }
-
-        // Immediate effects to existing companies (no extra popup)
-        float deltaPct = (_sectorSurges[sector].priceMult - 1f) * 100f;
-        foreach (var kv in MarketManager.Instance.companies)
-        {
-            var c = kv.Value;
-            if (c == null) continue;
-            if (Norm(c.sector) != sector) continue;
-
-            if (Mathf.Abs(deltaPct) > 0.001f)
-                MarketManager.Instance.ServerBumpCompanyPrice(c.companyName, deltaPct);
-
-            if (!Mathf.Approximately(_sectorSurges[sector].payoutMult, 1f))
-                MarketManager.Instance.ServerBoostCompanyPayouts(
-                    c.companyName,
-                    _sectorSurges[sector].payoutMult,
-                    _sectorSurges[sector].expiresAtRound - CurRound());
-        }
-    }
-
-    [Server]
-    public void ServerPruneSectorSurges()
-    {
-        PruneSectorSurges(); // your existing private method
-    }
-    
-    [Server]
-    private void ApplyGlobalEventParts(GameEventSO e)
-    {
-        if (e?.sectorImpacts == null) return;
-        foreach (var s in e.sectorImpacts)
-        {
-            if (string.IsNullOrWhiteSpace(s.sector)) continue;
-            ActivateSectorSurge(Norm(s.sector), s.priceMult, s.payoutMult, s.durationRounds);
         }
     }
 }
