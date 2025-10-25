@@ -26,17 +26,7 @@ MonoBehaviour:
   tieSplitPot: 1
   restrictToOpponents: 1
   requireCompanyOwner: 0
-  effects:
-  - targetType: 0
-    targetName: Steel & Iron Production
-    moneyDelta: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: 1
-    duration: 0
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
+  effects: []
   enableBankOddFine: 0
   bankCompanyName: Bank
   oddFineAmount: 500
@@ -53,8 +43,8 @@ MonoBehaviour:
   - sector: Steel
     priceMult: 2
     payoutMult: 2
-    durationRounds: 8
+    durationRounds: 3
   - sector: Weapon
     priceMult: 3
     payoutMult: 3
-    durationRounds: 8
+    durationRounds: 3

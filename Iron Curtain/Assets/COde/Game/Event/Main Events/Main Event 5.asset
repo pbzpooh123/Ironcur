@@ -40,4 +40,4 @@ MonoBehaviour:
   - sector: Weapon
     priceMult: 1.5
     payoutMult: 1.5
-    durationRounds: 3
+    durationRounds: 2

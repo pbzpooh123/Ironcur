@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   eventName: Beginning of the Collapse of the Soviet Union
   description: "Weapon Manufacturing: \u2013100% revenue and players receive 50%
-    refund of purchase cost\nReal Estate: +100% revenue for 5 turns"
+    refund of purchase cost\nReal Estate: +100% revenue for 5 turns\nCommunication
+    Company : +50& revenue for 3 turns"
   history: Economic Turmoil and Gorbachev's Reforms (Perestroika & Glasnost) Begin
     to Take Effect
   type: 1
@@ -46,4 +47,8 @@ MonoBehaviour:
   - sector: Real Estate
     priceMult: 2
     payoutMult: 2
-    durationRounds: 2
+    durationRounds: 5
+  - sector: Commu
+    priceMult: 1.5
+    payoutMult: 1.5
+    durationRounds: 3

@@ -157,7 +157,15 @@ public class MarketManager : NetworkBehaviour
             }
 
             // Visuals + client-side add (kept for robustness)
-            RpcAddCompany(key, record.baseCost, pawn.playerName.Value, tile.sector);
+            RpcAddCompany(
+                key,
+                record.baseCost,
+                pawn.playerName.Value,
+                tile.sector,
+                record.currentPrice,                 // NEW
+                record.payoutMult,                   // NEW
+                record.payoutMultExpiresAtRound      // NEW
+            );
             RpcUpdateTileOwner(key, pawn.playerName.Value, pawn.colorIndex.Value);
 
             // 🔸 Now broadcast the (correct) server snapshot which includes the row
@@ -169,16 +177,24 @@ public class MarketManager : NetworkBehaviour
         {
             // (Optional) if you ever allow buying an unowned existing record:
             var rec = companies[key];
-            rec.owner      = pawn;
-            rec.ownerName  = pawn.playerName.Value;
-            rec.sector     = tile.sector;
+            rec.owner = pawn;
+            rec.ownerName = pawn.playerName.Value;
+            rec.sector = tile.sector;
             rec.ownershipPercents.Clear();
             rec.ownershipPercents[pawn] = 100;
             tile.owner = pawn;
 
             EnsurePortfolioEntry(pawn, key, 100);
             RpcSyncOwnership(key, pawn.playerName.Value, 100);
-            RpcAddCompany(key, rec.baseCost, pawn.playerName.Value, tile.sector);
+            RpcAddCompany(
+                key,
+                rec.baseCost,
+                pawn.playerName.Value,
+                tile.sector,
+                rec.currentPrice,
+                rec.payoutMult,
+                rec.payoutMultExpiresAtRound
+            );
             RpcUpdateTileOwner(key, pawn.playerName.Value, pawn.colorIndex.Value);
 
             pawn.ServerBroadcastPortfolio();
@@ -187,40 +203,34 @@ public class MarketManager : NetworkBehaviour
     }
 
     [ObserversRpc]
-    private void RpcAddCompany(string companyName, int baseCost, string ownerName, string sector) // CHANGED
+    private void RpcAddCompany(string companyName, int baseCost, string ownerName, string sector,int currentPrice,float payoutMult,int payoutMultExpiresAtRound )
     {
-        var ownerPawn = FindPawnByName(ownerName);
+            var ownerPawn = FindPawnByName(ownerName);
 
         if (!companies.TryGetValue(companyName, out var rec))
         {
-            rec = new CompanyRecord(companyName, baseCost, ownerPawn, sector); // pass sector
-            rec.ownerName = ownerName;
-
-            if (ownerPawn != null)
-            {
-                rec.owner = ownerPawn;
-                rec.ownershipPercents.Clear();
-                rec.ownershipPercents[ownerPawn] = 100;
-                EnsurePortfolioEntry(ownerPawn, companyName, 100);
-            }
+            rec = new CompanyRecord(companyName, baseCost, ownerPawn, sector);
             companies[companyName] = rec;
-            if (ownerPawn == null) StartCoroutine(RebindOwnerLater(companyName, ownerName));
+        }
+
+        rec.ownerName  = ownerName;
+        rec.owner      = ownerPawn;
+        rec.sector     = sector;
+        rec.baseCost   = baseCost;
+        rec.currentPrice = currentPrice;                       // NEW
+        rec.payoutMult = payoutMult;                           // NEW
+        rec.payoutMultExpiresAtRound = payoutMultExpiresAtRound; // NEW
+
+        // ensure client portfolio row exists for owner
+        if (ownerPawn != null)
+        {
+            rec.ownershipPercents.Clear();
+            rec.ownershipPercents[ownerPawn] = 100;
+            EnsurePortfolioEntry(ownerPawn, companyName, 100);
         }
         else
         {
-            rec.ownerName = ownerName;
-            rec.sector = sector; // keep sector in sync
-            if (rec.owner == null)
-            {
-                if (ownerPawn != null)
-                {
-                    rec.owner = ownerPawn;
-                    rec.ownershipPercents.Clear();
-                    rec.ownershipPercents[ownerPawn] = 100;
-                    EnsurePortfolioEntry(ownerPawn, companyName, 100);
-                }
-                else StartCoroutine(RebindOwnerLater(companyName, ownerName));
-            }
+            StartCoroutine(RebindOwnerLater(companyName, ownerName));
         }
 
         ProposalUI.Instance?.Refresh();
@@ -228,6 +238,16 @@ public class MarketManager : NetworkBehaviour
         RpcRefreshLocalPortfolioUI();
     }
 
+    [ObserversRpc]
+    private void RpcSyncCompanyPayoutAura(string companyName, float payoutMult, int expiresAtRound)
+    {
+        if (companies.TryGetValue(companyName, out var c))
+        {
+            c.payoutMult = Mathf.Max(0f, payoutMult);
+            c.payoutMultExpiresAtRound = expiresAtRound;
+        }
+        RpcRefreshLocalPortfolioUI();
+    }
 
     private PlayerPawn FindPawnByName(string name)
     {
@@ -297,13 +317,13 @@ public class MarketManager : NetworkBehaviour
     public void ShowProposalForPawn(PlayerPawn pawn)
     {
         if (pawn == null || pawn.Owner == null) return;
-        if (pawn.jailTurnsLeft.Value > 0) return;  
-        
-         if (!_proposalHintShown.Contains(pawn.Owner.ClientId))
-            {
-                _proposalHintShown.Add(pawn.Owner.ClientId);
-                TargetShowProposalHint(pawn.Owner);
-            }
+        if (pawn.jailTurnsLeft.Value > 0) return;
+
+        if (!_proposalHintShown.Contains(pawn.Owner.ClientId))
+        {
+            _proposalHintShown.Add(pawn.Owner.ClientId);
+            TargetShowProposalHint(pawn.Owner);
+        }
         TargetShowProposalUI(pawn.Owner);
     }
 
@@ -361,13 +381,13 @@ public class MarketManager : NetworkBehaviour
     public void ShowReviewForPawn(PlayerPawn owner)
     {
         if (owner == null || owner.Owner == null) return;
-        if (owner.jailTurnsLeft.Value > 0) return; 
+        if (owner.jailTurnsLeft.Value > 0) return;
 
         if (!_reviewHintShown.Contains(owner.Owner.ClientId))
-            {
-                _reviewHintShown.Add(owner.Owner.ClientId);
-                TargetShowReviewHint(owner.Owner);
-            }
+        {
+            _reviewHintShown.Add(owner.Owner.ClientId);
+            TargetShowReviewHint(owner.Owner);
+        }
         TargetShowReviewUI(owner.Owner);
     }
 
@@ -433,7 +453,7 @@ public class MarketManager : NetworkBehaviour
         if (!companies.TryGetValue(companyName, out var company)) return;
         if (company.owner == proposer) return;
 
-        price   = Mathf.Max(1, price);
+        price = Mathf.Max(1, price);
 
         if (!_submittedThisTurn.TryGetValue(proposer, out var set))
             _submittedThisTurn[proposer] = set = new HashSet<string>();
@@ -442,7 +462,7 @@ public class MarketManager : NetworkBehaviour
         int sellerAvail = company.GetOwnership(company.owner);
         if (sellerAvail <= 0) return;
 
-        int buyerHas  = company.GetOwnership(proposer);
+        int buyerHas = company.GetOwnership(proposer);
         int buyerRoom = Mathf.Max(0, 100 - buyerHas);
 
         int maxTransfer = Mathf.Min(percent, sellerAvail, buyerRoom);
@@ -452,10 +472,11 @@ public class MarketManager : NetworkBehaviour
             return;
         }
 
-        company.proposals.Add(new Proposal {
+        company.proposals.Add(new Proposal
+        {
             proposer = proposer,
-            percent  = maxTransfer,
-            price    = price
+            percent = maxTransfer,
+            price = price
         });
 
         set.Add(companyName);
@@ -506,8 +527,8 @@ public class MarketManager : NetworkBehaviour
 
         // --- 1) Figure out how many % can actually transfer right now 
         int sellerAvail = company.GetOwnership(prevOwner);                 // what seller still owns
-        int buyerHas   = company.GetOwnership(proposal.proposer);          // what buyer already has
-        int buyerRoom  = Mathf.Max(0, 100 - buyerHas);                     // how much buyer can still get
+        int buyerHas = company.GetOwnership(proposal.proposer);          // what buyer already has
+        int buyerRoom = Mathf.Max(0, 100 - buyerHas);                     // how much buyer can still get
 
         int transfer = Mathf.Min(proposal.percent, sellerAvail, buyerRoom);
         if (transfer <= 0)
@@ -647,7 +668,7 @@ public class MarketManager : NetworkBehaviour
         if (tile.visuals != null)
         {
             if (!hasOwner) tile.visuals.ShowUnclaimed();
-            else           tile.visuals.ShowOwnedByColor(colorIndex); // paint even if pawn == null
+            else tile.visuals.ShowOwnedByColor(colorIndex); // paint even if pawn == null
         }
         else
         {
@@ -675,6 +696,7 @@ public class MarketManager : NetworkBehaviour
             {
                 company.payoutMult = 1f;
                 company.payoutMultExpiresAtRound = 0;
+                RpcSyncCompanyPayoutAura(company.companyName, 1f, 0);
             }
 
             int baseIncome = Mathf.RoundToInt(company.currentPrice * dividendYield);
@@ -708,11 +730,11 @@ public class MarketManager : NetworkBehaviour
                 if (!totals.ContainsKey(pawn)) totals[pawn] = 0;
                 totals[pawn] += finalPayout;
             }
-    }
+        }
 
-    // 2) Pay each pawn once → one popup (still queued if multiple phases happen)
-    foreach (var kv in totals)
-        kv.Key.AddMoney(kv.Value);
+        // 2) Pay each pawn once → one popup (still queued if multiple phases happen)
+        foreach (var kv in totals)
+            kv.Key.AddMoney(kv.Value);
     }
     private TileData FindTileByCompanyName(string companyName)
     {
@@ -980,6 +1002,10 @@ public class MarketManager : NetworkBehaviour
     {
         if (companies.TryGetValue(companyName, out var c))
             c.currentPrice = newPrice;
+
+            if (PortfolioUI.Instance != null && PortfolioUI.Instance.panel != null &&
+            PortfolioUI.Instance.panel.activeInHierarchy)
+            PortfolioUI.Instance.RefreshFromSnapshot();
     }
 
     /* ---------- PUBLIC EVENT HOOKS ---------- */
@@ -1010,7 +1036,7 @@ public class MarketManager : NetworkBehaviour
     [Server]
     public void ServerSetGlobalTrend(float percentBias)
     {
-        _globalTrendPct = percentBias; 
+        _globalTrendPct = percentBias;
     }
 
     [Server]
@@ -1019,6 +1045,8 @@ public class MarketManager : NetworkBehaviour
         if (!companies.TryGetValue(company, out var c) || c == null) return;
         c.payoutMult = Mathf.Max(0f, multiplier);
         c.payoutMultExpiresAtRound = TurnManager.Instance.roundCount.Value + Mathf.Max(1, durationRounds);
+
+        RpcSyncCompanyPayoutAura(company, c.payoutMult, c.payoutMultExpiresAtRound);
     }
 
     [Server]
@@ -1115,31 +1143,65 @@ public class MarketManager : NetworkBehaviour
     }
 
     [TargetRpc]
-private void TargetShowProposalHint(FishNet.Connection.NetworkConnection conn)
-{
-    // Prefer a dedicated hint in the Proposal UI if available
-    if (ProposalUI.Instance != null) {
-        ProposalUI.Instance.ShowFirstTimeHint();
-        return;
+    private void TargetShowProposalHint(FishNet.Connection.NetworkConnection conn)
+    {
+        // Prefer a dedicated hint in the Proposal UI if available
+        if (ProposalUI.Instance != null)
+        {
+            ProposalUI.Instance.ShowFirstTimeHint();
+            return;
+        }
+        // Fallback: side panel
+        EventUI.Instance?.SideeventShow(
+            "Proposal tip:\n• Choose a company you don’t own.\n• Enter % you want and the price you’ll pay.\n• You can’t exceed 100% total and owner can’t sell more than they have.",
+            true
+        );
     }
-    // Fallback: side panel
-    EventUI.Instance?.SideeventShow(
-        "Proposal tip:\n• Choose a company you don’t own.\n• Enter % you want and the price you’ll pay.\n• You can’t exceed 100% total and owner can’t sell more than they have.", 
-        true
-    );
-}
 
-[TargetRpc]
-private void TargetShowReviewHint(FishNet.Connection.NetworkConnection conn)
-{
-    if (ReviewUI.Instance != null) {
-        ReviewUI.Instance.ShowFirstTimeHint();
-        return;
+    [TargetRpc]
+    private void TargetShowReviewHint(FishNet.Connection.NetworkConnection conn)
+    {
+        if (ReviewUI.Instance != null)
+        {
+            ReviewUI.Instance.ShowFirstTimeHint();
+            return;
+        }
+        EventUI.Instance?.SideeventShow(
+            "Review tip:\n• Review offers made to your companies.\n• Accept to transfer shares for cash; Reject to keep them.\n• Majority (>60%) can change tile owner color.",
+            true
+        );
     }
-    EventUI.Instance?.SideeventShow(
-        "Review tip:\n• Review offers made to your companies.\n• Accept to transfer shares for cash; Reject to keep them.\n• Majority (>60%) can change tile owner color.",
-        true
-    );
-}
+
+    [Server]
+    public int ServerCountCompaniesOwnedBy(PlayerPawn pawn, string sectorFilter = null, bool onlyMajority = false)
+    {
+        if (pawn == null) return 0;
+        int count = 0;
+
+        foreach (var kv in companies)
+        {
+            var c = kv.Value;
+            if (c == null) continue;
+
+            if (!string.IsNullOrWhiteSpace(sectorFilter) &&
+                !string.Equals(c.sector, sectorFilter, System.StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (onlyMajority)
+            {
+                // majority if this pawn holds >60% (your existing rule)
+                if (c.ownershipPercents.TryGetValue(pawn, out int pct) && pct > 60)
+                    count++;
+            }
+            else
+            {
+                // any ownership > 0 counts as “own”
+                if (c.ownershipPercents.TryGetValue(pawn, out int pct) && pct > 0)
+                    count++;
+            }
+        }
+
+        return count;
+    }
 
 }

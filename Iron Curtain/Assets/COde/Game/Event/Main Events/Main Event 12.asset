@@ -47,11 +47,11 @@ MonoBehaviour:
   - sector: Electo
     priceMult: 1.5
     payoutMult: 1.5
-    durationRounds: 10
+    durationRounds: 8
   - sector: Techo
     priceMult: 2
     payoutMult: 2
-    durationRounds: 10
+    durationRounds: 8
   - sector: Commu
     priceMult: 1.25
     payoutMult: 1.25

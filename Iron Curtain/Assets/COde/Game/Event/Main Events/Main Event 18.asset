@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Main Event 18
   m_EditorClassIdentifier: 
   eventName: Global Peace Summit
-  description: 'All players: Receive a $100M bonus to support economic recovery'
+  description: 'All players: Receive a $150M bonus to support economic recovery'
   history: 'World Leaders Hold Major Conference to Reduce Conflict and Promote Sustainable
     Development '
   type: 1
@@ -27,7 +27,7 @@ MonoBehaviour:
   effects:
   - targetType: 2
     targetName: 
-    moneyDelta: 100
+    moneyDelta: 150
     randomMoneyMin: 0
     randomMoneyMax: 0
     multiplier: 0
@@ -35,6 +35,9 @@ MonoBehaviour:
     skipTurn: 0
     ownershipDelta: 0
     grantExtraRoll: 0
+    payPerCompany: 0
+    sectorFilter: 
+    onlyMajority: 0
   enableBankOddFine: 0
   bankCompanyName: Bank
   oddFineAmount: 500

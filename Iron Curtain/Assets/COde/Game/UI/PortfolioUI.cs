@@ -88,54 +88,58 @@ public class PortfolioUI : MonoBehaviour
 
     public void OnRefreshClicked()
     {
-        RefreshFromSnapshot(); // local rebuild (server already pushes changes)
+        RefreshFromSnapshot(); 
     }
 
-    // === Build cache from the pawn snapshot and render current page ===
     public void RefreshFromSnapshot()
     {
         if (_current == null) return;
 
-        // Build cache from the client-side snapshot
-        var snap = _current.GetClientPortfolioSnapshot(); // (company, percent, multiplier)
+      
+        var snap = _current.GetClientPortfolioSnapshot(); 
 
-        // Rebuild cache with baseCost resolved
         _itemsCache.Clear();
 
             foreach (var it in snap)
             {
                 int currentPrice = 0;
+                float aura = 1f;
+
                 if (MarketManager.Instance != null &&
                     MarketManager.Instance.companies.TryGetValue(it.company, out var comp) &&
                     comp != null)
                 {
-                    currentPrice = comp.currentPrice; // <-- use market price
+                    currentPrice = comp.currentPrice;  
+                    aura = Mathf.Max(0f, comp.payoutMult); 
                 }
 
-                _itemsCache.Add((it.company, it.percent, Mathf.Max(0.01f, it.multiplier), currentPrice));
+                float personal = Mathf.Max(0.01f, it.multiplier);
+                float effective = personal * Mathf.Max(0.01f, aura);
+
+                _itemsCache.Add((it.company, it.percent, effective, currentPrice));
             }
 
-        // Sort by percent desc then company name
         _itemsCache.Sort((a, b) =>
         {
             int pc = b.percent.CompareTo(a.percent);
             return pc != 0 ? pc : string.Compare(a.company, b.company, System.StringComparison.Ordinal);
         });
 
-        // Update header (use totals across ALL items, not just page)
         int totalPercent = 0;
         int totalEstPayout = 0;
 
-        // read yield from MarketManager (fallback to 10% if missing)
         float yieldPct = 0.10f;
-        if (MarketManager.Instance != null)
-            yieldPct = Mathf.Clamp01(MarketManager.Instance.dividendYield);
+            if (MarketManager.Instance != null)
+                yieldPct = Mathf.Clamp01(MarketManager.Instance.dividendYield);
 
-        foreach (var it in _itemsCache)
+            totalPercent = 0;
+            totalEstPayout = 0;
+
+            foreach (var it in _itemsCache)
             {
-                int baseIncome = Mathf.RoundToInt(it.currentPrice * yieldPct);   // <-- currentPrice * yield
+                int baseIncome = Mathf.RoundToInt(it.currentPrice * yieldPct);
                 float ownRatio = Mathf.Clamp01(it.percent / 100f);
-                int est = Mathf.RoundToInt(baseIncome * ownRatio * it.multiplier);
+                int est = Mathf.RoundToInt(baseIncome * ownRatio * it.multiplier); // multiplier is EFFECTIVE now
                 totalPercent += it.percent;
                 totalEstPayout += est;
             }
@@ -144,14 +148,12 @@ public class PortfolioUI : MonoBehaviour
         if (summaryText) summaryText.text = $"{_itemsCache.Count} companies • Total % = {totalPercent} • Est. payout = ${totalEstPayout}";
         if (cashText)    cashText.text = $"Cash: ${_current.money.Value}";
 
-        // reset to first page and render
         _pageIndex = 0;
         RenderPageOnly();
     }
 
     private void RenderPageOnly()
     {
-        // clear current rows
         for (int i = rowsParent.childCount - 1; i >= 0; i--)
             Destroy(rowsParent.GetChild(i).gameObject);
 

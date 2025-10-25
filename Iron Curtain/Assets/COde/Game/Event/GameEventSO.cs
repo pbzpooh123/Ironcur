@@ -51,6 +51,10 @@ public class EventEffect
     [Header("Extra Turn / Movement")]
     public bool grantExtraRoll = false;
 
+     public int payPerCompany = 0;          // e.g., 100 means pay $100 for each owned company
+    public string sectorFilter = null;     
+    public bool onlyMajority = false;
+
 }
 
 [CreateAssetMenu(fileName = "NewGameEvent", menuName = "Game/Event", order = 1)]
@@ -80,7 +84,7 @@ public class GameEventSO : ScriptableObject
 
     [Header("Effects")]
     public List<EventEffect> effects = new List<EventEffect>();
-    
+
     [Header("Rule #6: Bank Odd Fine")]
     public bool enableBankOddFine = false;
     public string bankCompanyName = "Bank";
@@ -91,11 +95,11 @@ public class GameEventSO : ScriptableObject
     public int blockProposalRounds = 1; // 1 = this round only
 
     [Header("ForcedRollTier")]
-    public int lowMax = 2;             
+    public int lowMax = 2;
     public int lowPayAmount = 200;
-    public int highMin = 5;           
+    public int highMin = 5;
     public int highGainAmount = 200;
-    public bool affectAllPlayers = true; 
+    public bool affectAllPlayers = true;
 
     [Header("Recession (optional)")]
     public bool triggerRecession = false;
@@ -111,6 +115,4 @@ public class GameEventSO : ScriptableObject
     }
 
     public List<SectorImpact> sectorImpacts = new List<SectorImpact>();
-
-
 }

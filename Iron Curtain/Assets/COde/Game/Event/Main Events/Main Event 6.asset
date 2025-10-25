@@ -47,4 +47,4 @@ MonoBehaviour:
   - sector: Techo
     priceMult: 2
     payoutMult: 2
-    durationRounds: 2
+    durationRounds: 1

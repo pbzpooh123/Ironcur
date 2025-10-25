@@ -464,6 +464,27 @@ public class EventManager : NetworkBehaviour
             if (effect.grantExtraRoll)
                 extraRollGranted = true;
 
+            if (effect.payPerCompany > 0)
+                {
+                    int ownedCount = MarketManager.Instance.ServerCountCompaniesOwnedBy(
+                        pawn,
+                        effect.sectorFilter,
+                        effect.onlyMajority
+                    );
+
+                    int totalFine = ownedCount * effect.payPerCompany;
+                    if (totalFine > 0)
+                    {
+                        int pay = Mathf.Min(totalFine, pawn.money.Value);
+                    if (pay > 0) pawn.TrySpendMoney(pay);
+                        
+                        foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
+                            TargetShowSideEvent(c,
+                                $"{pawn.playerName.Value} pays ${pay}M ({effect.payPerCompany}×{ownedCount} company/companies).",
+                                false);
+                    }
+                }
+
             switch (effect.targetType)
             {
                 case TargetType.Factory:
