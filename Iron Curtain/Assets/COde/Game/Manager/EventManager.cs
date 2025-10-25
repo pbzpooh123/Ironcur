@@ -267,7 +267,8 @@ public class EventManager : NetworkBehaviour
         SelectTimelineIfNeeded();
 
         GameEventSO e = PickMainEventFromTimeline();
-        RpcUpdateNextMainEventUI(PeekNextMainEventName());
+        var (n, h) = PeekNextMainEventInfo(); 
+        RpcUpdateNextMainEventUI(n, h);
 
         string title = (e != null) ? e.eventName : $"Main Event — Round {round}";
         string body  = (e != null) ? e.description : "—";
@@ -1399,8 +1400,8 @@ public class EventManager : NetworkBehaviour
         string name = tl?.timelineName ?? "Classic";
         RpcSetTimelineName(name);
 
-        // NEW: seed “next main event” name
-        RpcUpdateNextMainEventUI(PeekNextMainEventName());
+        var (n, h) = PeekNextMainEventInfo();            // CHANGED
+        RpcUpdateNextMainEventUI(n, h); 
     }
 
 
@@ -1415,23 +1416,37 @@ public class EventManager : NetworkBehaviour
     }
 
     [Server]
-    public string PeekNextMainEventName()
+    private (string name, string history) PeekNextMainEventInfo()
     {
-        // Ensure the deck exists and matches current timeline
         if (_mainEventDeck.Count == 0 ||
             (_deckTimelineIndex != _currentTimelineIndex && _deckTimelineIndex >= 0))
             BuildEventDeck();
 
-        if (_mainEventDeck.Count == 0) return "—";
+        if (_mainEventDeck.Count == 0) return ("—", "");
+
         var next = _mainEventDeck[0];
-        return (next != null) ? next.eventName : "—";
+        if (next == null) return ("—", "");
+
+        var name = string.IsNullOrWhiteSpace(next.eventName) ? "—" : next.eventName;
+        var history = !string.IsNullOrWhiteSpace(next.history)
+                        ? next.history
+                        : (next.description ?? "");
+
+        return (name, history);
+    }
+
+    [Server]
+    public string PeekNextMainEventName()
+    {
+        var (name, _) = PeekNextMainEventInfo();
+        return name;
     }
 
     [ObserversRpc(BufferLast = true)]
-    private void RpcUpdateNextMainEventUI(string nextName)
+    private void RpcUpdateNextMainEventUI(string nextName, string nextHistory)
     {
         // If you have a dedicated label:
-        TurnUI.Instance.SetNextMainEventName(nextName);
+        TurnUI.Instance.SetNextMainEvent(nextName, nextHistory);
     }
     
     private struct SectorSurge {

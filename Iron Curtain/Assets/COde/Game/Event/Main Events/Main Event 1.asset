@@ -27,17 +27,7 @@ MonoBehaviour:
   tieSplitPot: 1
   restrictToOpponents: 1
   requireCompanyOwner: 0
-  effects:
-  - targetType: 0
-    targetName: 
-    moneyDelta: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: 0
-    duration: 0
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
+  effects: []
   enableBankOddFine: 0
   bankCompanyName: Bank
   oddFineAmount: 500
@@ -55,7 +45,7 @@ MonoBehaviour:
     priceMult: 0.5
     payoutMult: 0.5
     durationRounds: 5
-  - sector: Transportation
+  - sector: Logic
     priceMult: 0.5
     payoutMult: 0.5
     durationRounds: 5

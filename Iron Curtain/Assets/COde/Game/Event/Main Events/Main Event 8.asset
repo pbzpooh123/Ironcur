@@ -26,28 +26,8 @@ MonoBehaviour:
   restrictToOpponents: 1
   requireCompanyOwner: 0
   effects:
-  - targetType: 0
-    targetName: Food & Beverage Production
-    moneyDelta: 120
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: 0.5
-    duration: 0
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
-  - targetType: 0
-    targetName: Real Estate
-    moneyDelta: 220
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: -0.5
-    duration: 0
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
   - targetType: 2
-    targetName: Banking & Finance
+    targetName: 
     moneyDelta: -500
     randomMoneyMin: 0
     randomMoneyMax: 0
@@ -69,7 +49,11 @@ MonoBehaviour:
   triggerRecession: 0
   recessionRounds: 3
   sectorImpacts:
-  - sector: Steel
-    priceMult: 2
-    payoutMult: 2
-    durationRounds: 5
+  - sector: Food
+    priceMult: 1.5
+    payoutMult: 1.5
+    durationRounds: 2
+  - sector: Real Estate
+    priceMult: 0.5
+    payoutMult: 0.5
+    durationRounds: 2

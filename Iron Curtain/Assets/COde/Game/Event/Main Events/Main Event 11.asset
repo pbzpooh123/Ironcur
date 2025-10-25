@@ -47,7 +47,7 @@ MonoBehaviour:
   triggerRecession: 1
   recessionRounds: 2
   sectorImpacts:
-  - sector: Steel
-    priceMult: 2
-    payoutMult: 2
+  - sector: Oil
+    priceMult: 4
+    payoutMult: 4
     durationRounds: 5

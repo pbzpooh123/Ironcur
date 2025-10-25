@@ -39,6 +39,38 @@ MonoBehaviour:
   recessionRounds: 3
   sectorImpacts:
   - sector: Steel
-    priceMult: 2
-    payoutMult: 2
-    durationRounds: 5
+    priceMult: 0.5
+    payoutMult: 0.5
+    durationRounds: 3
+  - sector: Commu
+    priceMult: 0.5
+    payoutMult: 0.5
+    durationRounds: 3
+  - sector: Electo
+    priceMult: 0.5
+    payoutMult: 0.5
+    durationRounds: 3
+  - sector: Logic
+    priceMult: 0.5
+    payoutMult: 0.5
+    durationRounds: 3
+  - sector: Oil
+    priceMult: 0.5
+    payoutMult: 0.5
+    durationRounds: 3
+  - sector: Bank
+    priceMult: 0.5
+    payoutMult: 0.5
+    durationRounds: 3
+  - sector: Techo
+    priceMult: 0.5
+    payoutMult: 0.5
+    durationRounds: 3
+  - sector: Weapon
+    priceMult: 0.5
+    payoutMult: 0.5
+    durationRounds: 3
+  - sector: Estate
+    priceMult: 0.5
+    payoutMult: 0.5
+    durationRounds: 3

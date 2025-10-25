@@ -16,6 +16,7 @@ public class TurnUI : MonoBehaviour
     private PlayerPawn myPawn;
 
     public TMP_Text nextEventText;
+    public TMP_Text nextEventHistory;
 
     public static TurnUI Instance;
 
@@ -121,9 +122,28 @@ public class TurnUI : MonoBehaviour
         if (messageTMP != null) messageTMP.text = "";
     }
 
-    public void SetNextMainEventName(string name)
-{
-    if (nextEventText != null)
-        nextEventText.text = $"Next Main Event: {name}";
-}
+    public void SetNextMainEvent(string name, string history)
+    {
+        if (nextEventText != null)
+            nextEventText.text = string.IsNullOrWhiteSpace(name) ? "—" : name;
+
+        if (nextEventHistory != null)
+        {
+            if (string.IsNullOrWhiteSpace(history))
+            {
+                nextEventHistory.gameObject.SetActive(false);
+            }
+            else
+            {
+                nextEventHistory.gameObject.SetActive(true);
+                nextEventHistory.text = history;
+            }
+        }
+        else
+        {
+            // If you only have one text field, append the blurb under the title.
+            if (nextEventText != null && !string.IsNullOrWhiteSpace(history))
+                nextEventText.text = $"{nextEventText.text}\n<size=80%><i>{history}</i></size>";
+        }
+    }  
 }

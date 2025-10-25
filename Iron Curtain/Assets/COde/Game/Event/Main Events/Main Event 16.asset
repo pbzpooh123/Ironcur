@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Main Event 16
   m_EditorClassIdentifier: 
   eventName: Rise of the Internet & Information Age
-  description: 'All other companies: +20% permanent revenue due to leveraging new
-    data and networks to improve operations'
+  description: 'All companies: +20% permanent revenue due to leveraging new data
+    and networks to improve operations'
   history: 'The Internet Becomes Widespread, Transforming Daily Life '
   type: 1
   mode: 0
@@ -35,10 +35,46 @@ MonoBehaviour:
   highMin: 5
   highGainAmount: 200
   affectAllPlayers: 1
-  triggerRecession: 0
+  triggerRecession: 1
   recessionRounds: 3
   sectorImpacts:
   - sector: Steel
-    priceMult: 2
-    payoutMult: 2
-    durationRounds: 5
+    priceMult: 1.2
+    payoutMult: 1.2
+    durationRounds: 8
+  - sector: Food
+    priceMult: 1.2
+    payoutMult: 1.2
+    durationRounds: 8
+  - sector: Commu
+    priceMult: 1.2
+    payoutMult: 1.2
+    durationRounds: 8
+  - sector: Electo
+    priceMult: 1.2
+    payoutMult: 1.2
+    durationRounds: 8
+  - sector: Logic
+    priceMult: 1.2
+    payoutMult: 1.2
+    durationRounds: 8
+  - sector: Estate
+    priceMult: 1.2
+    payoutMult: 1.2
+    durationRounds: 8
+  - sector: Oil
+    priceMult: 1.2
+    payoutMult: 1.2
+    durationRounds: 8
+  - sector: Bank
+    priceMult: 1.2
+    payoutMult: 1.2
+    durationRounds: 8
+  - sector: Techo
+    priceMult: 1.2
+    payoutMult: 1.2
+    durationRounds: 8
+  - sector: Weapon
+    priceMult: 1.2
+    payoutMult: 1.2
+    durationRounds: 8

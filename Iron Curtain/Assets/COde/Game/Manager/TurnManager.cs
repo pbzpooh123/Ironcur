@@ -481,12 +481,8 @@ public class TurnManager : NetworkBehaviour
             else
                 roundtext.text = $"Rounds left: {roundsLeft}   (Main event in {eventIn} rounds)";
         }
-
-        // Optional: also mirror to a dedicated label on TurnUI
-        TurnUI.Instance?.SetNextMainEventName(nextEventName);
     }
 
-    /// <summary> Called by EventManager AFTER main event finishes. </summary>
     [Server]
     public void ServerStartTurnAfterMainEvent()
     {

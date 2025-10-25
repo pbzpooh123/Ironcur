@@ -25,37 +25,7 @@ MonoBehaviour:
   tieSplitPot: 1
   restrictToOpponents: 1
   requireCompanyOwner: 1
-  effects:
-  - targetType: 0
-    targetName: Steel & Iron Production
-    moneyDelta: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: -0.25
-    duration: 3
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
-  - targetType: 0
-    targetName: Food & Beverage Production
-    moneyDelta: 200
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: 0
-    duration: 0
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
-  - targetType: 0
-    targetName: Transportation & Logistics
-    moneyDelta: 0
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: -0.5
-    duration: 3
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
+  effects: []
   enableBankOddFine: 0
   bankCompanyName: Bank
   oddFineAmount: 500
@@ -70,6 +40,14 @@ MonoBehaviour:
   recessionRounds: 3
   sectorImpacts:
   - sector: Steel
-    priceMult: 2
-    payoutMult: 2
-    durationRounds: 5
+    priceMult: 0.75
+    payoutMult: 0.75
+    durationRounds: 3
+  - sector: Logic
+    priceMult: 0.5
+    payoutMult: 0.5
+    durationRounds: 3
+  - sector: Food
+    priceMult: 1.25
+    payoutMult: 1.25
+    durationRounds: 1

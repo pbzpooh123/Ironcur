@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Main Event 14
   m_EditorClassIdentifier: 
   eventName: Fall of the Berlin Wall
-  description: 'Transportation & Logistics: +100% revenue for this turn
+  description: 'Transportation & Logistics: +100% revenue for this round
 
     Real
-    Estate: +50% revenue'
+    Estate: +50% revenue this round'
   history: 'East and West Germans Tear Down the Berlin Wall  '
   type: 1
   mode: 0
@@ -26,27 +26,7 @@ MonoBehaviour:
   tieSplitPot: 1
   restrictToOpponents: 1
   requireCompanyOwner: 0
-  effects:
-  - targetType: 0
-    targetName: Transportation & Logistics
-    moneyDelta: 200
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: 1
-    duration: 0
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
-  - targetType: 0
-    targetName: Real Estate
-    moneyDelta: 220
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: 0.5
-    duration: 0
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
+  effects: []
   enableBankOddFine: 0
   bankCompanyName: Bank
   oddFineAmount: 500
@@ -60,7 +40,11 @@ MonoBehaviour:
   triggerRecession: 0
   recessionRounds: 3
   sectorImpacts:
-  - sector: Steel
+  - sector: Logic
     priceMult: 2
     payoutMult: 2
-    durationRounds: 5
+    durationRounds: 1
+  - sector: Estate
+    priceMult: 1.5
+    payoutMult: 1.5
+    durationRounds: 1

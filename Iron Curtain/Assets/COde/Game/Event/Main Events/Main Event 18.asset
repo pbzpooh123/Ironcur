@@ -25,7 +25,7 @@ MonoBehaviour:
   restrictToOpponents: 1
   requireCompanyOwner: 0
   effects:
-  - targetType: 3
+  - targetType: 2
     targetName: 
     moneyDelta: 100
     randomMoneyMin: 0

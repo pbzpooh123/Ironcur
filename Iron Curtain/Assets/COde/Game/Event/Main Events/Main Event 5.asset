@@ -23,17 +23,7 @@ MonoBehaviour:
   tieSplitPot: 1
   restrictToOpponents: 1
   requireCompanyOwner: 0
-  effects:
-  - targetType: 0
-    targetName: Weapon Manufacturing
-    moneyDelta: 500
-    randomMoneyMin: 0
-    randomMoneyMax: 0
-    multiplier: 0.5
-    duration: 0
-    skipTurn: 0
-    ownershipDelta: 0
-    grantExtraRoll: 0
+  effects: []
   enableBankOddFine: 0
   bankCompanyName: Bank
   oddFineAmount: 500
@@ -47,7 +37,7 @@ MonoBehaviour:
   triggerRecession: 0
   recessionRounds: 3
   sectorImpacts:
-  - sector: Steel
-    priceMult: 2
-    payoutMult: 2
-    durationRounds: 5
+  - sector: Weapon
+    priceMult: 1.5
+    payoutMult: 1.5
+    durationRounds: 3
