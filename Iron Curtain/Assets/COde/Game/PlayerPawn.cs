@@ -211,7 +211,7 @@ public class PlayerPawn : NetworkBehaviour
     [ServerRpc]
     private void CmdStartMovement(int steps)
     {
-        if (!IsServer) return;
+        if (!IsServerInitialized) return;
     
         RpcMoveSteps(steps); 
     }
@@ -645,16 +645,14 @@ public class PlayerPawn : NetworkBehaviour
     }
 
     [ObserversRpc]
-private void RpcShowDice(int d1, int d2)
-{
-    if (DiceUI.Instance != null)
+    private void RpcShowDice(int d1, int d2)
     {
-        // ใช้อันนี้แทน และส่ง callback ว่าจะให้ทำอะไรต่อหลังจากอนิเมชันจบ
-        DiceUI.Instance.ShowDiceRollingWithCallback(d1, d2, () =>
+        if (DiceUI.Instance != null)
         {
-            // อาจจะทำอะไรบางอย่างหลังจากลูกเต๋าหยุดแล้ว เช่น
-            Debug.Log("Dice animation finished on client.");
-        });
+            DiceUI.Instance.ShowDiceRollingWithCallback(d1, d2, () =>
+            {
+                Debug.Log("Dice animation finished on client.");
+            });
+        }
     }
-}
 }

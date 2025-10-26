@@ -1,4 +1,3 @@
-// PlayerEntryRow.cs
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -17,13 +16,11 @@ public class PlayerEntryRow : MonoBehaviour
             readyToggle.onValueChanged.RemoveAllListeners();
             readyToggle.isOn = isReady;
             readyToggle.interactable = isLocal;
-
             if (isLocal && onLocalToggleChanged != null)
                 readyToggle.onValueChanged.AddListener(onLocalToggleChanged.Invoke);
         }
     }
 
-    // NEW: let LobbyUI tint the name with the chosen color
     public void SetNameColor(Color c)
     {
         if (nameText) nameText.color = c;

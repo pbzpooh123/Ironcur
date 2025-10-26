@@ -1,5 +1,4 @@
-// LobbyUI.cs
-using UnityEngine;               // <-- needed for Color
+using UnityEngine;          
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
