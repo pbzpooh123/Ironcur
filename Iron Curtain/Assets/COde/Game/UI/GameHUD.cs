@@ -55,7 +55,10 @@ public class GameHUD : MonoBehaviour
 
         var infoPanel = panel.GetComponent<PlayerInfoPanel>();
         if (infoPanel != null)
+        {
             infoPanel.SetInfo(name, money);
+            infoPanel.SetOwnerCid(ownerCid);   // ← important for PortfolioButtonBinder
+        }
 
         RegisterPanel(infoPanel, name, ownerCid);
 
@@ -63,7 +66,6 @@ public class GameHUD : MonoBehaviour
         return infoPanel;
     }
 
-    /// <summary>Find the UI panel by player display name (case-insensitive).</summary>
     public PlayerInfoPanel FindPanelByName(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;
@@ -71,7 +73,6 @@ public class GameHUD : MonoBehaviour
         return panel;
     }
 
-    /// <summary>Find the UI panel by the owner's connection id.</summary>
     public PlayerInfoPanel FindPanelByCid(int cid)
     {
         if (cid < 0) return null;
@@ -79,26 +80,26 @@ public class GameHUD : MonoBehaviour
         return panel;
     }
 
-    /// <summary>
-    /// If you ever rename the player (e.g., lobby rename), call this once to keep the map in sync.
-    /// </summary>
     public void UpdatePanelName(PlayerInfoPanel panel, string oldName, string newName)
     {
         if (panel == null) return;
 
         var oldKey = Norm(oldName);
-        if (!string.IsNullOrWhiteSpace(oldKey) && _panelsByName.TryGetValue(oldKey, out var existing) && existing == panel)
+        if (!string.IsNullOrWhiteSpace(oldKey) &&
+            _panelsByName.TryGetValue(oldKey, out var existing) && existing == panel)
             _panelsByName.Remove(oldKey);
 
         var newKey = Norm(newName);
         if (!string.IsNullOrWhiteSpace(newKey))
             _panelsByName[newKey] = panel;
 
-        // Also update the visible label if needed
-        panel.SetInfo(newName);
+        if (panel.nameText != null)
+        {
+            panel.ownerName = newName;
+            panel.nameText.text = newName;
+        }
     }
 
-    /// <summary>Internal: register panel in our lookup maps.</summary>
     private void RegisterPanel(PlayerInfoPanel panel, string name, int cid)
     {
         if (panel == null) return;

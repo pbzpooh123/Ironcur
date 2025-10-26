@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using FishNet;                   // ← NEW
+using FishNet.Connection;       // ← NEW
 
 public class PortfolioUI : MonoBehaviour
 {
@@ -27,7 +29,7 @@ public class PortfolioUI : MonoBehaviour
 
     // cache for paging
     private List<(string company, int percent, float multiplier, int currentPrice)> _itemsCache
-    = new List<(string, int, float, int)>();
+        = new List<(string, int, float, int)>();
     private int _pageIndex = 0; // 0-based
 
     private void Awake()
@@ -42,25 +44,37 @@ public class PortfolioUI : MonoBehaviour
             _current.OnClientPortfolioChanged -= RefreshFromSnapshot;
     }
 
-    public void Show(PlayerPawn pawn)
+    // === NEW: explicit entrypoint for a chosen player (from InfoPanel button) ===
+    public void ShowForPawn(PlayerPawn pawn, string displayName)
     {
+        if (pawn == null) return;
+
+        // unsubscribe old
+        if (_current != null && _current != pawn)
+            _current.OnClientPortfolioChanged -= RefreshFromSnapshot;
+
         _current = pawn;
 
-        // subscribe once so UI auto-refreshes on pushes
+        // subscribe so UI auto-refreshes on pushes
         _current.OnClientPortfolioChanged -= RefreshFromSnapshot;
         _current.OnClientPortfolioChanged += RefreshFromSnapshot;
 
-        // request a fresh snapshot from server (safe for host too)
-        if (_current.IsServerInitialized)
-            _current.CmdRequestPortfolioForViewer(_current.Owner);
-        else
-            _current.CmdRequestPortfolioForViewer();
+        // request a fresh snapshot to THIS viewer (local client)
+        var viewerConn = InstanceFinder.ClientManager != null ? InstanceFinder.ClientManager.Connection : null;
+        if (viewerConn != null)
+            _current.CmdRequestPortfolioForViewer(viewerConn);
+
+        // header
+        if (titleText) titleText.text = $"{displayName}'s Portfolio";
 
         // build from current snapshot immediately
         RefreshFromSnapshot();
 
         if (panel != null) panel.SetActive(true);
     }
+
+    // (kept for compatibility if something else still calls Show)
+    public void Show(PlayerPawn pawn) => ShowForPawn(pawn, pawn != null ? pawn.playerName.Value : "—");
 
     public void Hide()
     {
@@ -69,6 +83,17 @@ public class PortfolioUI : MonoBehaviour
 
         if (panel != null)
             panel.SetActive(false);
+
+        _current = null;
+
+        // optional: clear list
+        if (rowsParent != null)
+        {
+            for (int i = rowsParent.childCount - 1; i >= 0; i--)
+                Destroy(rowsParent.GetChild(i).gameObject);
+        }
+        _itemsCache.Clear();
+        UpdatePageLabel(0, 0);
     }
 
     // === Paging controls ===
@@ -88,6 +113,11 @@ public class PortfolioUI : MonoBehaviour
 
     public void OnRefreshClicked()
     {
+        // Re-request to be safe (optional)
+        var viewerConn = InstanceFinder.ClientManager != null ? InstanceFinder.ClientManager.Connection : null;
+        if (_current != null && viewerConn != null)
+            _current.CmdRequestPortfolioForViewer(viewerConn);
+
         RefreshFromSnapshot(); 
     }
 
@@ -95,29 +125,28 @@ public class PortfolioUI : MonoBehaviour
     {
         if (_current == null) return;
 
-      
-        var snap = _current.GetClientPortfolioSnapshot(); 
+        var snap = _current.GetClientPortfolioSnapshot();
 
         _itemsCache.Clear();
 
-            foreach (var it in snap)
+        foreach (var it in snap)
+        {
+            int currentPrice = 0;
+            float aura = 1f;
+
+            if (MarketManager.Instance != null &&
+                MarketManager.Instance.companies.TryGetValue(it.company, out var comp) &&
+                comp != null)
             {
-                int currentPrice = 0;
-                float aura = 1f;
-
-                if (MarketManager.Instance != null &&
-                    MarketManager.Instance.companies.TryGetValue(it.company, out var comp) &&
-                    comp != null)
-                {
-                    currentPrice = comp.currentPrice;  
-                    aura = Mathf.Max(0f, comp.payoutMult); 
-                }
-
-                float personal = Mathf.Max(0.01f, it.multiplier);
-                float effective = personal * Mathf.Max(0.01f, aura);
-
-                _itemsCache.Add((it.company, it.percent, effective, currentPrice));
+                currentPrice = comp.currentPrice;  
+                aura = Mathf.Max(0f, comp.payoutMult); 
             }
+
+            float personal = Mathf.Max(0.01f, it.multiplier);
+            float effective = personal * Mathf.Max(0.01f, aura);
+
+            _itemsCache.Add((it.company, it.percent, effective, currentPrice));
+        }
 
         _itemsCache.Sort((a, b) =>
         {
@@ -125,26 +154,22 @@ public class PortfolioUI : MonoBehaviour
             return pc != 0 ? pc : string.Compare(a.company, b.company, System.StringComparison.Ordinal);
         });
 
+        float yieldPct = 0.10f;
+        if (MarketManager.Instance != null)
+            yieldPct = Mathf.Clamp01(MarketManager.Instance.dividendYield);
+
         int totalPercent = 0;
         int totalEstPayout = 0;
 
-        float yieldPct = 0.10f;
-            if (MarketManager.Instance != null)
-                yieldPct = Mathf.Clamp01(MarketManager.Instance.dividendYield);
+        foreach (var it in _itemsCache)
+        {
+            int baseIncome = Mathf.RoundToInt(it.currentPrice * yieldPct);
+            float ownRatio = Mathf.Clamp01(it.percent / 100f);
+            int est = Mathf.RoundToInt(baseIncome * ownRatio * it.multiplier); // multiplier is EFFECTIVE now
+            totalPercent += it.percent;
+            totalEstPayout += est;
+        }
 
-            totalPercent = 0;
-            totalEstPayout = 0;
-
-            foreach (var it in _itemsCache)
-            {
-                int baseIncome = Mathf.RoundToInt(it.currentPrice * yieldPct);
-                float ownRatio = Mathf.Clamp01(it.percent / 100f);
-                int est = Mathf.RoundToInt(baseIncome * ownRatio * it.multiplier); // multiplier is EFFECTIVE now
-                totalPercent += it.percent;
-                totalEstPayout += est;
-            }
-
-        if (titleText)   titleText.text = $"{_current.playerName.Value}'s Portfolio";
         if (summaryText) summaryText.text = $"{_itemsCache.Count} companies • Total % = {totalPercent} • Est. payout = ${totalEstPayout}";
         if (cashText)    cashText.text = $"Cash: ${_current.money.Value}";
 
