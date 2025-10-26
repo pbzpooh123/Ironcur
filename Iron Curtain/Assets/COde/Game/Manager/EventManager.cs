@@ -213,58 +213,6 @@ public class EventManager : NetworkBehaviour
         ApplyEventToPawn(e, pawn);
     }
 
-    private PlayerPawn _tileFlowPawn;
-    private int _tileStepOpenCount = 0;
-
-    [Server]
-    private void BeginTileFlow(PlayerPawn pawn)
-    {
-        _tileFlowPawn = pawn;
-        _tileStepOpenCount = 0;
-        TurnManager.Instance.ServerBeginTileAction(pawn);
-    }
-
-    [Server]
-    private void ShowStep(PlayerPawn pawn, string msg)
-    {
-        _tileStepOpenCount++;
-        if (pawn?.Owner != null)
-            TargetShowSideEventStep(pawn.Owner, msg);
-    }
-
-    [TargetRpc]
-    private void TargetShowSideEventStep(FishNet.Connection.NetworkConnection conn, string message)
-    {
-        if (EventUI.Instance != null)
-        {
-            EventUI.Instance.SideeventShow(message, pauseAll: true);
-            EventUI.Instance.SetSideeventReadyCallback(() =>
-            {
-                EventManager.Instance.CmdTileStepClosed();
-            });
-        }
-    }
-
-    [TargetRpc]
-    private void TargetShowSideEventFinal(FishNet.Connection.NetworkConnection conn, string message)
-    {
-        if (EventUI.Instance != null)
-        {
-            EventUI.Instance.SideeventShow(message, pauseAll: true);
-            EventUI.Instance.SetSideeventReadyCallback(() =>
-            {
-                TurnManager.Instance.CmdTileActionReady();
-            });
-        }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void CmdTileStepClosed(FishNet.Connection.NetworkConnection conn = null)
-    {
-        if (_tileFlowPawn == null || _tileFlowPawn.Owner != conn) return;
-        _tileStepOpenCount = Mathf.Max(0, _tileStepOpenCount - 1);
-    }
-
     /* ================= MAIN EVENTS (TIMELINE-BOUND) ================= */
 
     [Server]
@@ -359,12 +307,24 @@ public class EventManager : NetworkBehaviour
             EventUI.Instance.MaineventShow(title, body, pauseAll);
     }
 
+
     [TargetRpc]
-    private void TargetShowSideEvent(NetworkConnection conn, string message, bool pauseAll)
+    private void TargetShowSideEvent(FishNet.Connection.NetworkConnection conn, string message, bool pauseAll)
     {
         if (EventUI.Instance != null)
+        {
             EventUI.Instance.SideeventShow(message, pauseAll);
+            EventUI.Instance.SetSideeventReadyCallback(() =>
+            {
+                TurnManager.Instance.CmdTileActionReady();
+            });
+        }
+        else
+        {
+            TurnManager.Instance.CmdTileActionReady();
+        }
     }
+
 
     [ServerRpc(RequireOwnership = false)]
     public void CmdPlayerReady(NetworkConnection conn = null)
@@ -1084,7 +1044,8 @@ public class EventManager : NetworkBehaviour
         }
 
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowSideEvent(receiver.Owner, $"Benefactor Donation: Others paid you up to ${amountEach}M each.", false);
+             TargetShowSideEvent(c, $"Benefactor Donation: Others paid {receiver.playerName.Value} up to ${amountEach}M each.", false);
+
 
         ResumeAfterEvent();
     }

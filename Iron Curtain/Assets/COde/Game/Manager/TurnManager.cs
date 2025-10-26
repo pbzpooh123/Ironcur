@@ -6,7 +6,6 @@ using FishNet.Object.Synchronizing;
 using TMPro;
 using System.Threading.Tasks;
 
-
 public enum TurnPhase
 {
     None,
@@ -28,14 +27,12 @@ public class TurnManager : NetworkBehaviour
     public readonly SyncVar<int> roundCount = new();
 
     public TMP_Text roundtext;
-    
 
     private TurnPhase _phase = TurnPhase.None;
 
     private readonly Dictionary<PlayerPawn, int> _skipTurns = new();
     private readonly Dictionary<PlayerPawn, int> _extraRolls = new();
 
-    // Main event single-fire guard.
     private int _lastMainEventRoundFired = -1;
 
     private const int maxrounds = 25;
@@ -43,11 +40,21 @@ public class TurnManager : NetworkBehaviour
     public readonly SyncVar<int> remainingRounds = new();
     public bool IsGameEnded => _gameEnded;
 
-    // === NEW: are we waiting for the tile panel "Ready"? ===
     private bool _tileActionAwaitingAck = false;
     [SerializeField] private bool enableDevHotkeys = true;
     [SerializeField] private bool AutoBailoutAtTurnStart = true;
+
+    // <<< NEW: auto-end guard >>>
+    private bool _endTurnScheduled = false;
+
     private int RoundsRemaining() => Mathf.Max(0, maxrounds - (roundCount.Value - 1));
+
+    [Server] public bool IsPhase(TurnPhase phase) => _phase == phase;
+
+    [Server]
+    public bool IsCurrentAndInProposal(PlayerPawn pawn)
+        => pawn != null && IsCurrentPawn(pawn) && IsPhase(TurnPhase.Proposal);  
+
     private int RoundsUntilNextMainEvent()
     {
         int mod = roundCount.Value % 3;
@@ -66,13 +73,12 @@ public class TurnManager : NetworkBehaviour
         roundCount.Value = 1;
         remainingRounds.Value = maxrounds;
         RpcUpdateRoundUI(
-        RoundsRemaining(),
-        RoundsUntilNextMainEvent(),
-        EventManager.Instance ? EventManager.Instance.PeekNextMainEventName() : "—"
+            RoundsRemaining(),
+            RoundsUntilNextMainEvent(),
+            EventManager.Instance ? EventManager.Instance.PeekNextMainEventName() : "—"
         );
         StartCoroutine(DelayedStart());
         EventManager.Instance?.ServerSelectTimelineAndAnnounce();
-
     }
 
     private System.Collections.IEnumerator DelayedStart()
@@ -85,26 +91,19 @@ public class TurnManager : NetworkBehaviour
     {
         if (!enableDevHotkeys) return;
 
-        // Only react when the key is pressed this frame
         if (Input.GetKeyDown(KeyCode.Keypad9))
         {
-            // If we're the server/host, end immediately.
             if (IsServerStarted)
-            {
                 EndMatch("Ended by DEV hotkey (Numpad 9).");
-            }
             else
-            {
-                // Ask the server to end the match.
                 CmdDevEndMatch();
-            }
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
     private void CmdDevEndMatch(FishNet.Connection.NetworkConnection caller = null)
     {
-        if (!enableDevHotkeys) return; // guard if disabled on server
+        if (!enableDevHotkeys) return;
         EndMatch("Ended by DEV hotkey (Numpad 9).");
     }
 
@@ -143,7 +142,6 @@ public class TurnManager : NetworkBehaviour
         _phase = phase;
         Debug.Log($"[TurnManager] Phase -> {_phase}");
 
-        // Broadcast to ALL clients so they can set UI properly
         var pawn = GetCurrentPawn();
         string currentName = (pawn != null) ? pawn.playerName.Value : "";
         RpcSetTurnState(currentPlayerIndex.Value, _phase, currentName);
@@ -155,18 +153,12 @@ public class TurnManager : NetworkBehaviour
         var tu = GameObject.FindObjectOfType<TurnUI>();
         if (tu == null) return;
 
-        // Find local-owned pawn
         PlayerPawn local = null;
         foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
         {
-            if (p != null && p.IsOwner)
-            {
-                local = p;
-                break;
-            }
+            if (p != null && p.IsOwner) { local = p; break; }
         }
 
-        // Default lock-down
         tu.SetRollInteractable(false);
         tu.SetEndTurnInteractable(false);
 
@@ -178,7 +170,6 @@ public class TurnManager : NetworkBehaviour
         switch (phase)
         {
             case TurnPhase.Review:
-                // Only review UI for the owner. No buttons here.
                 break;
 
             case TurnPhase.Rolling:
@@ -186,17 +177,17 @@ public class TurnManager : NetworkBehaviour
                 break;
 
             case TurnPhase.TileEventPending:
-                // While a tile panel is open, no roll / no end turn.
                 tu.SetRollInteractable(false);
                 tu.SetEndTurnInteractable(false);
                 break;
 
             case TurnPhase.Proposal:
-                // Proposal UI for current player. No buttons here.
+                // no buttons; ProposalUI flow owns the phase
                 break;
 
             case TurnPhase.EndReady:
-                tu.SetEndTurnInteractable(isMyTurn);
+                // <<< CHANGED: keep button disabled because we auto-end >>>
+                tu.SetEndTurnInteractable(false);
                 break;
         }
     }
@@ -263,10 +254,10 @@ public class TurnManager : NetworkBehaviour
         if (AutoBailoutAtTurnStart && currentPlayer.money.Value < 0)
         {
             int tries = 0;
-            const int MAX_TRIES = 10; // safety cap
+            const int MAX_TRIES = 10;
             while (currentPlayer.money.Value < 0 && tries < MAX_TRIES)
             {
-                currentPlayer.ForceBailoutOnce(); // your +$100, +mark
+                currentPlayer.ForceBailoutOnce();
                 tries++;
             }
             if (tries > 0)
@@ -280,7 +271,6 @@ public class TurnManager : NetworkBehaviour
             return;
         }
 
-        // Consume 1 turn of jail time at start (this turn counts as jailed if >0).
         bool jailedThisTurn = IsJailed(currentPlayer);
         if (jailedThisTurn)
             currentPlayer.jailTurnsLeft.Value = Mathf.Max(0, currentPlayer.jailTurnsLeft.Value - 1);
@@ -293,15 +283,11 @@ public class TurnManager : NetworkBehaviour
         currentPlayer.TargetStartTurn(currentPlayer.Owner);
         Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value} (jailed={jailedThisTurn})");
 
-        // If jailed: NO Review, NO Roll, NO Proposal → directly EndReady
+        // <<< CHANGED: jailed → auto-end (no EndTurn button) >>>
         if (jailedThisTurn)
         {
             _extraRolls[currentPlayer] = 0;
-
-            SetPhase(TurnPhase.EndReady);
-            currentPlayer.TargetEnableRoll(currentPlayer.Owner, false);
-            currentPlayer.TargetEnableEndTurn(currentPlayer.Owner, true);
-
+            ServerEnterEndReadyAndAutoEnd();
             return;
         }
 
@@ -326,7 +312,7 @@ public class TurnManager : NetworkBehaviour
         pawn.TargetEnableEndTurn(pawn.Owner, false);
     }
 
-    // === NEW: bracket any tile panel ===
+    // === bracket any tile panel ===
     [Server]
     public void ServerBeginTileAction(PlayerPawn pawn)
     {
@@ -334,12 +320,10 @@ public class TurnManager : NetworkBehaviour
         _tileActionAwaitingAck = true;
         SetPhase(TurnPhase.TileEventPending);
 
-        // lock roll/end on the active pawn while a tile panel is open
         pawn.TargetEnableRoll(pawn.Owner, false);
         pawn.TargetEnableEndTurn(pawn.Owner, false);
     }
 
-    // Called by the local player when they press Ready/Close on that tile panel.
     [ServerRpc(RequireOwnership = false)]
     public void CmdTileActionReady(FishNet.Connection.NetworkConnection caller = null)
     {
@@ -349,8 +333,6 @@ public class TurnManager : NetworkBehaviour
         if (!_tileActionAwaitingAck || _phase != TurnPhase.TileEventPending) return;
 
         _tileActionAwaitingAck = false;
-
-        // Continue: extra rolls first, then proposal
         ServerOnTileActionComplete(pawn);
     }
 
@@ -369,14 +351,13 @@ public class TurnManager : NetworkBehaviour
         if (extra > 0)
         {
             ConsumeOneExtraRoll(pawn);
-            Debug.Log($"[TurnManager] Consumed one extra roll. Remaining={GetExtraRolls(pawn)} → ProceedToRoll()");
-            ProceedToRoll(); // roll again; that tile should also call ServerBeginTileAction + CmdTileActionReady
+            ProceedToRoll();
         }
         else
         {
             foreach (var tile in FindObjectsOfType<TileData>())
                 tile.RefreshVisuals();
-            Debug.Log("[TurnManager] No extra roll → ProceedToProposal()");
+
             ProceedToProposal();
         }
     }
@@ -387,22 +368,19 @@ public class TurnManager : NetworkBehaviour
         var pawn = GetCurrentPawn();
         if (pawn == null) return;
 
-        // Block proposals for the round if the event is active
+        // proposals blocked → auto-end
         if (EventManager.Instance != null && EventManager.Instance.IsProposalBlockedNow())
         {
-            SetPhase(TurnPhase.EndReady);
-            pawn.TargetEnableRoll(pawn.Owner, false);
-            pawn.TargetEnableEndTurn(pawn.Owner, true);
-            Debug.Log($"[TurnManager] Proposals disabled → EndTurn enabled for {pawn.playerName.Value}.");
+            Debug.Log($"[TurnManager] Proposals disabled → auto end for {pawn.playerName.Value}.");
+            ServerEnterEndReadyAndAutoEnd(); // <<< CHANGED
             return;
         }
 
+        // jailed (defensive) → auto-end
         if (IsJailed(pawn))
         {
-            SetPhase(TurnPhase.EndReady);
-            pawn.TargetEnableRoll(pawn.Owner, false);
-            pawn.TargetEnableEndTurn(pawn.Owner, true);
-            Debug.Log($"[TurnManager] {pawn.playerName.Value} is jailed → skipping Proposal, enabling EndTurn.");
+            Debug.Log($"[TurnManager] {pawn.playerName.Value} is jailed (defensive) → auto end.");
+            ServerEnterEndReadyAndAutoEnd(); // <<< CHANGED
             return;
         }
 
@@ -415,12 +393,34 @@ public class TurnManager : NetworkBehaviour
     [Server]
     public void OnPlayerFinishedProposal()
     {
+        // <<< CHANGED: auto-end instead of enabling button >>>
+        ServerEnterEndReadyAndAutoEnd();
+    }
+
+    // <<< NEW: small helper to flip to EndReady and finish automatically >>>
+    [Server]
+    private void ServerEnterEndReadyAndAutoEnd()
+    {
+        if (_endTurnScheduled || _gameEnded) return;
+
         var pawn = GetCurrentPawn();
         if (pawn == null) return;
 
+        _endTurnScheduled = true;
+
         SetPhase(TurnPhase.EndReady);
         pawn.TargetEnableRoll(pawn.Owner, false);
-        pawn.TargetEnableEndTurn(pawn.Owner, true);
+        pawn.TargetEnableEndTurn(pawn.Owner, false);
+
+        StartCoroutine(CoAutoEndTurn());
+    }
+
+    private System.Collections.IEnumerator CoAutoEndTurn()
+    {
+        // Short grace so UIs can close/settle; adjust if you like.
+        yield return new WaitForSeconds(0.35f);
+        _endTurnScheduled = false;
+        EndTurn();
     }
 
     [Server]
@@ -428,7 +428,6 @@ public class TurnManager : NetworkBehaviour
     {
         if (turnOrder.Count == 0 || _gameEnded) return;
 
-        // Count every turn taken
         turnCount.Value++;
 
         int nextIndex = currentPlayerIndex.Value + 1;
@@ -572,7 +571,6 @@ public class TurnManager : NetworkBehaviour
             string name = string.IsNullOrWhiteSpace(p.playerName.Value) ? "Player" : p.playerName.Value;
             long score = p.money.Value - (100L * p.bailoutMarks.Value);
 
-
             p.TargetSubmitToLeaderboard(p.Owner, score, name);
         }
     }
@@ -580,7 +578,6 @@ public class TurnManager : NetworkBehaviour
     [ObserversRpc(BufferLast = true)]
     private void RpcShowFinalResults(string[] names, int[] moneys, int[] bailouts, int[] finals)
     {
-
         var ui = MatchResultsUI.Instance;
         if (ui != null)
             ui.Show(names, moneys, bailouts, finals);
@@ -589,7 +586,6 @@ public class TurnManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void CmdFinalResultsReady(FishNet.Connection.NetworkConnection conn = null)
     {
-
         if (conn == null) return;
 
         _readyClientIds ??= new HashSet<int>();
@@ -600,7 +596,7 @@ public class TurnManager : NetworkBehaviour
 
         if (_resultsReady >= _resultsRequired)
         {
-             _ = SubmitScoresThenGoToLeaderboard();
+            _ = SubmitScoresThenGoToLeaderboard();
         }
     }
     private HashSet<int> _readyClientIds;
@@ -611,37 +607,32 @@ public class TurnManager : NetworkBehaviour
         MatchResultsUI.Instance?.GoToLeaderboardScene();
     }
 
-   private async Task SubmitScoresThenGoToLeaderboard()
-{
-    var svc = UGSLeaderboard.Instance;
-
-    if (svc != null)
+    private async Task SubmitScoresThenGoToLeaderboard()
     {
-        var tasks = new List<Task>();
-        foreach (var p in GameManager.Instance.Players)
+        var svc = UGSLeaderboard.Instance;
+
+        if (svc != null)
         {
-            string name  = string.IsNullOrWhiteSpace(p.playerName.Value) ? "Player" : p.playerName.Value;
-            long score   = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
-            tasks.Add(svc.SubmitMyScoreAsync(score, name));
+            var tasks = new List<Task>();
+            foreach (var p in GameManager.Instance.Players)
+            {
+                string name  = string.IsNullOrWhiteSpace(p.playerName.Value) ? "Player" : p.playerName.Value;
+                long score   = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
+                tasks.Add(svc.SubmitMyScoreAsync(score, name));
+            }
+
+            try { await Task.WhenAll(tasks); }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[UGS] One or more leaderboard submissions failed: {ex}");
+            }
+        }
+        else
+        {
+            Debug.LogWarning("[UGS] Leaderboard service not present; loading scene anyway.");
+            await Task.Delay(500);
         }
 
-        try
-        {
-            await Task.WhenAll(tasks);
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogError($"[UGS] One or more leaderboard submissions failed: {ex}");
-        }
+        RpcGoToLeaderboard();
     }
-    else
-    {
-        Debug.LogWarning("[UGS] Leaderboard service not present; loading scene anyway.");
-        // tiny grace period so any client-side calls can race-in
-        await Task.Delay(500);
-    }
-
-    RpcGoToLeaderboard();
-}
-
 }

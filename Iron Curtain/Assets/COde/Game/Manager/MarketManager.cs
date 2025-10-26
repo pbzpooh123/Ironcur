@@ -319,11 +319,19 @@ public class MarketManager : NetworkBehaviour
         if (pawn == null || pawn.Owner == null) return;
         if (pawn.jailTurnsLeft.Value > 0) return;
 
+        if (!TurnManager.Instance.IsCurrentPawn(pawn) ||
+            !TurnManager.Instance.InProposalPhaseFor(pawn))
+        {
+            Debug.Log($"[MarketManager] Blocked ShowProposalForPawn for {pawn.playerName.Value} (not in Proposal phase).");
+            return;
+        }
+
         if (!_proposalHintShown.Contains(pawn.Owner.ClientId))
         {
             _proposalHintShown.Add(pawn.Owner.ClientId);
             TargetShowProposalHint(pawn.Owner);
         }
+
         TargetShowProposalUI(pawn.Owner);
     }
 
@@ -350,14 +358,18 @@ public class MarketManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void CmdRequestProposalUI(NetworkConnection conn = null)
     {
-        if (conn == null)
-            return;
+        if (conn == null) return;
 
         var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
-        if (pawn == null)
-            return;
+        if (pawn == null) return;
 
-        // Use server-only entry to show on that client.
+        if (!TurnManager.Instance.IsCurrentPawn(pawn) ||
+            !TurnManager.Instance.InProposalPhaseFor(pawn))
+        {
+            Debug.Log($"[MarketManager] Client blocked from opening ProposalUI (not in Proposal phase).");
+            return;
+        }
+
         ShowProposalForPawn(pawn);
     }
 
@@ -449,7 +461,13 @@ public class MarketManager : NetworkBehaviour
 
         var proposer = GameManager.Instance.Players.Find(p => p.Owner == caller);
         if (proposer == null) return;
-        if (EventManager.Instance != null && EventManager.Instance.IsProposalBlockedNow()) return;
+
+        if (!TurnManager.Instance.IsCurrentPawn(proposer) ||
+            !TurnManager.Instance.InProposalPhaseFor(proposer))
+            return;
+
+        if (EventManager.Instance != null && EventManager.Instance.IsProposalBlockedNow())
+            return;
 
         if (!companies.TryGetValue(companyName, out var company)) return;
         if (company.GetOwnership(proposer) > 50) return;
@@ -474,7 +492,6 @@ public class MarketManager : NetworkBehaviour
         SyncProposalsToClients(companyName);
         Debug.Log($"[Market] {proposer.playerName.Value} proposed {maxTransfer}% of {companyName} for ${price}");
     }
-
 
 
     /* ================= Accept/Reject Proposal ================= */
