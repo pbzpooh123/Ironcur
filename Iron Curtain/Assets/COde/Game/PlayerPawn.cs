@@ -172,17 +172,6 @@ public class PlayerPawn : NetworkBehaviour
         return true;
     }
 
-    [Server]
-    private void CheckBailout()
-    {
-        if (money.Value < 0)
-        {
-            bailoutMarks.Value += 1;
-            money.Value = 100;
-            TargetNotifyBailout(Owner, bailoutMarks.Value, money.Value);
-        }
-    }
-
     [TargetRpc]
     private void TargetNotifyBailout(NetworkConnection conn, int marks, int currentMoney)
     {
@@ -234,13 +223,31 @@ public class PlayerPawn : NetworkBehaviour
         }
     }
 
-    [ServerRpc]
+   [ServerRpc]
     private void CmdStartMovement(int steps)
     {
         if (!IsServerInitialized) return;
-    
+
+        if (Owner != null)
+            TargetMoveSteps(Owner, steps);
+
+        RpcMoveStepsOthers(steps);
+    }
+
+    [TargetRpc]
+    private void TargetMoveSteps(FishNet.Connection.NetworkConnection conn, int steps)
+    {
         StopAllCoroutines();
-        StartCoroutine(ServerMoveStepByStep(steps));
+        StartCoroutine(MoveStepByStep(steps));
+    }
+
+    [ObserversRpc]
+    private void RpcMoveStepsOthers(int steps)
+    {
+        if (IsOwner) return;
+
+        StopAllCoroutines();
+        StartCoroutine(MoveStepByStep(steps));
     }
 
     [ServerRpc]

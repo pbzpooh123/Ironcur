@@ -105,6 +105,9 @@ MonoBehaviour:
   portfolioButton: {fileID: 5046551574406848023}
   ownerCid: -1
   ownerName: 
+  highlightImage: {fileID: 4406307356039657526}
+  activeColor: {r: 1, g: 0.9, b: 0.3, a: 0.75}
+  idleColor: {r: 1, g: 1, b: 1, a: 0.15}
   bailoutText: {fileID: 3870340549746616997}
 --- !u!114 &5923547694135254486
 MonoBehaviour:

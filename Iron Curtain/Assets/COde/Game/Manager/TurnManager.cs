@@ -166,6 +166,8 @@ public class TurnManager : NetworkBehaviour
             return;
 
         bool isMyTurn = (local.playerName.Value == currentPlayerName);
+        if (GameHUD.Instance != null && !string.IsNullOrEmpty(currentPlayerName))
+        GameHUD.Instance.SetCurrentTurn(currentPlayerName);
 
         switch (phase)
         {
@@ -478,8 +480,11 @@ public class TurnManager : NetworkBehaviour
             if (eventIn <= 0)
                 roundtext.text = $"Rounds left: {roundsLeft}";
             else
-                roundtext.text = $"Rounds left: {roundsLeft}   (Main event in {eventIn} rounds)";
+                roundtext.text = $"Rounds left: {roundsLeft}";
         }
+
+        if (TurnUI.Instance != null)
+            TurnUI.Instance.SetNextMainEventETA(eventIn);
     }
 
     [Server]
@@ -558,7 +563,6 @@ public class TurnManager : NetworkBehaviour
         {
             tu.SetRollInteractable(false);
             tu.SetEndTurnInteractable(false);
-            tu.ShowToast($"Game Over: {reason}", 5f);
         }
     }
 

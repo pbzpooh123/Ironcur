@@ -79,8 +79,9 @@ public class ProposalUI : MonoBehaviour
         {
             var c = kv.Value;
             if (c == null) continue;
-            int myPct = c.GetOwnership(currentPawn);
-            if (myPct > 50) continue;
+            if (c.owner == null || c.owner == currentPawn) continue;              // must belong to someone else
+            if (c.GetOwnership(currentPawn) >= 100) continue;                     // you already have 100%
+            if (c.GetOwnership(c.owner) <= 0) continue;
             if (MarketManager.Instance.HasSubmittedThisTurn(currentPawn, c.companyName))
                 continue;
 

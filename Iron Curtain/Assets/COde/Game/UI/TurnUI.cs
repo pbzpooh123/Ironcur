@@ -8,17 +8,31 @@ public class TurnUI : MonoBehaviour
     [Header("Buttons")]
     public Button rollDiceButton;
     public Button endTurnButton;
-
-    [Header("Optional Message/Banner (assign either)")]
-    public TMP_Text messageTMP;      // TextMeshPro (optional)
     public Button portfolioButton;
 
+    [Header("Message/Banner (optional)")]
+    public TMP_Text messageTMP;
+
+    [Header("Rounds")]
+    public TMP_Text roundsLeftText;
+
+    [Header("Next Main Event (collapsible)")]
+    [Tooltip("Parent panel that contains the next event UI (title, history, ETA row).")]
+    public GameObject nextEventContainer;     // drag the whole section here
+    public Button nextEventToggleButton;      // a small arrow button in the header
+    public RectTransform nextEventChevron;    // Image RectTransform of the chevron icon
+
+    [Space(6)]
+    public TMP_Text nextMainEventText;        // event title/name (from EventManager)
+    public TMP_Text nextMainEventHistory;     // short history/blurb (from EventManager)
+    public TMP_Text nextMainEventEtaText;     // “Main event in X rounds” (from TurnManager)
+
     private PlayerPawn myPawn;
-
-    public TMP_Text nextEventText;
-    public TMP_Text nextEventHistory;
-
     public static TurnUI Instance;
+
+    // Persist (optional). Remove if you don’t want persistence.
+    private const string PREF_NEXT_EVENT_COLLAPSED = "ui.nextEventCollapsed";
+    private bool _nextEventCollapsed = false;
 
     void Awake()
     {
@@ -27,20 +41,25 @@ public class TurnUI : MonoBehaviour
 
     private void Start()
     {
-        if (rollDiceButton != null) rollDiceButton.onClick.AddListener(OnRollDiceClicked);
-        if (endTurnButton != null)  endTurnButton.onClick.AddListener(OnEndTurnClicked);
-        if (portfolioButton != null)
-            portfolioButton.onClick.AddListener(OnPortfolioClicked);
-        
+        if (rollDiceButton)      rollDiceButton.onClick.AddListener(OnRollDiceClicked);
+        if (endTurnButton)       endTurnButton.onClick.AddListener(OnEndTurnClicked);
+        if (portfolioButton)     portfolioButton.onClick.AddListener(OnPortfolioClicked);
+        if (nextEventToggleButton) nextEventToggleButton.onClick.AddListener(ToggleNextEventPanel);
+
         SetRollInteractable(false);
         SetEndTurnInteractable(false);
         ClearMessage();
+
+        // Load collapsed state (optional)
+        _nextEventCollapsed = PlayerPrefs.GetInt(PREF_NEXT_EVENT_COLLAPSED, 0) == 1;
+        ApplyNextEventCollapsed();
     }
 
     private void OnDestroy()
     {
-        if (rollDiceButton != null) rollDiceButton.onClick.RemoveListener(OnRollDiceClicked);
-        if (endTurnButton != null)  endTurnButton.onClick.RemoveListener(OnEndTurnClicked);
+        if (rollDiceButton)      rollDiceButton.onClick.RemoveListener(OnRollDiceClicked);
+        if (endTurnButton)       endTurnButton.onClick.RemoveListener(OnEndTurnClicked);
+        if (nextEventToggleButton) nextEventToggleButton.onClick.RemoveListener(ToggleNextEventPanel);
     }
 
     public void BindPawn(PlayerPawn pawn)
@@ -54,8 +73,8 @@ public class TurnUI : MonoBehaviour
     {
         if (myPawn != null && myPawn.IsOwner)
         {
-            myPawn.OnRollDiceButton();     
-            SetRollInteractable(false); 
+            myPawn.OnRollDiceButton();
+            SetRollInteractable(false);
         }
     }
 
@@ -63,14 +82,13 @@ public class TurnUI : MonoBehaviour
     {
         if (myPawn != null && myPawn.IsOwner)
         {
-            myPawn.OnEndTurnButton();     
-            SetEndTurnInteractable(false); 
+            myPawn.OnEndTurnButton();
+            SetEndTurnInteractable(false);
         }
     }
-    
+
     private void OnPortfolioClicked()
     {
-        // Find local pawn if not bound for any reason
         if (myPawn == null)
         {
             foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
@@ -83,67 +101,94 @@ public class TurnUI : MonoBehaviour
 
     public void SetEndTurnInteractable(bool enable)
     {
-        if (endTurnButton != null) endTurnButton.interactable = enable;
+        if (endTurnButton) endTurnButton.interactable = enable;
     }
 
     public void SetRollInteractable(bool enable)
     {
-        if (rollDiceButton != null) rollDiceButton.interactable = enable;
+        if (rollDiceButton) rollDiceButton.interactable = enable;
     }
 
     public void ForceDisableEndTurn() => SetEndTurnInteractable(false);
-    
+
     public void FreezeAll()
     {
         SetRollInteractable(false);
         SetEndTurnInteractable(false);
     }
-    
+
     public void ShowMessage(string msg)
     {
-       if (messageTMP != null) messageTMP.text = msg;
+        if (messageTMP) messageTMP.text = msg;
     }
 
     public void ClearMessage()
     {
-        if (messageTMP != null) messageTMP.text = "";
-    }
-    
-    public void ShowToast(string msg, float seconds = 3f)
-    {
-        if (gameObject.activeInHierarchy)
-            StartCoroutine(CoToast(msg, seconds));
+        if (messageTMP) messageTMP.text = "";
     }
 
-    private IEnumerator CoToast(string msg, float seconds)
-    {
-        if (messageTMP != null) messageTMP.text = msg;
-        yield return new WaitForSeconds(seconds);
-        if (messageTMP != null) messageTMP.text = "";
-    }
-
+    /* ---------- Next Main Event content (from EventManager) ---------- */
     public void SetNextMainEvent(string name, string history)
     {
-        if (nextEventText != null)
-            nextEventText.text = string.IsNullOrWhiteSpace(name) ? "—" : name;
+        // NOTE: you had a small name mismatch earlier (nextEventText vs nextMainEventText).
+        if (nextMainEventText)
+            nextMainEventText.text = string.IsNullOrWhiteSpace(name) ? "—" : name;
 
-        if (nextEventHistory != null)
+        if (nextMainEventHistory)
         {
             if (string.IsNullOrWhiteSpace(history))
             {
-                nextEventHistory.gameObject.SetActive(false);
+                nextMainEventHistory.gameObject.SetActive(false);
             }
             else
             {
-                nextEventHistory.gameObject.SetActive(true);
-                nextEventHistory.text = history;
+                nextMainEventHistory.gameObject.SetActive(true);
+                nextMainEventHistory.text = history;
             }
+        }
+    }
+
+    /* ---------- Next Main Event ETA (from TurnManager) ---------- */
+    public void SetNextMainEventETA(int rounds)
+    {
+        if (!nextMainEventEtaText) return;
+
+        if (rounds <= 0)
+        {
+            nextMainEventEtaText.text = "Main event: now";
+        }
+        else if (rounds == 1)
+        {
+            nextMainEventEtaText.text = "Main event in 1 round";
         }
         else
         {
-            // If you only have one text field, append the blurb under the title.
-            if (nextEventText != null && !string.IsNullOrWhiteSpace(history))
-                nextEventText.text = $"{nextEventText.text}\n<size=80%><i>{history}</i></size>";
+            nextMainEventEtaText.text = $"Main event in {rounds} rounds";
         }
-    }  
+    }
+
+    /* ---------- Collapse/Expand behaviour ---------- */
+    public void ToggleNextEventPanel()
+    {
+        _nextEventCollapsed = !_nextEventCollapsed;
+        ApplyNextEventCollapsed();
+
+        // Persist (optional)
+        PlayerPrefs.SetInt(PREF_NEXT_EVENT_COLLAPSED, _nextEventCollapsed ? 1 : 0);
+        PlayerPrefs.Save();
+    }
+
+    private void ApplyNextEventCollapsed()
+    {
+        if (nextEventContainer)
+            nextEventContainer.SetActive(!_nextEventCollapsed);
+
+        // Rotate chevron: collapsed = pointing right, expanded = down.
+        if (nextEventChevron)
+        {
+            // Adjust angles to match your art if needed.
+            float z = _nextEventCollapsed ? 0f : 0f;
+            nextEventChevron.localEulerAngles = new Vector3(0f, 0f, z);
+        }
+    }
 }

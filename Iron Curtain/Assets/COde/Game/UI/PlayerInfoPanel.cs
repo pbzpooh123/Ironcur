@@ -20,6 +20,12 @@ public class PlayerInfoPanel : MonoBehaviour
     [HideInInspector] public int ownerCid = -1;
     [HideInInspector] public string ownerName = "";
 
+    [Header("Turn Highlight")]
+
+    public Image highlightImage;
+    public Color activeColor = new Color(1f, 0.9f, 0.3f, 0.75f);
+    public Color idleColor   = new Color(1f, 1f, 1f, 0.15f);
+
     public void SetInfo(string name, int money = 0)
     {
         ownerName = name;
@@ -45,5 +51,12 @@ public class PlayerInfoPanel : MonoBehaviour
     {
         if (bailoutText != null)
             bailoutText.text = $"Bailouts: {marks}";
+    }
+
+    public void SetTurnActive(bool isActive)
+    {
+        if (!highlightImage) return;
+        highlightImage.enabled = true;
+        highlightImage.color = isActive ? activeColor : idleColor;
     }
 }

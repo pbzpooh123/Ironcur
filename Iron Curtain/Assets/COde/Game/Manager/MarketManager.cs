@@ -579,7 +579,10 @@ public class MarketManager : NetworkBehaviour
         if (majority != prevOwner)
         {
             company.owner = majority;
-            RpcUpdateTileOwner(companyName, majority.playerName.Value, majority.colorIndex.Value);
+            company.ownerName = majority.playerName.Value;          
+
+            RpcSyncMajorityOwner(companyName, company.ownerName);
+            RpcUpdateTileOwner(companyName, company.ownerName, majority.colorIndex.Value);
         }
 
         // Sync portfolios & UI
@@ -856,13 +859,13 @@ public class MarketManager : NetworkBehaviour
         if (oldOwner == newOwner) return;
 
         c.owner = newOwner;
+        c.ownerName = newOwner.playerName.Value;                       // <<< ADD THIS
+
         c.ownershipPercents.Clear();
         c.ownershipPercents[newOwner] = 100;
 
-        // Remove company from old owner's portfolio
         oldOwner?.factoryPortfolio.Remove(companyName);
 
-        // Add to new owner's portfolio
         if (!newOwner.factoryPortfolio.ContainsKey(companyName))
             newOwner.factoryPortfolio[companyName] = new ShareRecord
             {
@@ -872,7 +875,9 @@ public class MarketManager : NetworkBehaviour
                 roundBought = TurnManager.Instance.roundCount.Value
             };
 
+        RpcSyncMajorityOwner(companyName, c.ownerName);                // <<< SYNC TO CLIENTS
         RpcSyncOwnership(companyName, newOwner.playerName.Value, 100);
+        RpcUpdateTileOwner(companyName, c.ownerName, newOwner.colorIndex.Value);
     }
 
     [Server]
@@ -1216,6 +1221,21 @@ public class MarketManager : NetworkBehaviour
         }
 
         return count;
+    }
+
+    [ObserversRpc]
+    private void RpcSyncMajorityOwner(string companyName, string newOwnerName)
+    {
+        if (companies.TryGetValue(companyName, out var c))
+        {
+            c.ownerName = newOwnerName;
+            c.owner = FindPawnByName(newOwnerName); // may be null briefly on late clients; that’s okay
+        }
+
+        // Nudge UIs if open
+        ProposalUI.Instance?.Refresh();
+        ReviewUI.Instance?.Refresh();
+        RpcRefreshLocalPortfolioUI();
     }
 
 }

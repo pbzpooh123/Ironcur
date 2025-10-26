@@ -57,7 +57,7 @@ public class EventManager : NetworkBehaviour
     {
         base.OnStartClient();
         if (!IsServerInitialized)
-            CmdRequestSeed(); 
+            CmdRequestSeed();
     }
 
     /* ================= UTILS ================= */
@@ -634,6 +634,10 @@ public class EventManager : NetworkBehaviour
         if (conn == null) return;
         var (nextName, nextHistory) = PeekNextMainEventInfo();
         TargetSeedState(conn, _timelineName, nextName, nextHistory);
+
+        // NEW: seed all current surges
+        foreach (var kv in _sectorSurges)
+            TargetSeedSectorSurge(conn, kv.Key, kv.Value.priceMult, kv.Value.payoutMult, kv.Value.expiresAtRound);
     }
 
     [TargetRpc]
@@ -705,7 +709,12 @@ public class EventManager : NetworkBehaviour
         var rm = new List<string>();
         foreach (var kv in _sectorSurges)
             if (now >= kv.Value.expiresAtRound) rm.Add(kv.Key);
-        foreach (var s in rm) _sectorSurges.Remove(s);
+        foreach (var s in rm)
+        {
+            _sectorSurges.Remove(s);
+            // tell clients it's inactive now (1,1,0)
+            RpcSyncSectorSurge(s, 1f, 1f, 0);
+        }
     }
 
     [Server]
@@ -747,6 +756,10 @@ public class EventManager : NetworkBehaviour
                 payoutMult = Mathf.Max(0f, payoutMult),
                 expiresAtRound = CurRound() + Mathf.Max(1, durationRounds)
             };
+
+            RpcSyncSectorSurge(sector, _sectorSurges[sector].priceMult,
+                   _sectorSurges[sector].payoutMult,
+                   _sectorSurges[sector].expiresAtRound);
         }
 
         // Immediate effects to existing companies (no extra popup)
@@ -822,6 +835,9 @@ public class EventManager : NetworkBehaviour
             TargetSelectUI.Instance.gameObject.SetActive(false);
 
         ForcedRollTierUI.Instance?.Hide();
+        #if !UNITY_SERVER
+            _clientSurges.Clear();
+        #endif
     }
 
     // --- Proposal block state ---
@@ -1044,7 +1060,7 @@ public class EventManager : NetworkBehaviour
         }
 
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-             TargetShowSideEvent(c, $"Benefactor Donation: Others paid {receiver.playerName.Value} up to ${amountEach}M each.", false);
+            TargetShowSideEvent(c, $"Benefactor Donation: Others paid {receiver.playerName.Value} up to ${amountEach}M each.", false);
 
 
         ResumeAfterEvent();
@@ -1500,5 +1516,72 @@ public class EventManager : NetworkBehaviour
             foreach (var conn in InstanceFinder.ServerManager.Clients.Values)
                 TargetShowMainEvent(conn, $"Odd Roll Fine EXPIRED.", "", false);
         }
+    }
+
+    [System.Serializable]
+    private struct ClientSectorSurge
+    {
+        public float priceMult;
+        public float payoutMult;
+        public int expiresAtRound; // absolute round number
+    }
+
+#if !UNITY_SERVER
+    private readonly Dictionary<string, ClientSectorSurge> _clientSurges = new();
+#endif
+
+    private static string CNorm(string s) => string.IsNullOrWhiteSpace(s) ? "" : s.Trim().ToLowerInvariant();
+
+    // Called whenever we (server) change a surge for a sector.
+    [ObserversRpc(BufferLast = true)]
+    private void RpcSyncSectorSurge(string sector, float priceMult, float payoutMult, int expiresAtRound)
+    {
+#if !UNITY_SERVER
+        sector = CNorm(sector);
+        if (string.IsNullOrEmpty(sector)) return;
+        _clientSurges[sector] = new ClientSectorSurge
+        {
+            priceMult = Mathf.Max(0.01f, priceMult),
+            payoutMult = Mathf.Max(0f, payoutMult),
+            expiresAtRound = expiresAtRound
+        };
+#endif
+    }
+
+    // Client helper: is the surge’s price multiplier active right now?
+    public bool ClientIsSectorSurgeActive(string sector)
+    {
+#if UNITY_SERVER
+        // on server, use your authoritative method
+        return !Mathf.Approximately(GetActiveSectorPriceMult(sector), 1f);
+#else
+        sector = CNorm(sector);
+        if (string.IsNullOrEmpty(sector)) return false;
+        if (!_clientSurges.TryGetValue(sector, out var s)) return false;
+
+        int cur = TurnManager.Instance != null ? TurnManager.Instance.roundCount.Value : 1;
+        bool priceEffective = Mathf.Abs(s.priceMult - 1f) > 0.001f;
+        bool notExpired = (s.expiresAtRound == 0) || (cur < s.expiresAtRound);
+        return priceEffective && notExpired;
+#endif
+    }
+
+    // Client helper: current price multiplier (1f if inactive)
+    public float ClientGetSectorPriceMult(string sector)
+    {
+#if UNITY_SERVER
+        return GetActiveSectorPriceMult(sector);
+#else
+        sector = CNorm(sector);
+        if (string.IsNullOrEmpty(sector)) return 1f;
+        if (!_clientSurges.TryGetValue(sector, out var s)) return 1f;
+        return ClientIsSectorSurgeActive(sector) ? Mathf.Max(0.01f, s.priceMult) : 1f;
+#endif
+    }
+
+    [TargetRpc]
+    private void TargetSeedSectorSurge(NetworkConnection conn, string sector, float priceMult, float payoutMult, int expiresAtRound)
+    {
+        RpcSyncSectorSurge(sector, priceMult, payoutMult, expiresAtRound);
     }
 }

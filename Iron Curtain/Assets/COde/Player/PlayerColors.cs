@@ -27,4 +27,9 @@ public static class PlayerColors
         if (idx >= Palette.Length) return Palette.Length - 1;
         return idx;
     }
+
+    public static Color Get(int colorIndex)
+    {
+        return PlayerColors.Palette[colorIndex];
+    }
 }

@@ -17,6 +17,8 @@ public class GameHUD : MonoBehaviour
 
     private Transform[] anchors;
 
+    private PlayerInfoPanel _currentTurnPanel;
+
     // name → panel (case-insensitive)
     private readonly Dictionary<string, PlayerInfoPanel> _panelsByName = new();
     // cid  → panel
@@ -116,6 +118,23 @@ public class GameHUD : MonoBehaviour
             var t = panel.GetComponent<PlayerCidTag>();
             if (t != null && t.clientId >= 0)
                 _panelsByCid[t.clientId] = panel;
+        }
+    }
+
+    public void SetCurrentTurn(string playerName)
+    {
+        // clear old
+        if (_currentTurnPanel) _currentTurnPanel.SetTurnActive(false);
+
+        var panel = FindPanelByName(playerName);
+        if (panel)
+        {
+            panel.SetTurnActive(true);
+            _currentTurnPanel = panel;
+        }
+        else
+        {
+            _currentTurnPanel = null;
         }
     }
 
