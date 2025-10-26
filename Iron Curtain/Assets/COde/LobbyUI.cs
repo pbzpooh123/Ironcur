@@ -1,4 +1,5 @@
-using UnityEngine;
+// LobbyUI.cs
+using UnityEngine;               // <-- needed for Color
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -14,9 +15,11 @@ public class LobbyUI : MonoBehaviour
     public Button startGameButton;
     public GameObject lobbyPanel;
 
-    // NEW: optional copy button (hook in Inspector)
     [Header("Optional")]
     public Button copyCodeButton;
+
+    // NEW: keep rows so we can recolor when color ownership changes
+    private readonly List<(PlayerEntryRow row, int cid)> _rows = new();
 
     private void Start()
     {
@@ -37,7 +40,6 @@ public class LobbyUI : MonoBehaviour
             copyCodeButton.onClick.AddListener(CopyRoomCodeToClipboard);
     }
 
-    // CHANGE: use the string we’re given (don’t pull from a singleton here)
     public void SetRoomCode(string code)
     {
         roomCodeText.text = string.IsNullOrWhiteSpace(code) ? "Room Code: —" : $"Room Code: {code}";
@@ -48,6 +50,7 @@ public class LobbyUI : MonoBehaviour
         // clear current rows
         foreach (Transform child in playerListContainer)
             Destroy(child.gameObject);
+        _rows.Clear();
 
         // local client id
         int localCid = InstanceFinder.ClientManager != null
@@ -75,12 +78,30 @@ public class LobbyUI : MonoBehaviour
                     if (lp != null) lp.SetReady(val); // call ServerRpc
                 }
             );
+
+            // keep for recoloring later
+            _rows.Add((row, connIds[i]));
         }
+
+        // tint names now, based on latest color ownership snapshot
+        RefreshNameColors();
 
         // Only the host sees Start, and it’s enabled only if everyone is ready
         bool isHost = InstanceFinder.IsServerStarted;
         startGameButton.gameObject.SetActive(isHost);
         startGameButton.interactable = isHost && NetworkManagerLobby.Instance.AllPlayersReady();
+    }
+
+    // NEW: recolor rows after color ownership updates
+    public void RefreshNameColors()
+    {
+        foreach (var item in _rows)
+        {
+            if (LobbyColorBinder.TryGetColorForCid(item.cid, out var col))
+                item.row.SetNameColor(col);
+            else
+                item.row.SetNameColor(Color.white);
+        }
     }
 
     private NetworkLobbyPlayer FindLocalLobbyPlayer()
@@ -128,10 +149,10 @@ public class LobbyUI : MonoBehaviour
     private void QuitLobby()
     {
         if (InstanceFinder.IsServerStarted)
-            InstanceFinder.ServerManager.StopConnection(true); // Stop server & all clients
+            InstanceFinder.ServerManager.StopConnection(true);
 
         if (InstanceFinder.IsClientStarted)
-            InstanceFinder.ClientManager.StopConnection(); // Stop client
+            InstanceFinder.ClientManager.StopConnection();
 
 #if UNITY_EDITOR
         UnityEditor.EditorApplication.isPlaying = false;
@@ -140,12 +161,9 @@ public class LobbyUI : MonoBehaviour
 #endif
     }
 
-    // NEW: copy button handler (optional)
     private void CopyRoomCodeToClipboard()
     {
         if (roomCodeText == null) return;
-
-        // Expecting "Room Code: ABCDEF"
         string raw = roomCodeText.text;
         string code = raw.Replace("Room Code:", "").Trim();
         GUIUtility.systemCopyBuffer = code;

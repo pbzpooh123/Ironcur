@@ -22,4 +22,10 @@ public class PlayerEntryRow : MonoBehaviour
                 readyToggle.onValueChanged.AddListener(onLocalToggleChanged.Invoke);
         }
     }
+
+    // NEW: let LobbyUI tint the name with the chosen color
+    public void SetNameColor(Color c)
+    {
+        if (nameText) nameText.color = c;
+    }
 }

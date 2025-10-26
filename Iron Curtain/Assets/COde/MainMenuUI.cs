@@ -32,9 +32,9 @@ public class MainMenuUI : MonoBehaviour
     private bool isHosting = false;
     public UnityEngine.UI.Button hostButton;
 
-    [Header("Name & Color Panel")]
-    public Button[] colorButtons;     // assign swatch buttons
-    private int _selectedColorIndex = 0;
+    // [Header("Name & Color Panel")]
+    // public Button[] colorButtons;     // assign swatch buttons
+    // private int _selectedColorIndex = 0;
 
     private void Start()
     {
@@ -46,17 +46,6 @@ public class MainMenuUI : MonoBehaviour
         CloseAllPanels();
         mainMenuPanel.SetActive(true);
         startPanel.SetActive(true);
-
-        for (int i = 0; i < colorButtons.Length && i < PlayerColors.Palette.Length; i++)
-        {
-            int idx = i;
-            var img = colorButtons[i].GetComponent<Image>();
-            if (img) img.color = PlayerColors.Palette[i];
-
-            colorButtons[i].onClick.RemoveAllListeners();
-            colorButtons[i].onClick.AddListener(() => OnPickColor(idx));
-        }
-        OnPickColor(_selectedColorIndex);
 
         isHosting = false;
         if (hostButton != null) hostButton.interactable = true;
@@ -140,7 +129,6 @@ public class MainMenuUI : MonoBehaviour
             OpenHostClientPanel();
         }
         PlayerPrefs.SetString("PlayerName", nameInput.text);
-        PlayerPrefs.SetInt("ColorIndex", _selectedColorIndex);
         PlayerPrefs.Save();
     }
 
@@ -149,13 +137,7 @@ public class MainMenuUI : MonoBehaviour
         OpenNameCountryPanel();
     }
     
-    public void OnPickColor(int idx)
-    {
-        _selectedColorIndex = PlayerColors.Clamp(idx);
-
-    }
     
-
     // --- Networking ---
 
     public async void HostGame()
@@ -245,7 +227,7 @@ public class MainMenuUI : MonoBehaviour
             if (obj.IsOwner && obj.TryGetComponent(out NetworkLobbyPlayer player))
             {
                 player.JoinRoom(roomCodeInput.text.ToUpper());
-                player.CmdSetProfile(nameInput.text, _selectedColorIndex);
+                player.CmdSetProfile(nameInput.text,0);
                 return;
             }
         }

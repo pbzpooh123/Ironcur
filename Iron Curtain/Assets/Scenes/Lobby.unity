@@ -722,6 +722,7 @@ GameObject:
   - component: {fileID: 101673775}
   - component: {fileID: 101673774}
   - component: {fileID: 101673776}
+  - component: {fileID: 101673777}
   m_Layer: 5
   m_Name: Color (3)
   m_TagString: Untagged
@@ -830,6 +831,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &101673777
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101673772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddc0509a0b77ab1429cb4244cd6499f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 3
+  swatch: {fileID: 101673774}
+  pickButton: {fileID: 101673776}
 --- !u!1 &167254021
 GameObject:
   m_ObjectHideFlags: 0
@@ -1107,6 +1123,7 @@ GameObject:
   - component: {fileID: 221503242}
   - component: {fileID: 221503241}
   - component: {fileID: 221503243}
+  - component: {fileID: 221503244}
   m_Layer: 5
   m_Name: Color (4)
   m_TagString: Untagged
@@ -1215,6 +1232,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &221503244
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 221503239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddc0509a0b77ab1429cb4244cd6499f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 4
+  swatch: {fileID: 221503241}
+  pickButton: {fileID: 221503243}
 --- !u!1 &247366100
 GameObject:
   m_ObjectHideFlags: 0
@@ -5760,6 +5792,7 @@ GameObject:
   - component: {fileID: 1233895493}
   - component: {fileID: 1233895492}
   - component: {fileID: 1233895494}
+  - component: {fileID: 1233895495}
   m_Layer: 5
   m_Name: Color (1)
   m_TagString: Untagged
@@ -5868,6 +5901,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1233895495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1233895490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddc0509a0b77ab1429cb4244cd6499f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 1
+  swatch: {fileID: 1233895492}
+  pickButton: {fileID: 1233895494}
 --- !u!1 &1236663099
 GameObject:
   m_ObjectHideFlags: 0
@@ -6930,6 +6978,7 @@ GameObject:
   - component: {fileID: 1356706732}
   - component: {fileID: 1356706736}
   - component: {fileID: 1356706737}
+  - component: {fileID: 1356706738}
   m_Layer: 5
   m_Name: Main Menu
   m_TagString: Untagged
@@ -7044,13 +7093,6 @@ MonoBehaviour:
   roomCodeInput: {fileID: 519926008}
   lobbyUI: {fileID: 1464092821}
   hostButton: {fileID: 674318867}
-  colorButtons:
-  - {fileID: 1515447703}
-  - {fileID: 1233895494}
-  - {fileID: 2093345308}
-  - {fileID: 101673776}
-  - {fileID: 221503243}
-  - {fileID: 1753984525}
 --- !u!114 &1356706737
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7063,6 +7105,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9f3793acbec5b3e4295e949e838f9410, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1356706738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1356706731}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c5baa5dbaa1a7641a6528cbd2961cf6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lobbyPlayerPrefab: {fileID: 8113397077836019727, guid: b42c6843c06c3b543aaf1914005072c8, type: 3}
 --- !u!1 &1420178516
 GameObject:
   m_ObjectHideFlags: 0
@@ -7246,7 +7301,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
-    m_Left: 0
+    m_Left: 539
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
@@ -7359,7 +7414,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   roomCodeText: {fileID: 1993546067}
   playerListContainer: {fileID: 1460042218}
-  playerEntryPrefab: {fileID: 2503349591214032372, guid: 88f669302cd4c7e40a83b06b59bb3171, type: 3}
+  playerEntryPrefab: {fileID: 274570516175505717, guid: 88f669302cd4c7e40a83b06b59bb3171, type: 3}
   quitButton: {fileID: 341472755}
   readyButton: {fileID: 361315707}
   startGameButton: {fileID: 198961054}
@@ -7452,6 +7507,7 @@ GameObject:
   - component: {fileID: 1515447702}
   - component: {fileID: 1515447701}
   - component: {fileID: 1515447703}
+  - component: {fileID: 1515447704}
   m_Layer: 5
   m_Name: Color
   m_TagString: Untagged
@@ -7560,6 +7616,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &1515447704
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1515447699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddc0509a0b77ab1429cb4244cd6499f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 0
+  swatch: {fileID: 1515447701}
+  pickButton: {fileID: 1515447703}
 --- !u!1 &1528223583
 GameObject:
   m_ObjectHideFlags: 0
@@ -8675,6 +8746,7 @@ GameObject:
   - component: {fileID: 1753984527}
   - component: {fileID: 1753984526}
   - component: {fileID: 1753984525}
+  - component: {fileID: 1753984529}
   m_Layer: 5
   m_Name: Color (5)
   m_TagString: Untagged
@@ -8783,6 +8855,21 @@ RectTransform:
   m_AnchoredPosition: {x: 260.296, y: -297.8942}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &1753984529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1753984524}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddc0509a0b77ab1429cb4244cd6499f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 5
+  swatch: {fileID: 1753984526}
+  pickButton: {fileID: 1753984525}
 --- !u!1 &1800723281
 GameObject:
   m_ObjectHideFlags: 0
@@ -10093,6 +10180,7 @@ GameObject:
   - component: {fileID: 1958615092}
   - component: {fileID: 1958615094}
   - component: {fileID: 1958615093}
+  - component: {fileID: 1958615095}
   m_Layer: 5
   m_Name: Color Panel
   m_TagString: Untagged
@@ -10164,6 +10252,22 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1958615091}
   m_CullTransparentMesh: 1
+--- !u!114 &1958615095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1958615091}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 88bfa5e656033584c94a47ae8cc2342b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _componentIndexCache: 255
+  _addedNetworkObject: {fileID: 2073705946}
+  _networkObjectCache: {fileID: 0}
+  slotCount: 6
 --- !u!1 &1969656568
 GameObject:
   m_ObjectHideFlags: 0
@@ -10749,6 +10853,7 @@ GameObject:
   - component: {fileID: 2073705944}
   - component: {fileID: 2073705943}
   - component: {fileID: 2073705942}
+  - component: {fileID: 2073705946}
   m_Layer: 5
   m_Name: Lobby UI
   m_TagString: Untagged
@@ -10839,6 +10944,58 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &2073705946
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2073705941}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 26b716c41e9b56b4baafaf13a523ba2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  <IsNested>k__BackingField: 0
+  WasActiveDuringEdit: 1
+  WasActiveDuringEdit_Set1: 1
+  <ComponentIndex>k__BackingField: 0
+  <PredictedSpawn>k__BackingField: {fileID: 0}
+  <PredictedOwner>k__BackingField: {fileID: 0}
+  NetworkBehaviours: []
+  InitializedParentNetworkBehaviour: {fileID: 0}
+  InitializedNestedNetworkObjects: []
+  RuntimeParentNetworkBehaviour: {fileID: 0}
+  RuntimeChildNetworkBehaviours: []
+  _isNetworked: 1
+  _isSpawnable: 1
+  _isGlobal: 0
+  _initializeOrder: 0
+  _preventDespawnOnDisconnect: 0
+  _defaultDespawnType: 0
+  NetworkObserver: {fileID: 0}
+  _enablePrediction: 0
+  _predictionType: 0
+  _graphicalObject: {fileID: 0}
+  _detachGraphicalObject: 0
+  _enableStateForwarding: 1
+  _networkTransform: {fileID: 0}
+  _ownerInterpolation: 1
+  _ownerSmoothedProperties: 255
+  _adaptiveInterpolation: 3
+  _spectatorSmoothedProperties: 255
+  _spectatorInterpolation: 2
+  _enableTeleport: 0
+  _teleportThreshold: 1
+  <PrefabId>k__BackingField: 65535
+  <SpawnableCollectionId>k__BackingField: 0
+  <AssetPathHash>k__BackingField: 0
+  <SceneId>k__BackingField: 4286561951
+  SerializedTransformProperties:
+    Position: {x: 0, y: 0, z: 0}
+    Rotation: {x: 0, y: 0, z: 0, w: 0}
+    Scale: {x: 0, y: 0, z: 0}
+    IsValid: 0
 --- !u!1 &2093345304
 GameObject:
   m_ObjectHideFlags: 0
@@ -10851,6 +11008,7 @@ GameObject:
   - component: {fileID: 2093345307}
   - component: {fileID: 2093345306}
   - component: {fileID: 2093345308}
+  - component: {fileID: 2093345309}
   m_Layer: 5
   m_Name: Color (2)
   m_TagString: Untagged
@@ -10959,6 +11117,21 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &2093345309
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2093345304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ddc0509a0b77ab1429cb4244cd6499f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slotIndex: 2
+  swatch: {fileID: 2093345306}
+  pickButton: {fileID: 2093345308}
 --- !u!1001 &7004600280166178296
 PrefabInstance:
   m_ObjectHideFlags: 0

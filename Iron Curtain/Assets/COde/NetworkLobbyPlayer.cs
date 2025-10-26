@@ -19,21 +19,23 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     public override void OnStartServer()
      {
         base.OnStartServer();
-           if (colorIndex.Value == 0) // default engine value
-               colorIndex.Value = -1; // not picked yet
+           colorIndex.Value = -1; 
      }
 
-    public override void OnStartClient()
+   public override void OnStartClient()
     {
         base.OnStartClient();
 
-        // keep UI synced
         isReady.OnChange += OnReadyStatusChanged;
-
-        // apply color on change (tints pawn for everyone)
         colorIndex.OnChange += (oldV, newV, asServer) => ApplyMyColor(newV);
 
-        Invoke(nameof(FindLobbyUIAndPushProfile), 0.5f);
+        if (IsOwner)
+        {
+            string n  = PlayerPrefs.GetString("PlayerName", "Player");
+            int ci    = PlayerPrefs.GetInt("ColorIndex", 0);
+            CmdSetProfile(n, ci);       
+            RequestRoomCode();           
+        }
     }
 
     private void FindLobbyUIAndPushProfile()
@@ -43,8 +45,6 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         if (IsOwner)
         {
             string n = PlayerPrefs.GetString("PlayerName", "Player");
-            int ci = PlayerPrefs.GetInt("ColorIndex", 0);
-            CmdSetProfile(n, ci); // server will enforce uniqueness
             RequestRoomCode();
         }
     }
@@ -68,50 +68,8 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     public void CmdSetProfile(string newName, int desiredColorIndex)
     {
             playerName.Value = string.IsNullOrWhiteSpace(newName) ? "Player" : newName;
-
-        int picked = GetUniqueColor(desiredColorIndex); 
-
-        colorIndex.Value = picked;
-        ApplyMyColor(colorIndex.Value);
-        TargetColorAssigned(Owner, colorIndex.Value);
-        NetworkManagerLobby.Instance.UpdateLobbyUI();
+                 NetworkManagerLobby.Instance.UpdateLobbyUI();
     }
-
-    private int GetUniqueColor(int desired)
-    {
-        desired = PlayerColors.Clamp(desired);
-
-        var taken = new HashSet<int>();
-        foreach (var kv in NetworkManager.ServerManager.Clients)
-        {
-            var no = kv.Value?.FirstObject;
-            if (no == null) continue;
-            var lp = no.GetComponent<NetworkLobbyPlayer>();
-            if (lp == null) continue;
-
-            int idx = lp.colorIndex.Value;
-            if (idx >= 0 && idx < PlayerColors.Palette.Length) // ignore -1
-                taken.Add(idx);
-        }
-
-        if (!taken.Contains(desired))
-            return desired;
-
-        for (int i = 0; i < PlayerColors.Palette.Length; i++)
-            if (!taken.Contains(i))
-                return i;
-
-        return -1; // none free
-    }
-
-    [TargetRpc]
-    private void TargetColorAssigned(FishNet.Connection.NetworkConnection conn, int idx)
-    {
-        PlayerPrefs.SetInt("ColorIndex", idx);
-        PlayerPrefs.Save();
-
-    }
-
 
     /* ---------------- Room code + lobby list ---------------- */
 
