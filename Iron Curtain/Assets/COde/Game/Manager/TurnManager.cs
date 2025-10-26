@@ -477,7 +477,7 @@ public class TurnManager : NetworkBehaviour
         if (roundtext != null)
         {
             if (eventIn <= 0)
-                roundtext.text = $"Rounds left: {roundsLeft}   (Main event this round: {nextEventName})";
+                roundtext.text = $"Rounds left: {roundsLeft}";
             else
                 roundtext.text = $"Rounds left: {roundsLeft}   (Main event in {eventIn} rounds)";
         }

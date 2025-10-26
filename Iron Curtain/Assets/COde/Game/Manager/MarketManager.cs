@@ -61,7 +61,7 @@ public class CompanyRecord
     public PlayerPawn GetMajorityOwner()
     {
         foreach (var kv in ownershipPercents)
-            if (kv.Value > 60) return kv.Key;
+            if (kv.Value > 50) return kv.Key;
         return owner;
     }
 }
@@ -441,6 +441,7 @@ public class MarketManager : NetworkBehaviour
     /// The current pawn may submit exactly one proposal per company this turn.
     /// Only use from Proposal phase and only for the current pawn.
     /// </summary>
+
     [ServerRpc(RequireOwnership = false)]
     public void CmdSubmitProposal(string companyName, int percent, int price, NetworkConnection caller = null)
     {
@@ -451,7 +452,7 @@ public class MarketManager : NetworkBehaviour
         if (EventManager.Instance != null && EventManager.Instance.IsProposalBlockedNow()) return;
 
         if (!companies.TryGetValue(companyName, out var company)) return;
-        if (company.owner == proposer) return;
+        if (company.GetOwnership(proposer) > 50) return;
 
         price = Mathf.Max(1, price);
 
@@ -466,19 +467,9 @@ public class MarketManager : NetworkBehaviour
         int buyerRoom = Mathf.Max(0, 100 - buyerHas);
 
         int maxTransfer = Mathf.Min(percent, sellerAvail, buyerRoom);
-        if (maxTransfer <= 0)
-        {
-            Debug.LogWarning($"[Market] Proposal has no transferable % (sellerAvail={sellerAvail}, buyerRoom={buyerRoom}).");
-            return;
-        }
+        if (maxTransfer <= 0) return;
 
-        company.proposals.Add(new Proposal
-        {
-            proposer = proposer,
-            percent = maxTransfer,
-            price = price
-        });
-
+        company.proposals.Add(new Proposal { proposer = proposer, percent = maxTransfer, price = price });
         set.Add(companyName);
         SyncProposalsToClients(companyName);
         Debug.Log($"[Market] {proposer.playerName.Value} proposed {maxTransfer}% of {companyName} for ${price}");
@@ -614,7 +605,6 @@ public class MarketManager : NetworkBehaviour
     {
         var pawn = GameManager.Instance.Players.Find(p => p.playerName.Value == playerName);
         if (pawn == null) return;
-
         if (!pawn.factoryPortfolio.ContainsKey(companyName))
         {
             pawn.factoryPortfolio[companyName] = new ShareRecord
@@ -633,10 +623,17 @@ public class MarketManager : NetworkBehaviour
             pawn.factoryPortfolio[companyName] = rec;
         }
 
+        if (companies.TryGetValue(companyName, out var comp) && comp != null)
+        {
+            if (newPercent > 0)
+                comp.SetOwnership(pawn, newPercent);
+            else
+                comp.ownershipPercents.Remove(pawn); // optional cleanup
+        }
+
         RpcRefreshLocalPortfolioUI();
         Debug.Log($"[ClientSync] {playerName} now has {newPercent}% of {companyName}");
     }
-
     [ObserversRpc(BufferLast = true)]
     private void RpcUpdateTileOwner(string companyName, string newOwnerName, int colorIndex)
     {
@@ -886,7 +883,7 @@ public class MarketManager : NetworkBehaviour
             }
         }
 
-        if (bestPawn != null && best > 60)
+        if (bestPawn != null && best > 50)
         {
             majorityOwner = bestPawn;
             return true;
@@ -1167,7 +1164,7 @@ public class MarketManager : NetworkBehaviour
             return;
         }
         EventUI.Instance?.SideeventShow(
-            "Review tip:\n• Review offers made to your companies.\n• Accept to transfer shares for cash; Reject to keep them.\n• Majority (>60%) can change tile owner color.",
+            "Review tip:\n• Review offers made to your companies.\n• Accept to transfer shares for cash; Reject to keep them.\n• Majority (>50%) can change tile owner color.",
             true
         );
     }
@@ -1189,8 +1186,8 @@ public class MarketManager : NetworkBehaviour
 
             if (onlyMajority)
             {
-                // majority if this pawn holds >60% (your existing rule)
-                if (c.ownershipPercents.TryGetValue(pawn, out int pct) && pct > 60)
+                // majority if this pawn holds >50% (your existing rule)
+                if (c.ownershipPercents.TryGetValue(pawn, out int pct) && pct > 50)
                     count++;
             }
             else

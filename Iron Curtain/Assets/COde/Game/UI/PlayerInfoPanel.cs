@@ -10,10 +10,6 @@ public class PlayerInfoPanel : MonoBehaviour
 
     [Header("Optional")]
     public TMP_Text turnOrderText; 
-    
-    // [Header("Company Ownership UI")]
-    // public Transform ownershipListParent;       // container for entries
-    // public GameObject ownershipEntryPrefab; 
     private readonly Dictionary<string, TMP_Text> ownershipEntries = new();
 
     public void SetInfo(string name, int money = 0)

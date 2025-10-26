@@ -10628,9 +10628,9 @@ RectTransform:
   - {fileID: 930895001}
   - {fileID: 1403265753}
   - {fileID: 658993356}
-  - {fileID: 602629533}
   - {fileID: 69321818}
   - {fileID: 1037992360}
+  - {fileID: 602629533}
   - {fileID: 1041645452}
   - {fileID: 319205861}
   m_Father: {fileID: 0}

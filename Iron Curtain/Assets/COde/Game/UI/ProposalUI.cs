@@ -72,17 +72,15 @@ public class ProposalUI : MonoBehaviour
         if (panel == null || !panel.activeSelf) return;
         if (MarketManager.Instance == null || currentPawn == null) return;
 
-        // rebuild cache
+    
         _itemsCache.Clear();
 
         foreach (var kv in MarketManager.Instance.companies)
         {
             var c = kv.Value;
             if (c == null) continue;
-            if (c.owner == currentPawn) continue;
-            if (c.ownerName == currentPawn.playerName.Value) continue;
-            if (c.GetOwnership(currentPawn) >= 100) continue;
-
+            int myPct = c.GetOwnership(currentPawn);
+            if (myPct > 50) continue;
             if (MarketManager.Instance.HasSubmittedThisTurn(currentPawn, c.companyName))
                 continue;
 
