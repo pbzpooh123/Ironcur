@@ -239,7 +239,8 @@ public class PlayerPawn : NetworkBehaviour
     {
         if (!IsServerInitialized) return;
     
-        RpcMoveSteps(steps); 
+        StopAllCoroutines();
+        StartCoroutine(ServerMoveStepByStep(steps));
     }
 
     [ServerRpc]
@@ -293,11 +294,31 @@ public class PlayerPawn : NetworkBehaviour
     }
 
     /* ---------- Movement ---------- */
-    [ObserversRpc]
-    private void RpcMoveSteps(int steps)
+    [Server] // ← IMPORTANT
+    private IEnumerator ServerMoveStepByStep(int steps)
     {
-        StopAllCoroutines();
-        StartCoroutine(MoveStepByStep(steps));
+        int tileCount = GameManager.Instance.TileCount;
+
+        for (int i = 1; i <= steps; i++)
+        {
+            int nextTile = (currentTile + 1) % tileCount;
+            Vector3 targetPos = GameManager.Instance.GetTilePosition(nextTile);
+
+            // move the authoritative transform (server only)
+            while (Vector3.Distance(transform.position, targetPos) > 0.05f)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
+                yield return null; // server ticks; NetworkTransform replicates to clients
+            }
+
+            transform.position = targetPos;
+            currentTile = nextTile;
+
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        // now that server is at the final tile, process tile logic
+        HandleTileLogic();
     }
 
     private IEnumerator MoveStepByStep(int steps)
