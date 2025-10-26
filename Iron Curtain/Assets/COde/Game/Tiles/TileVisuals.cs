@@ -1,4 +1,3 @@
-// TileVisuals.cs
 using UnityEngine;
 
 public class TileVisuals : MonoBehaviour
@@ -9,7 +8,6 @@ public class TileVisuals : MonoBehaviour
     public Sprite claimedSprite;
     public Color unclaimedTint = Color.white;
 
-
     [Header("Tone")]
     [Range(0f,1f)] public float ownedToneLerp = 0.85f; // darken/lighten a bit when owned
 
@@ -17,20 +15,28 @@ public class TileVisuals : MonoBehaviour
     {
         if (mainRenderer != null)
         {
-            mainRenderer.sprite = unclaimedSprite ? unclaimedSprite : mainRenderer.sprite;
-            mainRenderer.color  = unclaimedTint;
+            if (unclaimedSprite) mainRenderer.sprite = unclaimedSprite;
+            mainRenderer.color = unclaimedTint;
         }
     }
 
     public void ShowOwnedByColor(int colorIndex)
     {
-        var c = PlayerColors.Palette[PlayerColors.Clamp(colorIndex)];
+        // If color is unset/invalid, render as unclaimed
+        if (!PlayerColors.IsValid(colorIndex))
+        {
+            ShowUnclaimed();
+            return;
+        }
+
+        var c = PlayerColors.Palette[colorIndex];
 
         if (mainRenderer != null)
         {
             Debug.Log($"[TileVisuals] ShowOwnedByColor colorIndex={colorIndex} color={c}");
-            // use the claimed sprite and tint slightly toward the owner color for tone
-            mainRenderer.sprite = claimedSprite ? claimedSprite : mainRenderer.sprite;
+            if (claimedSprite) mainRenderer.sprite = claimedSprite;
+
+            // Subtle tint toward owner color
             var tone = Color.Lerp(Color.white, c, ownedToneLerp);
             tone.a = 1f;
             mainRenderer.color = tone;

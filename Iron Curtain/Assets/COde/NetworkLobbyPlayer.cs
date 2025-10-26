@@ -67,8 +67,12 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     [ServerRpc]
     public void CmdSetProfile(string newName, int desiredColorIndex)
     {
-            playerName.Value = string.IsNullOrWhiteSpace(newName) ? "Player" : newName;
-                 NetworkManagerLobby.Instance.UpdateLobbyUI();
+        playerName.Value = string.IsNullOrWhiteSpace(newName) ? "Player" : newName;
+        NetworkManagerLobby.Instance.UpdateLobbyUI();
+        if (ColorLockManager.Instance != null)
+        {
+            ColorLockManager.Instance.CmdPick(desiredColorIndex, playerName.Value, Owner);
+        }
     }
 
     /* ---------------- Room code + lobby list ---------------- */

@@ -42,42 +42,83 @@ public class PlayerPawn : NetworkBehaviour
             money.Value = 1000;
 
         if (Owner?.FirstObject != null &&
-        Owner.FirstObject.TryGetComponent(out NetworkLobbyPlayer lobby))
+            Owner.FirstObject.TryGetComponent(out NetworkLobbyPlayer lobby))
         {
-            colorIndex.Value = PlayerColors.Clamp(lobby.colorIndex.Value);
-        }
-        if (colorIndex.Value == 0)
-        {
-            colorIndex.Value = -1;
+            colorIndex.Value = PlayerColors.ClampOrUnset(lobby.colorIndex.Value);
+
+            // also propagate name once, on the server
+            playerName.Value = string.IsNullOrWhiteSpace(lobby.playerName.Value)
+                ? $"P{Owner.ClientId}"
+                : lobby.playerName.Value.Trim();
         }
     }
 
-    public override void OnStartClient()
+
+   public override void OnStartClient()
     {
         base.OnStartClient();
         ApplyColor(colorIndex.Value);
         colorIndex.OnChange += OnColorChanged;
         money.OnChange += OnMoneyChanged;
+
+        // start binding loop
         StartCoroutine(AutoBindInfoPanel());
+    }
+
+    private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
+    {
+        if (infoPanel == null)
+        {
+            // lazy bind if HUD appeared late
+            TryEnsureInfoPanel();
+            if (infoPanel == null)
+            {
+                Debug.LogWarning("[PlayerPawn] Money changed, but infoPanel still null. Waiting for HUD...");
+                return;
+            }
+        }
+
+        infoPanel.UpdateMoney(newValue);
+        Debug.Log($"[Money] {playerName.Value}: ${oldValue} -> ${newValue}");
+        int delta = newValue - oldValue;
+
+        if (delta != 0)
+        {
+            var deltaCtrl = infoPanel.GetComponentInChildren<MoneyDeltaController>(true);
+            if (deltaCtrl != null) deltaCtrl.ShowDelta(delta);
+        }
     }
 
     private IEnumerator AutoBindInfoPanel()
     {
-        float t = 2f;
+        float t = 5f; // give HUD a bit more time to appear
         while (t > 0f && infoPanel == null)
         {
-            if (GameHUD.Instance != null && !string.IsNullOrEmpty(playerName.Value))
+            TryEnsureInfoPanel();
+            if (infoPanel != null)
             {
-                var maybe = GameHUD.Instance.FindPanelByName(playerName.Value);
-                if (maybe != null)
-                {
-                    infoPanel = maybe;
-                    infoPanel.SetInfo(playerName.Value, money.Value);
-                    break;
-                }
+                infoPanel.SetInfo(
+                    string.IsNullOrWhiteSpace(playerName.Value) ? $"P{Owner?.ClientId ?? -1}" : playerName.Value,
+                    money.Value);
+                yield break;
             }
             t -= Time.unscaledDeltaTime;
             yield return null;
+        }
+    }
+
+    private void TryEnsureInfoPanel()
+    {
+        if (GameHUD.Instance == null) return;
+
+        if (infoPanel == null && !string.IsNullOrWhiteSpace(playerName.Value))
+            infoPanel = GameHUD.Instance.FindPanelByName(playerName.Value);
+
+        if (infoPanel == null && Owner != null && Owner.IsActive)
+        {
+            var byCid = GameHUD.Instance.FindPanelByCid(Owner.ClientId);
+            if (byCid != null)
+                infoPanel = byCid;
         }
     }
      private void OnColorChanged(int oldVal, int newVal, bool asServer)
@@ -89,28 +130,28 @@ public class PlayerPawn : NetworkBehaviour
     {
         if (_sr == null)
         {
-            // try lazily once more
             _sr = GetComponentInChildren<SpriteRenderer>();
             if (_sr == null) return;
         }
-        _sr.color = PlayerColors.Get(idx);
+        // If unset, show white (or pick your neutral)
+        _sr.color = PlayerColors.GetOr(Color.white, idx);
     }
 
     public void ApplyColorIndex(int idx)
     {
-        
+        // Server owns truth; client asks server to set it
         if (IsServerInitialized)
-            colorIndex.Value = PlayerColors.Clamp(idx);
+            colorIndex.Value = PlayerColors.ClampOrUnset(idx);
         else
             CmdSetColorIndex(idx);
-    
+
         ApplyColor(idx);
     }
 
     [ServerRpc]
     public void CmdSetColorIndex(int idx)
     {
-        colorIndex.Value = PlayerColors.Clamp(idx);
+        colorIndex.Value = PlayerColors.ClampOrUnset(idx);
     }
 
     public override void OnStopClient()
@@ -119,21 +160,6 @@ public class PlayerPawn : NetworkBehaviour
         base.OnStopClient();
     }
 
-    private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
-    {
-        infoPanel?.UpdateMoney(newValue);
-        Debug.Log($"[Money] {playerName.Value}: ${oldValue} -> ${newValue}");
-        int delta = newValue - oldValue;
-        if (delta != 0 && infoPanel != null)
-        {
-            var deltaCtrl = infoPanel.GetComponentInChildren<MoneyDeltaController>(true);
-            if (deltaCtrl != null)
-            {
-                deltaCtrl.ShowDelta(delta);
-            }
-
-        }
-    }
 
     /* ---------- Money ---------- */
     [Server] public void AddMoney(int amount) => money.Value += amount;
