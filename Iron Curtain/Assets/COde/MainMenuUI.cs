@@ -32,9 +32,11 @@ public class MainMenuUI : MonoBehaviour
     private bool isHosting = false;
     public UnityEngine.UI.Button hostButton;
 
-    // [Header("Name & Color Panel")]
-    // public Button[] colorButtons;     // assign swatch buttons
-    // private int _selectedColorIndex = 0;
+   void Awake()
+    {
+        if (nameInput != null)
+            nameInput.characterLimit = 12;
+    }
 
     private void Start()
     {
@@ -122,14 +124,16 @@ public class MainMenuUI : MonoBehaviour
 
     public void OnClickNextFromNameCountry()
     {
-        bool nameValid = !string.IsNullOrWhiteSpace(nameInput.text);
-        
-        if (nameValid)
+       var n = (nameInput.text ?? "").Trim();
+        if (n.Length > 12) n = n.Substring(0, 12);  // just in case
+        nameInput.text = n;
+
+        if (!string.IsNullOrEmpty(n))
         {
+            PlayerPrefs.SetString("PlayerName", n);
+            PlayerPrefs.Save();
             OpenHostClientPanel();
         }
-        PlayerPrefs.SetString("PlayerName", nameInput.text);
-        PlayerPrefs.Save();
     }
 
     public void OnClickBackToNameCountry()
