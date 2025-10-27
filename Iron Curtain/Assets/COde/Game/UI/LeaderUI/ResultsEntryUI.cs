@@ -24,19 +24,24 @@ public class ResultsEntryUI : MonoBehaviour
 
     private IEnumerator CoAnimate(string playerName, int bailoutCount, int finalScore, int globalMax)
     {
-        // labels
+        // Labels
         if (nameText) nameText.text = playerName;
-        if (bailoutText) bailoutText.text = (bailoutCount > 0) ? $"-{bailoutCount * 100}" : "0";
 
-        // bar baseline
+        // Bailout label: show count (you can switch to penalty text if you prefer)
+        if (bailoutText) bailoutText.text = $"Bailout Penalty : -{bailoutCount * 100}";
+
+
+        // Bar baseline
         if (scoreBar)
         {
             scoreBar.minValue = 0f;
-            scoreBar.maxValue = 1f;         // IMPORTANT: shared normalization
+            scoreBar.maxValue = 1f; // shared normalization
             scoreBar.wholeNumbers = false;
             scoreBar.value = 0f;
         }
-        if (scoreText) scoreText.text = "0";
+
+        // Start score label at 0 with prefix
+        if (scoreText) scoreText.text = "Score : 0";
 
         yield return null;
 
@@ -54,13 +59,13 @@ public class ResultsEntryUI : MonoBehaviour
             int shown = Mathf.RoundToInt(Mathf.Lerp(0, finalScore, k));
             float norm = Mathf.Lerp(0f, targetNorm, k);
 
-            if (scoreText) scoreText.text = shown.ToString();
+            if (scoreText) scoreText.text = $"Score : {shown}";
             if (scoreBar) scoreBar.value = norm;
 
             yield return null;
         }
 
-        if (scoreText) scoreText.text = finalScore.ToString();
+        if (scoreText) scoreText.text = $"Score : {finalScore}";
         if (scoreBar) scoreBar.value = targetNorm;
 
         _co = null;
