@@ -91,7 +91,7 @@ public class TurnManager : NetworkBehaviour
     {
         if (!enableDevHotkeys) return;
 
-        if (Input.GetKeyDown(KeyCode.Keypad9))
+        if (Input.GetKeyDown(KeyCode.Alpha9))
         {
             if (IsServerStarted)
                 EndMatch("Ended by DEV hotkey (Numpad 9).");
