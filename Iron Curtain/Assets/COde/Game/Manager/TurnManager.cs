@@ -91,10 +91,10 @@ public class TurnManager : NetworkBehaviour
     {
         if (!enableDevHotkeys) return;
 
-        if (Input.GetKeyDown(KeyCode.Alpha9))
+        if (Input.GetKeyDown(KeyCode.P))
         {
             if (IsServerStarted)
-                EndMatch("Ended by DEV hotkey (Numpad 9).");
+                EndMatch("Ended by DEV hotkey (Button P).");
             else
                 CmdDevEndMatch();
         }
@@ -104,7 +104,7 @@ public class TurnManager : NetworkBehaviour
     private void CmdDevEndMatch(FishNet.Connection.NetworkConnection caller = null)
     {
         if (!enableDevHotkeys) return;
-        EndMatch("Ended by DEV hotkey (Numpad 9).");
+        EndMatch("Ended by DEV hotkey (Button P).");
     }
 
     [Server]
