@@ -1241,4 +1241,28 @@ public class MarketManager : NetworkBehaviour
         RpcRefreshLocalPortfolioUI();
     }
 
+    [Server] 
+    public void ForceCloseReviewFor(PlayerPawn pawn)
+    {
+        TargetHideReview(pawn.Owner); 
+    }
+
+    [Server]
+    public void ForceCloseProposalFor(PlayerPawn pawn, bool autoSkip)
+    {
+        TargetHideProposal(pawn.Owner);
+    }
+
+    [TargetRpc]
+    private void TargetHideReview(NetworkConnection conn)
+    {
+        if (ReviewUI.Instance != null) ReviewUI.Instance.Hide();
+    }
+
+    [TargetRpc]
+    private void TargetHideProposal(NetworkConnection conn)
+    {
+        if (ProposalUI.Instance != null) ProposalUI.Instance.Hide();
+    }
+
 }

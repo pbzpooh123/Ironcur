@@ -73,7 +73,7 @@ public class InvestmentUI : MonoBehaviour
         buyButton.interactable = newVal >= _effectiveCost;
     }
 
-    private void CloseAndContinue()
+    public void CloseAndContinue()
     {
         // tidy up listener
         if (currentPawn != null)

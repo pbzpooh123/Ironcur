@@ -224,7 +224,7 @@ public class PlayerPawn : NetworkBehaviour
     }
 
     [TargetRpc]
-    private void TargetShowDiceAndMove(NetworkConnection conn, int d1, int d2, int totalSteps)
+    public void TargetShowDiceAndMove(NetworkConnection conn, int d1, int d2, int totalSteps)
     {
         if (DiceUI.Instance != null)
         {
@@ -347,10 +347,14 @@ public class PlayerPawn : NetworkBehaviour
     private IEnumerator MoveStepByStep(int steps)
     {
         int tileCount = GameManager.Instance.TileCount;
+
         for (int i = 1; i <= steps; i++)
         {
             int nextTile = (currentTile + 1) % tileCount;
             Vector3 targetPos = GameManager.Instance.GetTilePosition(nextTile);
+
+            // pass flash 
+            TileHighlighter.Instance?.FlashPassAt(targetPos, size: 1f);
 
             while (Vector3.Distance(transform.position, targetPos) > 0.05f)
             {
@@ -363,9 +367,13 @@ public class PlayerPawn : NetworkBehaviour
             yield return new WaitForSeconds(0.1f);
         }
 
+        Vector3 landPos = GameManager.Instance.GetTilePosition(currentTile);
+        TileHighlighter.Instance?.FlashLandAt(landPos, size: 1.1f);
+
         if (IsServerInitialized)
             HandleTileLogic();
     }
+
 
     [Server]
     private void HandleTileLogic()

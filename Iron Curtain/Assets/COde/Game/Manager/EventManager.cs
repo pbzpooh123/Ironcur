@@ -226,6 +226,7 @@ public class EventManager : NetworkBehaviour
 
         var (n, h) = PeekNextMainEventInfo();
         RpcUpdateNextMainEventUI(n, h);
+        TurnManager.Instance.ServerBeginMainEvent();
 
         string title = (e != null) ? e.eventName : $"Main Event — Round {round}";
         string body = (e != null) ? e.description : "—";
@@ -282,6 +283,7 @@ public class EventManager : NetworkBehaviour
                 break;
         }
     }
+    
 
     private void DeferUntilAllReady(DeferredMode mode, GameEventSO e)
     {
@@ -573,9 +575,6 @@ public class EventManager : NetworkBehaviour
 
         ResumeAfterEvent();
     }
-
-    /* ================= MEDIA / TIER (unchanged portions omitted for brevity) ================= */
-    // ... keep your existing Media and Tier grid UI code here ...
 
     /* ================= BANK ODD FINE HOOK ================= */
 

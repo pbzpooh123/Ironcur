@@ -174,7 +174,25 @@ public class ProposalUI : MonoBehaviour
         return null;
     }
 
-    public void Hide() => CloseAndNotifyServer();
+    public void Hide()
+    {
+        if (panel != null) panel.SetActive(false);
+
+        // Tell server only if we're the current pawn
+        var local = FindLocalOwnedPawn();
+        if (local != null && TurnManager.Instance.IsCurrentPawn(local) &&
+            TurnManager.Instance.InProposalPhaseFor(local))
+        {
+            MarketManager.Instance.CmdNotifyProposalClosed();
+        }
+    }
+
+    private PlayerPawn FindLocalOwnedPawn()
+    {
+        foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
+            if (p != null && p.IsOwner) return p;
+        return null;
+    }
 
     public void ShowFirstTimeHint()
     {

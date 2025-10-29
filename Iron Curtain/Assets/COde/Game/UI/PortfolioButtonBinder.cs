@@ -9,6 +9,7 @@ public class PortfolioButtonBinder : MonoBehaviour
     private void Awake()
     {
         panel = GetComponent<PlayerInfoPanel>();
+        Debug.Log("[PortfolioButtonBinder] Awake - panel: " + (panel != null ? panel.OwnerName : "null"));
         if (panel != null && panel.portfolioButton != null)
         {
             panel.portfolioButton.onClick.RemoveAllListeners();

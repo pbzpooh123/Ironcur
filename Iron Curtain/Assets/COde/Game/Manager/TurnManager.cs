@@ -1,18 +1,19 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
+using TMPro;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
-using TMPro;
-using System.Threading.Tasks;
 
 public enum TurnPhase
 {
     None,
     Review,
     Rolling,
-    TileEventPending, 
+    TileEventPending,
     Proposal,
+    MainEvent,
     EndReady
 }
 
@@ -20,6 +21,7 @@ public class TurnManager : NetworkBehaviour
 {
     public static TurnManager Instance;
 
+    /* ---------- Turn State ---------- */
     private List<PlayerPawn> turnOrder = new List<PlayerPawn>();
 
     public readonly SyncVar<int> currentPlayerIndex = new();
@@ -44,16 +46,38 @@ public class TurnManager : NetworkBehaviour
     [SerializeField] private bool enableDevHotkeys = true;
     [SerializeField] private bool AutoBailoutAtTurnStart = true;
 
-    // <<< NEW: auto-end guard >>>
+    // guard for server auto-end
     private bool _endTurnScheduled = false;
 
     private int RoundsRemaining() => Mathf.Max(0, maxrounds - (roundCount.Value - 1));
 
     [Server] public bool IsPhase(TurnPhase phase) => _phase == phase;
 
+    /* ---------- Timers (per-phase + per-turn) ---------- */
+
+    [Header("Per-Phase Durations (seconds)")]
+    [SerializeField] private int defaultPhaseSeconds = 5;
+    [SerializeField] private int reviewSeconds       = 10;
+    [SerializeField] private int rollingSeconds      = 10;
+    [SerializeField] private int tileEventSeconds    = 15;
+    [SerializeField] private int proposalSeconds = 25;
+    [SerializeField] private int mainEventSeconds   = 20;
+    [SerializeField] private int endReadySeconds     = 5;
+
+    [Header("Whole-Turn Duration (seconds)")]
+    [SerializeField] private int turnDurationSeconds = 60;
+
+    // live counters synced for clients
+    public readonly SyncVar<int> phaseSecondsLeft = new();
+    public readonly SyncVar<TurnPhase> phaseSync  = new();
+    public readonly SyncVar<int> turnSecondsLeft  = new();
+
+    private Coroutine _phaseTimerCo;
+    private Coroutine _turnTimerCo;
+
     [Server]
     public bool IsCurrentAndInProposal(PlayerPawn pawn)
-        => pawn != null && IsCurrentPawn(pawn) && IsPhase(TurnPhase.Proposal);  
+        => pawn != null && IsCurrentPawn(pawn) && IsPhase(TurnPhase.Proposal);
 
     private int RoundsUntilNextMainEvent()
     {
@@ -72,11 +96,13 @@ public class TurnManager : NetworkBehaviour
         base.OnStartServer();
         roundCount.Value = 1;
         remainingRounds.Value = maxrounds;
+
         RpcUpdateRoundUI(
             RoundsRemaining(),
             RoundsUntilNextMainEvent(),
             EventManager.Instance ? EventManager.Instance.PeekNextMainEventName() : "—"
         );
+
         StartCoroutine(DelayedStart());
         EventManager.Instance?.ServerSelectTimelineAndAnnounce();
     }
@@ -94,7 +120,7 @@ public class TurnManager : NetworkBehaviour
         if (Input.GetKeyDown(KeyCode.P))
         {
             if (IsServerStarted)
-                EndMatch("Ended by DEV hotkey (Button P).");
+                EndMatch("Ended by DEV hotkey (P).");
             else
                 CmdDevEndMatch();
         }
@@ -104,8 +130,10 @@ public class TurnManager : NetworkBehaviour
     private void CmdDevEndMatch(FishNet.Connection.NetworkConnection caller = null)
     {
         if (!enableDevHotkeys) return;
-        EndMatch("Ended by DEV hotkey (Button P).");
+        EndMatch("Ended by DEV hotkey (P).");
     }
+
+    /* ---------- Game Start / Turn Order ---------- */
 
     [Server]
     private void StartGame()
@@ -130,74 +158,39 @@ public class TurnManager : NetworkBehaviour
         StartTurn();
     }
 
-    // --- Phase gate checks used by PlayerPawn ---
+    /* ---------- Phase Gates used by PlayerPawn ---------- */
+
     [Server] public bool CanRoll(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.Rolling;
     [Server] public bool CanEndTurn(PlayerPawn pawn) => IsCurrentPawn(pawn) && _phase == TurnPhase.EndReady;
     [Server] public bool InProposalPhaseFor(PlayerPawn p) => IsCurrentPawn(p) && _phase == TurnPhase.Proposal;
     [Server] public bool InReviewPhaseFor(PlayerPawn p) => IsCurrentPawn(p) && _phase == TurnPhase.Review;
 
+    /* ---------- Phase switching (starts timer) ---------- */
+
     [Server]
     private void SetPhase(TurnPhase phase)
     {
         _phase = phase;
+
         var pawn = GetCurrentPawn();
         int currentOwnerCid = (pawn?.Owner != null) ? pawn.Owner.ClientId : -1;
+
         RpcSetTurnState(_phase, currentOwnerCid);
+
+        // (Re)start phase timer whenever we enter a real phase
+        StopPhaseTimer();
+        if (phase != TurnPhase.None)
+            StartPhaseTimer(phase);
     }
 
     [ObserversRpc(BufferLast = true)]
     private void RpcSetTurnState(TurnPhase phase, int currentOwnerCid)
     {
-         GameHUD.Instance?.SetCurrentTurnByCid(currentOwnerCid);
+        GameHUD.Instance?.SetCurrentTurnByCid(currentOwnerCid);
         TurnUI.Instance?.ApplyTurnState(phase, currentOwnerCid);
     }
 
-    // [ObserversRpc(BufferLast = true)]
-    // private void RpcSetTurnState(int index, TurnPhase phase, string currentPlayerName)
-    // {
-    //     var tu = GameObject.FindObjectOfType<TurnUI>();
-    //     if (tu == null) return;
-
-    //     PlayerPawn local = null;
-    //     foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
-    //     {
-    //         if (p != null && p.IsOwner) { local = p; break; }
-    //     }
-
-    //     tu.SetRollInteractable(false);
-    //     tu.SetEndTurnInteractable(false);
-
-    //     if (local == null || string.IsNullOrEmpty(currentPlayerName))
-    //         return;
-
-    //     bool isMyTurn = (local.playerName.Value == currentPlayerName);
-    //     if (GameHUD.Instance != null && !string.IsNullOrEmpty(currentPlayerName))
-    //     GameHUD.Instance.SetCurrentTurn(currentPlayerName);
-
-    //     switch (phase)
-    //     {
-    //         case TurnPhase.Review:
-    //             break;
-
-    //         case TurnPhase.Rolling:
-    //             tu.SetRollInteractable(isMyTurn);
-    //             break;
-
-    //         case TurnPhase.TileEventPending:
-    //             tu.SetRollInteractable(false);
-    //             tu.SetEndTurnInteractable(false);
-    //             break;
-
-    //         case TurnPhase.Proposal:
-    //             // no buttons; ProposalUI flow owns the phase
-    //             break;
-
-    //         case TurnPhase.EndReady:
-    //             // <<< CHANGED: keep button disabled because we auto-end >>>
-    //             tu.SetEndTurnInteractable(false);
-    //             break;
-    //     }
-    // }
+    /* ---------- Helpers ---------- */
 
     [Server]
     public bool IsCurrentPawn(PlayerPawn pawn)
@@ -225,7 +218,7 @@ public class TurnManager : NetworkBehaviour
         _skipTurns[pawn] = Mathf.Max(duration, 1);
     }
 
-    /* -------------------- Extra roll API -------------------- */
+    /* ---------- Extra rolls ---------- */
 
     [Server]
     public void QueueExtraRoll(PlayerPawn pawn, int count)
@@ -237,6 +230,7 @@ public class TurnManager : NetworkBehaviour
     }
 
     [Server] private int GetExtraRolls(PlayerPawn pawn) => (pawn != null && _extraRolls.TryGetValue(pawn, out int v)) ? v : 0;
+
     [Server]
     private void ConsumeOneExtraRoll(PlayerPawn pawn)
     {
@@ -244,7 +238,7 @@ public class TurnManager : NetworkBehaviour
             _extraRolls[pawn] = v - 1;
     }
 
-    /* -------------------- Turn lifecycle -------------------- */
+    /* ---------- Turn lifecycle ---------- */
 
     [Server]
     private bool IsJailed(PlayerPawn pawn) => (pawn != null && pawn.jailTurnsLeft.Value > 0);
@@ -290,7 +284,9 @@ public class TurnManager : NetworkBehaviour
         currentPlayer.TargetStartTurn(currentPlayer.Owner);
         Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value} (jailed={jailedThisTurn})");
 
-        // <<< CHANGED: jailed → auto-end (no EndTurn button) >>>
+        // Start whole-turn timer
+        StartTurnTimer(currentPlayer);
+
         if (jailedThisTurn)
         {
             _extraRolls[currentPlayer] = 0;
@@ -319,7 +315,8 @@ public class TurnManager : NetworkBehaviour
         pawn.TargetEnableEndTurn(pawn.Owner, false);
     }
 
-    // === bracket any tile panel ===
+    /* ---------- Tile action bracket ---------- */
+
     [Server]
     public void ServerBeginTileAction(PlayerPawn pawn)
     {
@@ -375,19 +372,17 @@ public class TurnManager : NetworkBehaviour
         var pawn = GetCurrentPawn();
         if (pawn == null) return;
 
-        // proposals blocked → auto-end
         if (EventManager.Instance != null && EventManager.Instance.IsProposalBlockedNow())
         {
             Debug.Log($"[TurnManager] Proposals disabled → auto end for {pawn.playerName.Value}.");
-            ServerEnterEndReadyAndAutoEnd(); // <<< CHANGED
+            ServerEnterEndReadyAndAutoEnd();
             return;
         }
 
-        // jailed (defensive) → auto-end
         if (IsJailed(pawn))
         {
             Debug.Log($"[TurnManager] {pawn.playerName.Value} is jailed (defensive) → auto end.");
-            ServerEnterEndReadyAndAutoEnd(); // <<< CHANGED
+            ServerEnterEndReadyAndAutoEnd();
             return;
         }
 
@@ -400,11 +395,11 @@ public class TurnManager : NetworkBehaviour
     [Server]
     public void OnPlayerFinishedProposal()
     {
-        // <<< CHANGED: auto-end instead of enabling button >>>
         ServerEnterEndReadyAndAutoEnd();
     }
 
-    // <<< NEW: small helper to flip to EndReady and finish automatically >>>
+    /* ---------- End turn (auto or manual) ---------- */
+
     [Server]
     private void ServerEnterEndReadyAndAutoEnd()
     {
@@ -424,7 +419,6 @@ public class TurnManager : NetworkBehaviour
 
     private System.Collections.IEnumerator CoAutoEndTurn()
     {
-        // Short grace so UIs can close/settle; adjust if you like.
         yield return new WaitForSeconds(0.35f);
         _endTurnScheduled = false;
         EndTurn();
@@ -434,6 +428,10 @@ public class TurnManager : NetworkBehaviour
     public void EndTurn()
     {
         if (turnOrder.Count == 0 || _gameEnded) return;
+
+        // stop timers as we leave this turn
+        StopTurnTimer();
+        StopPhaseTimer();
 
         turnCount.Value++;
 
@@ -468,28 +466,27 @@ public class TurnManager : NetworkBehaviour
                 _lastMainEventRoundFired = roundCount.Value;
                 currentPlayerIndex.Value = nextIndex;
                 EventManager.Instance?.TriggerMainEvent(roundCount.Value);
-                SetPhase(TurnPhase.None);
                 return;
             }
         }
+
         currentPlayerIndex.Value = nextIndex;
-        SetPhase(TurnPhase.None);
         StartTurn();
+    }
+
+    [Server]
+    public void ServerBeginMainEvent()
+    {
+        SetPhase(TurnPhase.MainEvent);
     }
 
     [ObserversRpc(BufferLast = true)]
     private void RpcUpdateRoundUI(int roundsLeft, int eventIn, string nextEventName)
     {
         if (roundtext != null)
-        {
-            if (eventIn <= 0)
-                roundtext.text = $"Rounds left: {roundsLeft}";
-            else
-                roundtext.text = $"Rounds left: {roundsLeft}";
-        }
+            roundtext.text = $"Rounds left: {roundsLeft}";
 
-        if (TurnUI.Instance != null)
-            TurnUI.Instance.SetNextMainEventETA(eventIn);
+        TurnUI.Instance?.SetNextMainEventETA(eventIn);
     }
 
     [Server]
@@ -510,7 +507,8 @@ public class TurnManager : NetworkBehaviour
         return turnOrder[Mathf.Clamp(currentPlayerIndex.Value, 0, turnOrder.Count - 1)];
     }
 
-    // === Utility ===
+    /* ---------- Utility ---------- */
+
     public void ShuffleList<T>(List<T> list)
     {
         System.Random rng = new System.Random();
@@ -522,8 +520,11 @@ public class TurnManager : NetworkBehaviour
         }
     }
 
+    /* ---------- Match End / Results ---------- */
+
     private int _resultsReady = 0;
     private int _resultsRequired = 0;
+    private HashSet<int> _readyClientIds;
 
     [Server]
     private void EndMatch(string reason = "Reached final round.")
@@ -531,12 +532,15 @@ public class TurnManager : NetworkBehaviour
         if (_gameEnded) return;
         _gameEnded = true;
 
+        StopTurnTimer();
+        StopPhaseTimer();
+
         SetPhase(TurnPhase.None);
         RpcOnGameEnded(reason);
 
         MarketManager.Instance?.OnMatchEnded();
         EventManager.Instance?.OnMatchEnded();
-        roundtext.text = "Game Ended";
+        if (roundtext != null) roundtext.text = "Game Ended";
 
         var players = GameManager.Instance.Players;
         int n = players.Count;
@@ -548,10 +552,10 @@ public class TurnManager : NetworkBehaviour
         for (int i = 0; i < n; i++)
         {
             var p = players[i];
-            names[i] = string.IsNullOrWhiteSpace(p.playerName.Value) ? $"Player {i + 1}" : p.playerName.Value;
-            moneys[i] = p.money.Value;
-            bailouts[i] = p.bailoutMarks.Value;
-            finals[i] = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
+            names[i]   = string.IsNullOrWhiteSpace(p.playerName.Value) ? $"Player {i + 1}" : p.playerName.Value;
+            moneys[i]  = p.money.Value;
+            bailouts[i]= p.bailoutMarks.Value;
+            finals[i]  = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
         }
 
         RpcShowFinalResults(names, moneys, bailouts, finals);
@@ -578,8 +582,7 @@ public class TurnManager : NetworkBehaviour
         {
             if (p == null || p.Owner == null) continue;
             string name = string.IsNullOrWhiteSpace(p.playerName.Value) ? "Player" : p.playerName.Value;
-            long score = p.money.Value - (100L * p.bailoutMarks.Value);
-
+            long score  = p.money.Value - (100L * p.bailoutMarks.Value);
             p.TargetSubmitToLeaderboard(p.Owner, score, name);
         }
     }
@@ -587,9 +590,7 @@ public class TurnManager : NetworkBehaviour
     [ObserversRpc(BufferLast = true)]
     private void RpcShowFinalResults(string[] names, int[] moneys, int[] bailouts, int[] finals)
     {
-        var ui = MatchResultsUI.Instance;
-        if (ui != null)
-            ui.Show(names, moneys, bailouts, finals);
+        MatchResultsUI.Instance?.Show(names, moneys, bailouts, finals);
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -604,11 +605,8 @@ public class TurnManager : NetworkBehaviour
         _resultsReady++;
 
         if (_resultsReady >= _resultsRequired)
-        {
             _ = SubmitScoresThenGoToLeaderboard();
-        }
     }
-    private HashSet<int> _readyClientIds;
 
     [ObserversRpc(BufferLast = true)]
     private void RpcGoToLeaderboard()
@@ -625,13 +623,13 @@ public class TurnManager : NetworkBehaviour
             var tasks = new List<Task>();
             foreach (var p in GameManager.Instance.Players)
             {
-                string name  = string.IsNullOrWhiteSpace(p.playerName.Value) ? "Player" : p.playerName.Value;
-                long score   = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
+                string name = string.IsNullOrWhiteSpace(p.playerName.Value) ? "Player" : p.playerName.Value;
+                long score  = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
                 tasks.Add(svc.SubmitMyScoreAsync(score, name));
             }
 
             try { await Task.WhenAll(tasks); }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Debug.LogError($"[UGS] One or more leaderboard submissions failed: {ex}");
             }
@@ -643,5 +641,150 @@ public class TurnManager : NetworkBehaviour
         }
 
         RpcGoToLeaderboard();
+    }
+
+    /* ---------- Per-turn timer ---------- */
+
+    [Server]
+    private void StartTurnTimer(PlayerPawn pawn)
+    {
+        StopTurnTimer();
+        turnSecondsLeft.Value = Mathf.Max(5, turnDurationSeconds);
+    }
+
+    [Server]
+    private void StopTurnTimer()
+    {
+        if (_turnTimerCo != null)
+        {
+            StopCoroutine(_turnTimerCo);
+            _turnTimerCo = null;
+        }
+    }
+
+
+    /* ---------- Per-phase timer ---------- */
+
+   private int GetPhaseSeconds(TurnPhase phase)
+    {
+        return phase switch
+        {
+            TurnPhase.Review            => reviewSeconds      > 0 ? reviewSeconds      : defaultPhaseSeconds,
+            TurnPhase.Rolling           => rollingSeconds     > 0 ? rollingSeconds     : defaultPhaseSeconds,
+            TurnPhase.TileEventPending  => tileEventSeconds   > 0 ? tileEventSeconds   : defaultPhaseSeconds,
+            TurnPhase.Proposal          => proposalSeconds    > 0 ? proposalSeconds    : defaultPhaseSeconds,
+            TurnPhase.EndReady          => endReadySeconds    > 0 ? endReadySeconds    : defaultPhaseSeconds,
+            TurnPhase.MainEvent         => mainEventSeconds   > 0 ? mainEventSeconds   : defaultPhaseSeconds,   // ← NEW
+            _                           => defaultPhaseSeconds
+        };
+    }
+
+
+    [Server]
+    private void StartPhaseTimer(TurnPhase phase)
+    {
+        StopPhaseTimer();
+
+        var pawn = GetCurrentPawn();
+        if (pawn == null) return;
+
+        phaseSync.Value = phase;
+        phaseSecondsLeft.Value = GetPhaseSeconds(phase);
+        _phaseTimerCo = StartCoroutine(CoPhaseTimer(pawn, phase));
+    }
+
+    [Server]
+    private void StopPhaseTimer()
+    {
+        if (_phaseTimerCo != null)
+        {
+            StopCoroutine(_phaseTimerCo);
+            _phaseTimerCo = null;
+        }
+    }
+
+    private System.Collections.IEnumerator CoPhaseTimer(PlayerPawn pawn, TurnPhase phaseAtStart)
+    {
+        while (phaseSecondsLeft.Value > 0)
+        {
+            if (PauseManager.Instance != null && PauseManager.Instance.isPaused.Value)
+            {
+                yield return null;
+                continue;
+            }
+
+            RpcPhaseTimerTick(phaseAtStart, phaseSecondsLeft.Value, pawn.Owner != null ? pawn.Owner.ClientId : -1);
+            yield return new WaitForSeconds(1f);
+
+            if (_phase != phaseAtStart) yield break;  // phase changed elsewhere
+
+            phaseSecondsLeft.Value--;
+        }
+
+        // phase timed out
+        RpcPhaseTimeout(phaseAtStart);
+        ServerOnPhaseTimeout(pawn, phaseAtStart);
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcPhaseTimerTick(TurnPhase phase, int seconds, int currentOwnerCid)
+    {
+        TurnUI.Instance?.SetPhaseTimer(phase, seconds, currentOwnerCid);
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcPhaseTimeout(TurnPhase phase)
+    {
+        UICloser.CloseForPhaseClient(phase);
+    }
+
+    [Server]
+    private void ServerOnPhaseTimeout(PlayerPawn pawn, TurnPhase phaseTimedOut)
+    {
+        if (pawn == null || !IsCurrentPawn(pawn)) return;
+
+        switch (phaseTimedOut)
+        {
+            case TurnPhase.Review:
+                MarketManager.Instance?.ForceCloseReviewFor(pawn);
+                ProceedToRoll();
+                break;
+
+            case TurnPhase.Rolling:
+                ServerForceRoll(pawn);
+                break;
+
+            case TurnPhase.TileEventPending:
+                ServerOnTileActionComplete(pawn);
+                break;
+
+            case TurnPhase.Proposal:
+                MarketManager.Instance?.ForceCloseProposalFor(pawn, autoSkip: true);
+                OnPlayerFinishedProposal();
+                break;
+
+            case TurnPhase.MainEvent:                 // ← NEW
+                ServerStartTurnAfterMainEvent();      // resume match
+                break;
+
+            case TurnPhase.EndReady:
+                EndTurn();
+                break;
+        }
+    }
+
+
+    [Server]
+    private void ServerForceRoll(PlayerPawn pawn)
+    {
+        if (pawn == null || !IsCurrentPawn(pawn)) { ServerEnterEndReadyAndAutoEnd(); return; }
+
+        int d1 = UnityEngine.Random.Range(1, 7);
+        int d2 = UnityEngine.Random.Range(1, 7);
+        int total = d1 + d2;
+        pawn.lastRoll.Value = total;
+
+        EventManager.Instance?.OnServerPlayerRolled(pawn, total);
+        pawn.TargetShowDiceAndMove(pawn.Owner, d1, d2, total);
     }
 }

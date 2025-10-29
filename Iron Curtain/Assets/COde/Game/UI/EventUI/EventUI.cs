@@ -64,7 +64,7 @@ public class EventUI : MonoBehaviour
         }
     }
 
-    private void OnOk()
+    public void OnOk()
     {
         Mainpanel.SetActive(false);
 
@@ -75,7 +75,7 @@ public class EventUI : MonoBehaviour
         }
     }
     
-    private void OnSideOk()
+    public void OnSideOk()
     {
         Sidepanel.SetActive(false);
         if (waitingForAll)

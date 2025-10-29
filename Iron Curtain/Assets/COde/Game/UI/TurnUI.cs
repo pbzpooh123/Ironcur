@@ -39,6 +39,14 @@ public class TurnUI : MonoBehaviour
     private int _pendingOwnerCid = -1;
     private Coroutine _applyCo;
 
+    [Header("Turn Timer")]
+    public TMP_Text phaseLabelText;  // "Review", "Rolling", etc.
+    public TMP_Text phaseTimerText; 
+
+    [Header("Pause")]
+    public UnityEngine.UI.Button pauseButton;  // optional
+
+
     void Awake()
     {
         Instance = this;
@@ -58,6 +66,14 @@ public class TurnUI : MonoBehaviour
         // Load collapsed state (optional)
         _nextEventCollapsed = PlayerPrefs.GetInt(PREF_NEXT_EVENT_COLLAPSED, 0) == 1;
         ApplyNextEventCollapsed();
+
+        if (pauseButton) pauseButton.onClick.AddListener(() =>
+        {
+            // Client asks server to toggle pause (host actually decides)
+            bool wantPause = !(PauseManager.Instance?.isPaused.Value ?? false);
+            PauseManager.Instance?.CmdSetPaused(wantPause);
+        });
+
     }
 
     private void OnDestroy()
@@ -242,7 +258,7 @@ public class TurnUI : MonoBehaviour
             yield return null;
         }
 
-         GameHUD.Instance?.SetCurrentTurnByCid(ownerCid);
+        GameHUD.Instance?.SetCurrentTurnByCid(ownerCid);
 
         bool isMyTurn = (myPawn != null && myPawn.Owner != null &&
                         ownerCid >= 0 && myPawn.Owner.ClientId == ownerCid);
@@ -256,9 +272,33 @@ public class TurnUI : MonoBehaviour
             case TurnPhase.Rolling:
                 SetRollInteractable(isMyTurn);
                 break;
-            // other phases keep buttons disabled
+                // other phases keep buttons disabled
         }
 
         _applyCo = null;
     }
+    
+    public void SetPhaseTimer(TurnPhase phase, int seconds, int ownerCid)
+    {
+        if (phaseLabelText) phaseLabelText.text = PhaseToShortText(phase);
+
+        if (phaseTimerText)
+        {
+            phaseTimerText.text  = Mathf.Max(0, seconds).ToString() + "s";
+        }
+
+        // You can also dim buttons here if needed; we already handle per-phase interactability elsewhere.
+    }
+
+    private string PhaseToShortText(TurnPhase p) => p switch
+    {
+        TurnPhase.Review => "Review",
+        TurnPhase.Rolling => "Rolling",
+        TurnPhase.TileEventPending => "Event",
+        TurnPhase.Proposal => "Proposal",
+        TurnPhase.EndReady => "Ending",
+        _ => "—"
+    };
+    
+
 }

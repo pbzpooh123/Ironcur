@@ -60,7 +60,7 @@ public class PlayerInfoPanel : MonoBehaviour
             highlightImage.color = idleColor;
 
             // Sit on top to avoid being hidden by other children
-            highlightImage.transform.SetAsLastSibling();
+            highlightImage.transform.SetAsFirstSibling();
         }
     }
 
@@ -68,21 +68,30 @@ public class PlayerInfoPanel : MonoBehaviour
     {
         if (!highlightImage) return;
 
+        // color swap
         var c = isActive ? activeColor : idleColor;
         c.a = Mathf.Clamp01(c.a);
         highlightImage.color = c;
         highlightImage.enabled = true;
 
-        // Fight CanvasGroup parents muting alpha
         var cg = highlightImage.GetComponent<CanvasGroup>();
         if (cg == null) cg = highlightImage.gameObject.AddComponent<CanvasGroup>();
         cg.alpha = 1f;
-        cg.blocksRaycasts = false;
-        cg.interactable = false;
+        cg.blocksRaycasts = false;     
+        cg.interactable   = true;     
+        cg.ignoreParentGroups = true;  
 
-        // Also give you a very visible text cue while debugging
+   
+        highlightImage.raycastTarget = false;
+        highlightImage.transform.SetAsFirstSibling();
+
+
         if (nameText != null) nameText.color = isActive ? Color.yellow : Color.white;
+
+       
+        if (portfolioButton) portfolioButton.interactable = true;
     }
+
 
     public void SetInfo(string name, int money = 0)
     {
