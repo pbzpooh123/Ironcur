@@ -20,13 +20,13 @@ public class PortfolioButtonBinder : MonoBehaviour
     {
         if (panel == null) return;
 
-        var targetPawn = FindPawnByCid(panel.ownerCid);
-        if (targetPawn == null && !string.IsNullOrWhiteSpace(panel.ownerName))
-            targetPawn = FindPawnByName(panel.ownerName);
+        var targetPawn = FindPawnByCid(panel.OwnerCid);
+        if (targetPawn == null && !string.IsNullOrWhiteSpace(panel.OwnerName))
+            targetPawn = FindPawnByName(panel.OwnerName);
 
         if (targetPawn == null)
         {
-            Debug.LogWarning($"[Portfolio] Pawn not found for panel: {panel.ownerName} (cid={panel.ownerCid})");
+            Debug.LogWarning($"[Portfolio] Pawn not found for panel: {panel.OwnerName} (cid={panel.OwnerCid})");
             return;
         }
 
@@ -36,7 +36,7 @@ public class PortfolioButtonBinder : MonoBehaviour
             return;
         }
 
-        PortfolioUI.Instance.ShowForPawn(targetPawn, panel.ownerName);
+        PortfolioUI.Instance.ShowForPawn(targetPawn, panel.OwnerName);
         // request fresh snapshot to THIS viewer
         targetPawn.CmdRequestPortfolioForViewer();
     }
@@ -49,6 +49,7 @@ public class PortfolioButtonBinder : MonoBehaviour
             foreach (var p in gm.Players)
                 if (p != null && p.Owner != null && p.Owner.ClientId == cid)
                     return p;
+
         return GameObject.FindObjectsOfType<PlayerPawn>()
             .FirstOrDefault(p => p.Owner != null && p.Owner.ClientId == cid);
     }
@@ -56,11 +57,13 @@ public class PortfolioButtonBinder : MonoBehaviour
     private PlayerPawn FindPawnByName(string name)
     {
         if (string.IsNullOrWhiteSpace(name)) return null;
+
         var gm = GameManager.Instance;
         if (gm != null && gm.Players != null)
             foreach (var p in gm.Players)
                 if (p != null && p.playerName.Value == name)
                     return p;
+
         return GameObject.FindObjectsOfType<PlayerPawn>()
             .FirstOrDefault(p => p.playerName.Value == name);
     }

@@ -1,21 +1,19 @@
-// LobbyColorBinder.cs
+// LobbyColorBinder.cs  (keep MonoBehaviour)
 using UnityEngine;
 using UnityEngine.UI;
 using FishNet;
+using System.Collections;
 using System.Collections.Generic;
 
 public class LobbyColorBinder : MonoBehaviour
 {
     [Header("Per button")]
-    public int slotIndex;      // 0..Palette.Length-1
-    public Image swatch;       // your button’s Image to show the color
-    public Button pickButton;  // the clickable button
+    public int slotIndex;
+    public Image swatch;
+    public Button pickButton;
 
     private static LobbyColorBinder[] _all;
-
-    // client-side lookup: connectionId -> color slot
     private static readonly Dictionary<int,int> _cidToSlot = new();
-    public static bool TryGetSlotForCid(int cid, out int slot) => _cidToSlot.TryGetValue(cid, out slot);
 
     private void Awake()
     {
@@ -29,60 +27,54 @@ public class LobbyColorBinder : MonoBehaviour
         }
     }
 
-    private void OnEnable()
+    private void OnEnable() => StartCoroutine(WaitAndRequest());
+
+    private IEnumerator WaitAndRequest()
     {
-        _all = FindObjectsOfType<LobbyColorBinder>(true);
-        // ask server for a snapshot if you have a server authority script
-        if (ColorLockManager.Instance != null && InstanceFinder.ClientManager.Started)
-            ColorLockManager.Instance.CmdRequestSnapshot();
+        // Wait for client to start.
+        while (InstanceFinder.ClientManager == null || !InstanceFinder.ClientManager.Started)
+            yield return null;
+
+        // Wait for ColorLockManager to exist and be spawned before using its ServerRpc.
+        while (ColorLockManager.Instance == null || !ColorLockManager.Instance.IsSpawned)
+            yield return null;
+
+        ColorLockManager.Instance.CmdRequestSnapshot();
     }
 
     private void OnPick()
     {
-        if (ColorLockManager.Instance == null) return;
+        if (ColorLockManager.Instance == null || !ColorLockManager.Instance.IsSpawned) return;
         string name = PlayerPrefs.GetString("PlayerName", $"P{InstanceFinder.ClientManager.Connection.ClientId}");
         ColorLockManager.Instance.CmdPick(slotIndex, name);
     }
 
-    /// <summary>
-    /// Server should call this via an RPC when color ownership changes.
-    /// ownerCids[slot] = connectionId or -1 if free.
-    /// </summary>
+    public static bool TryGetSlotForCid(int cid, out int slot) => _cidToSlot.TryGetValue(cid, out slot);
+
     public static void ApplyOwners(int[] ownerCids)
     {
-        // rebuild cid -> slot map
         _cidToSlot.Clear();
         for (int i = 0; i < ownerCids.Length; i++)
-        {
-            int cid = ownerCids[i];
-            if (cid >= 0) _cidToSlot[cid] = i;
-        }
+            if (ownerCids[i] >= 0) _cidToSlot[ownerCids[i]] = i;
 
         if (_all == null) _all = FindObjectsOfType<LobbyColorBinder>(true);
-
-        // enable/disable buttons
         foreach (var b in _all)
         {
             bool taken = b.slotIndex >= 0 && b.slotIndex < ownerCids.Length && ownerCids[b.slotIndex] >= 0;
-            if (b.pickButton != null) b.pickButton.interactable = !taken;
+            if (b.pickButton) b.pickButton.interactable = !taken;
         }
 
-        // recolor player names in the lobby list
-        var lobby = Object.FindObjectOfType<LobbyUI>();
-        lobby?.RefreshNameColors();
+        FindObjectOfType<LobbyUI>()?.RefreshNameColors();
     }
 
-    // convenience for LobbyUI
     public static bool TryGetColorForCid(int connId, out Color color)
     {
         color = Color.white;
-        if (_cidToSlot.TryGetValue(connId, out int slot))
+        if (_cidToSlot.TryGetValue(connId, out int slot) &&
+            slot >= 0 && slot < PlayerColors.Palette.Length)
         {
-            if (slot >= 0 && slot < PlayerColors.Palette.Length)
-            {
-                color = PlayerColors.Palette[slot];
-                return true;
-            }
+            color = PlayerColors.Palette[slot];
+            return true;
         }
         return false;
     }

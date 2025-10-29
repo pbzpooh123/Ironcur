@@ -61,8 +61,8 @@ public class PlayerPawn : NetworkBehaviour
         colorIndex.OnChange += OnColorChanged;
         money.OnChange += OnMoneyChanged;
 
-        // start binding loop
-        StartCoroutine(AutoBindInfoPanel());
+        if (IsOwner && TurnUI.Instance != null)
+        TurnUI.Instance.BindPawn(this);
     }
 
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
@@ -126,7 +126,7 @@ public class PlayerPawn : NetworkBehaviour
         ApplyColor(newVal);
     }
 
-    private void ApplyColor(int idx)
+    public void ApplyColor(int idx)
     {
         if (_sr == null)
         {
@@ -139,13 +139,20 @@ public class PlayerPawn : NetworkBehaviour
 
     public void ApplyColorIndex(int idx)
     {
-        // Server owns truth; client asks server to set it
+        ApplyColor(idx); // immediate visual for local UX
+
         if (IsServerInitialized)
             colorIndex.Value = PlayerColors.ClampOrUnset(idx);
-        else
-            CmdSetColorIndex(idx);
-
-        ApplyColor(idx);
+        else if (IsOwner)
+            CmdSetColorIndex(idx);   // only owner will call
+        // non-owners do nothing here
+    }
+    
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdSetColorIndex(int idx, FishNet.Connection.NetworkConnection conn = null)
+    {
+        if (conn != Owner) return; // reject non-owners
+        colorIndex.Value = PlayerColors.ClampOrUnset(idx);
     }
 
     [ServerRpc]

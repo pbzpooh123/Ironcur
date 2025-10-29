@@ -1,5 +1,4 @@
 using UnityEngine;
-using TMPro;
 using System.Collections.Generic;
 
 public class GameHUD : MonoBehaviour
@@ -31,7 +30,7 @@ public class GameHUD : MonoBehaviour
     }
 
     /// <summary>
-    /// Creates a player panel at a corner slot. ownerCid is optional; pass it if known.
+    /// Creates a player panel at a corner slot. ownerCid is optional (-1 if unknown).
     /// </summary>
     public PlayerInfoPanel CreatePlayerPanel(int slotIndex, string name, int money, int ownerCid = -1)
     {
@@ -47,25 +46,20 @@ public class GameHUD : MonoBehaviour
             return null;
         }
 
-        GameObject panel = Instantiate(playerPanelPrefab, anchors[slotIndex]);
-        panel.name = $"PlayerPanel_{slotIndex}";
+        GameObject panelObj = Instantiate(playerPanelPrefab, anchors[slotIndex]);
+        panelObj.name = $"PlayerPanel_{slotIndex}";
 
-        // Ensure there is a CID tag on the panel for fallback binding
-        var tag = panel.GetComponent<PlayerCidTag>();
-        if (tag == null) tag = panel.AddComponent<PlayerCidTag>();
-        tag.clientId = ownerCid;
-
-        var infoPanel = panel.GetComponent<PlayerInfoPanel>();
-        if (infoPanel != null)
+        var panel = panelObj.GetComponent<PlayerInfoPanel>();
+        if (panel != null)
         {
-            infoPanel.SetInfo(name, money);
-            infoPanel.SetOwnerCid(ownerCid);   // ← important for PortfolioButtonBinder
+            panel.SetInfo(name, money);
+            panel.SetOwnerCid(ownerCid);
         }
 
-        RegisterPanel(infoPanel, name, ownerCid);
+        RegisterPanel(panel, name, ownerCid);
 
         Debug.Log($"[GameHUD] Spawned Player Panel for {name} (cid={ownerCid}) in slot {slotIndex}");
-        return infoPanel;
+        return panel;
     }
 
     public PlayerInfoPanel FindPanelByName(string name)
@@ -95,10 +89,9 @@ public class GameHUD : MonoBehaviour
         if (!string.IsNullOrWhiteSpace(newKey))
             _panelsByName[newKey] = panel;
 
-        if (panel.nameText != null)
+        if (panel.name != null)
         {
-            panel.ownerName = newName;
-            panel.nameText.text = newName;
+            panel.SetInfo(newName, 0); // keep money unchanged via UpdateMoney calls elsewhere
         }
     }
 
@@ -112,15 +105,9 @@ public class GameHUD : MonoBehaviour
 
         if (cid >= 0)
             _panelsByCid[cid] = panel;
-        else
-        {
-            // Try reading tag if cid wasn’t passed
-            var t = panel.GetComponent<PlayerCidTag>();
-            if (t != null && t.clientId >= 0)
-                _panelsByCid[t.clientId] = panel;
-        }
     }
 
+    /// <summary>Mark the current turn by player name (for older flows).</summary>
     public void SetCurrentTurn(string playerName)
     {
         // clear old
@@ -138,13 +125,26 @@ public class GameHUD : MonoBehaviour
         }
     }
 
-    private static string Norm(string s) => string.IsNullOrWhiteSpace(s) ? "" : s.Trim().ToLowerInvariant();
-}
+    /// <summary>Mark the current turn by owner connection id (recommended).</summary>
+    public void SetCurrentTurnByCid(int ownerCid)
+    {
+        // turn off any previous highlight
+        if (_currentTurnPanel) _currentTurnPanel.SetTurnActive(false);
+        _currentTurnPanel = null;
 
-/// <summary>
-/// Tiny tag so a panel can be looked up by connection id (CID).
-/// </summary>
-public class PlayerCidTag : MonoBehaviour
-{
-    public int clientId = -1;
+        if (_panelsByCid.TryGetValue(ownerCid, out var panel) && panel != null)
+        {
+            panel.SetTurnActive(true);
+            _currentTurnPanel = panel;
+        }
+    }
+
+    /// <summary>Call when a panel’s OwnerCid changes to keep the cid→panel map in sync.</summary>
+    public void NotifyPanelCidChanged(PlayerInfoPanel panel, int newCid)
+    {
+        if (panel == null) return;
+        if (newCid >= 0) _panelsByCid[newCid] = panel;
+    }
+
+    private static string Norm(string s) => string.IsNullOrWhiteSpace(s) ? "" : s.Trim().ToLowerInvariant();
 }

@@ -140,11 +140,15 @@ public class TurnManager : NetworkBehaviour
     private void SetPhase(TurnPhase phase)
     {
         _phase = phase;
-        Debug.Log($"[TurnManager] Phase -> {_phase}");
-
         var pawn = GetCurrentPawn();
-        string currentName = (pawn != null) ? pawn.playerName.Value : "";
-        RpcSetTurnState(currentPlayerIndex.Value, _phase, currentName);
+        int currentOwnerCid = (pawn?.Owner != null) ? pawn.Owner.ClientId : -1;
+        RpcSetTurnState(_phase, currentOwnerCid);
+    }
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcSetTurnState(TurnPhase phase, int currentOwnerCid)
+    {
+        TurnUI.Instance?.ApplyTurnState(phase, currentOwnerCid);
     }
 
     [ObserversRpc(BufferLast = true)]

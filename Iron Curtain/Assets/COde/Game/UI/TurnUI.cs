@@ -34,6 +34,11 @@ public class TurnUI : MonoBehaviour
     private const string PREF_NEXT_EVENT_COLLAPSED = "ui.nextEventCollapsed";
     private bool _nextEventCollapsed = false;
 
+    private bool _hasPendingState;
+    private TurnPhase _pendingPhase;
+    private int _pendingOwnerCid = -1;
+    private Coroutine _applyCo;
+
     void Awake()
     {
         Instance = this;
@@ -69,11 +74,22 @@ public class TurnUI : MonoBehaviour
         SetEndTurnInteractable(false);
     }
 
+    
+
+        private PlayerPawn GetOrFindLocalPawn()
+        {
+            if (myPawn != null && myPawn && myPawn.IsOwner) return myPawn;
+            foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
+                if (p != null && p.IsOwner) { myPawn = p; break; }
+            return myPawn;
+  }
+
     private void OnRollDiceClicked()
     {
-        if (myPawn != null && myPawn.IsOwner)
+        var p = GetOrFindLocalPawn();
+        if (p != null && p.IsOwner)
         {
-            myPawn.OnRollDiceButton();
+            p.OnRollDiceButton();
             SetRollInteractable(false);
         }
     }
@@ -190,5 +206,55 @@ public class TurnUI : MonoBehaviour
             float z = _nextEventCollapsed ? 0f : 0f;
             nextEventChevron.localEulerAngles = new Vector3(0f, 0f, z);
         }
+    }
+
+
+    public void ApplyTurnState(TurnPhase phase, int ownerCid)
+    {
+        _pendingPhase = phase;
+        _pendingOwnerCid = ownerCid;
+        _hasPendingState = true;
+        TryApplyCachedTurnState();
+    }
+
+    void OnEnable() => TryApplyCachedTurnState();
+
+    private void TryApplyCachedTurnState()
+    {
+        if (!_hasPendingState) return;
+        if (_applyCo != null) StopCoroutine(_applyCo);
+        _applyCo = StartCoroutine(CoApplyWhenReady(_pendingPhase, _pendingOwnerCid));
+    }
+
+    private IEnumerator CoApplyWhenReady(TurnPhase phase, int ownerCid)
+    {
+        // wait up to ~2s for the local-owned pawn to exist
+        float t = 2f;
+        while (t > 0f && (myPawn == null || !myPawn || !myPawn.IsOwner))
+        {
+            foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
+                if (p != null && p.IsOwner) { myPawn = p; break; }
+
+            if (myPawn != null && myPawn.IsOwner) break;
+            t -= Time.deltaTime;
+            yield return null;
+        }
+
+        bool isMyTurn = (myPawn != null && myPawn.Owner != null &&
+                        ownerCid >= 0 && myPawn.Owner.ClientId == ownerCid);
+
+        // default: lock buttons
+        SetRollInteractable(false);
+        SetEndTurnInteractable(false);
+
+        switch (phase)
+        {
+            case TurnPhase.Rolling:
+                SetRollInteractable(isMyTurn);
+                break;
+            // other phases keep buttons disabled
+        }
+
+        _applyCo = null;
     }
 }

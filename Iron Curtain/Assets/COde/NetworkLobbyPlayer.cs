@@ -51,14 +51,18 @@ public class NetworkLobbyPlayer : NetworkBehaviour
 
    private void ApplyMyColor(int idx)
     {
-        
+        PlayerPawn mine = null;
         foreach (var pawn in FindObjectsOfType<PlayerPawn>())
+            if (pawn != null && pawn.Owner == Owner) { mine = pawn; break; }
+        if (mine == null) return;
+
+        if (IsOwner)
         {
-            if (pawn != null && pawn.Owner == Owner)
-            {
-                pawn.ApplyColorIndex(idx); 
-                break;
-            }
+            mine.ApplyColorIndex(idx); 
+        }
+        else
+        {
+            mine.ApplyColor(idx);
         }
     }
 
