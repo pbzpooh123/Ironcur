@@ -172,6 +172,7 @@ public class MarketManager : NetworkBehaviour
             pawn.ServerBroadcastPortfolio();
             // Optional nudge if panel is open
             RpcRefreshLocalPortfolioUI();
+            
         }
         else
         {
@@ -236,6 +237,7 @@ public class MarketManager : NetworkBehaviour
         ProposalUI.Instance?.Refresh();
         ReviewUI.Instance?.Refresh();
         RpcRefreshLocalPortfolioUI();
+        Notifier.Instance?.ToastAll($"{ownerPawn.playerName.Value} took control of {companyName}!", ToastKind.Info);
     }
 
     [ObserversRpc]
@@ -583,6 +585,7 @@ public class MarketManager : NetworkBehaviour
 
             RpcSyncMajorityOwner(companyName, company.ownerName);
             RpcUpdateTileOwner(companyName, company.ownerName, majority.colorIndex.Value);
+            Notifier.Instance?.ToastAll($"{majority.playerName.Value} took control of {companyName}!", ToastKind.Success);
         }
 
         // Sync portfolios & UI
