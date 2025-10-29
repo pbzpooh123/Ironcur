@@ -72,4 +72,11 @@ public class TileVisuals : MonoBehaviour
         if (pawn == null) ShowUnclaimed();
         else ShowOwnedByColor(pawn.colorIndex.Value);
     }
+
+    public GameObject hoverOutline; // an image or mesh you toggle
+
+    public void SetHover(bool on)
+    {
+        if (hoverOutline) hoverOutline.SetActive(on);
+    }
 }

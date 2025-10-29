@@ -288,6 +288,29 @@ public class PlayerPawn : NetworkBehaviour
             ui.SetRollInteractable(false);
             ui.SetEndTurnInteractable(false);
         }
+        StartCoroutine(CoResyncButtons());
+    }
+
+    private IEnumerator CoResyncButtons()
+    {
+        yield return new WaitForSecondsRealtime(0.5f);
+        if (IsOwner)
+            CmdRequestButtonResync();
+    }
+
+    [ServerRpc]
+    private void CmdRequestButtonResync(FishNet.Connection.NetworkConnection caller = null)
+    {
+        if (caller != Owner) return;
+        if (TurnManager.Instance.IsCurrentPawn(this))
+        {
+            if (TurnManager.Instance.IsPhase(TurnPhase.Rolling))
+                TargetEnableRoll(Owner, true);
+            else
+                TargetEnableRoll(Owner, false);
+
+            TargetEnableEndTurn(Owner, TurnManager.Instance.IsPhase(TurnPhase.EndReady));
+        }
     }
 
     [TargetRpc]
