@@ -103,11 +103,11 @@ MonoBehaviour:
   profitText: {fileID: 8247013670169860833}
   turnOrderText: {fileID: 7933157853146841130}
   portfolioButton: {fileID: 5046551574406848023}
-  ownerCid: -1
-  ownerName: 
+  _ownerCid: -1
+  _ownerName: 
   highlightImage: {fileID: 4406307356039657526}
-  activeColor: {r: 1, g: 0.9, b: 0.3, a: 0.75}
-  idleColor: {r: 1, g: 1, b: 1, a: 0.15}
+  activeColor: {r: 0.9274233, g: 1, b: 0.2980392, a: 1}
+  idleColor: {r: 1, g: 1, b: 1, a: 1}
   bailoutText: {fileID: 3870340549746616997}
 --- !u!114 &5923547694135254486
 MonoBehaviour:

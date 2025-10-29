@@ -211,9 +211,11 @@ public class TurnUI : MonoBehaviour
 
     public void ApplyTurnState(TurnPhase phase, int ownerCid)
     {
-        _pendingPhase = phase;
+         _pendingPhase = phase;
         _pendingOwnerCid = ownerCid;
         _hasPendingState = true;
+        GameHUD.Instance?.SetCurrentTurnByCid(ownerCid);
+
         TryApplyCachedTurnState();
     }
 
@@ -239,6 +241,8 @@ public class TurnUI : MonoBehaviour
             t -= Time.deltaTime;
             yield return null;
         }
+
+         GameHUD.Instance?.SetCurrentTurnByCid(ownerCid);
 
         bool isMyTurn = (myPawn != null && myPawn.Owner != null &&
                         ownerCid >= 0 && myPawn.Owner.ClientId == ownerCid);

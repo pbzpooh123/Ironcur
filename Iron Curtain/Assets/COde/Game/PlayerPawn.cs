@@ -62,7 +62,8 @@ public class PlayerPawn : NetworkBehaviour
         money.OnChange += OnMoneyChanged;
 
         if (IsOwner && TurnUI.Instance != null)
-        TurnUI.Instance.BindPawn(this);
+            TurnUI.Instance.BindPawn(this);
+        StartCoroutine(AutoBindInfoPanel());
     }
 
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
@@ -91,7 +92,7 @@ public class PlayerPawn : NetworkBehaviour
 
     private IEnumerator AutoBindInfoPanel()
     {
-        float t = 5f; // give HUD a bit more time to appear
+        float t = 5f;
         while (t > 0f && infoPanel == null)
         {
             TryEnsureInfoPanel();
@@ -100,12 +101,17 @@ public class PlayerPawn : NetworkBehaviour
                 infoPanel.SetInfo(
                     string.IsNullOrWhiteSpace(playerName.Value) ? $"P{Owner?.ClientId ?? -1}" : playerName.Value,
                     money.Value);
+
+                // ★ Add this so HUD knows: cid -> panel
+                if (Owner != null) infoPanel.SetOwnerCid(Owner.ClientId);
+
                 yield break;
             }
             t -= Time.unscaledDeltaTime;
             yield return null;
         }
     }
+
 
     private void TryEnsureInfoPanel()
     {
@@ -120,6 +126,9 @@ public class PlayerPawn : NetworkBehaviour
             if (byCid != null)
                 infoPanel = byCid;
         }
+
+        if (infoPanel != null && Owner != null)
+            infoPanel.SetOwnerCid(Owner.ClientId);
     }
      private void OnColorChanged(int oldVal, int newVal, bool asServer)
     {
@@ -716,4 +725,6 @@ public class PlayerPawn : NetworkBehaviour
             });
         }
     }
+
+
 }

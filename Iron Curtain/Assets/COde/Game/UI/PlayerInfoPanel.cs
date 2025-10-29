@@ -30,6 +30,60 @@ public class PlayerInfoPanel : MonoBehaviour
 
     public TMP_Text bailoutText;
 
+    private static Sprite _fallbackSprite;
+    private static Sprite GetFallbackSprite()
+    {
+        if (_fallbackSprite != null) return _fallbackSprite;
+
+        var tex = new Texture2D(1, 1);
+        tex.SetPixel(0, 0, Color.white);
+        tex.Apply();
+        _fallbackSprite = Sprite.Create(tex, new Rect(0, 0, 1, 1), new Vector2(0.5f, 0.5f));
+        return _fallbackSprite;
+    }
+
+     void Awake()
+    {
+        if (highlightImage != null)
+        {
+            // Ensure drawable sprite exists (solid overlay fallback)
+            if (highlightImage.sprite == null)
+            {
+                var tex = Texture2D.whiteTexture;
+                highlightImage.sprite = Sprite.Create(
+                    tex, new Rect(0,0,tex.width,tex.height), new Vector2(0.5f,0.5f));
+                highlightImage.type = Image.Type.Simple;
+            }
+
+            highlightImage.raycastTarget = false;
+            highlightImage.enabled = true;
+            highlightImage.color = idleColor;
+
+            // Sit on top to avoid being hidden by other children
+            highlightImage.transform.SetAsLastSibling();
+        }
+    }
+
+    public void SetTurnActive(bool isActive)
+    {
+        if (!highlightImage) return;
+
+        var c = isActive ? activeColor : idleColor;
+        c.a = Mathf.Clamp01(c.a);
+        highlightImage.color = c;
+        highlightImage.enabled = true;
+
+        // Fight CanvasGroup parents muting alpha
+        var cg = highlightImage.GetComponent<CanvasGroup>();
+        if (cg == null) cg = highlightImage.gameObject.AddComponent<CanvasGroup>();
+        cg.alpha = 1f;
+        cg.blocksRaycasts = false;
+        cg.interactable = false;
+
+        // Also give you a very visible text cue while debugging
+        if (nameText != null) nameText.color = isActive ? Color.yellow : Color.white;
+    }
+
     public void SetInfo(string name, int money = 0)
     {
         _ownerName = name;
@@ -41,7 +95,7 @@ public class PlayerInfoPanel : MonoBehaviour
     public void SetOwnerCid(int cid)
     {
         _ownerCid = cid;
-        GameHUD.Instance?.NotifyPanelCidChanged(this, cid); // keep HUD map fresh
+        GameHUD.Instance?.NotifyPanelCidChanged(this, cid);
     }
 
     public void UpdateMoney(int money)
@@ -60,12 +114,5 @@ public class PlayerInfoPanel : MonoBehaviour
             bailoutText.text = $"Bailouts: {marks}";
     }
 
-    /// <summary>Called by GameHUD to visually mark current turn.</summary>
-    public void SetTurnActive(bool isActive)
-    {
-        Debug.Log($"[PlayerInfoPanel] SetTurnActive({isActive}) for {_ownerName}");
-        if (!highlightImage) return;
-        highlightImage.enabled = true;
-        highlightImage.color = isActive ? activeColor : idleColor;
-    }
 }
+

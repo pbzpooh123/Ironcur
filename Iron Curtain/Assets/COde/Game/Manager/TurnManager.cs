@@ -148,55 +148,56 @@ public class TurnManager : NetworkBehaviour
     [ObserversRpc(BufferLast = true)]
     private void RpcSetTurnState(TurnPhase phase, int currentOwnerCid)
     {
+         GameHUD.Instance?.SetCurrentTurnByCid(currentOwnerCid);
         TurnUI.Instance?.ApplyTurnState(phase, currentOwnerCid);
     }
 
-    [ObserversRpc(BufferLast = true)]
-    private void RpcSetTurnState(int index, TurnPhase phase, string currentPlayerName)
-    {
-        var tu = GameObject.FindObjectOfType<TurnUI>();
-        if (tu == null) return;
+    // [ObserversRpc(BufferLast = true)]
+    // private void RpcSetTurnState(int index, TurnPhase phase, string currentPlayerName)
+    // {
+    //     var tu = GameObject.FindObjectOfType<TurnUI>();
+    //     if (tu == null) return;
 
-        PlayerPawn local = null;
-        foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
-        {
-            if (p != null && p.IsOwner) { local = p; break; }
-        }
+    //     PlayerPawn local = null;
+    //     foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
+    //     {
+    //         if (p != null && p.IsOwner) { local = p; break; }
+    //     }
 
-        tu.SetRollInteractable(false);
-        tu.SetEndTurnInteractable(false);
+    //     tu.SetRollInteractable(false);
+    //     tu.SetEndTurnInteractable(false);
 
-        if (local == null || string.IsNullOrEmpty(currentPlayerName))
-            return;
+    //     if (local == null || string.IsNullOrEmpty(currentPlayerName))
+    //         return;
 
-        bool isMyTurn = (local.playerName.Value == currentPlayerName);
-        if (GameHUD.Instance != null && !string.IsNullOrEmpty(currentPlayerName))
-        GameHUD.Instance.SetCurrentTurn(currentPlayerName);
+    //     bool isMyTurn = (local.playerName.Value == currentPlayerName);
+    //     if (GameHUD.Instance != null && !string.IsNullOrEmpty(currentPlayerName))
+    //     GameHUD.Instance.SetCurrentTurn(currentPlayerName);
 
-        switch (phase)
-        {
-            case TurnPhase.Review:
-                break;
+    //     switch (phase)
+    //     {
+    //         case TurnPhase.Review:
+    //             break;
 
-            case TurnPhase.Rolling:
-                tu.SetRollInteractable(isMyTurn);
-                break;
+    //         case TurnPhase.Rolling:
+    //             tu.SetRollInteractable(isMyTurn);
+    //             break;
 
-            case TurnPhase.TileEventPending:
-                tu.SetRollInteractable(false);
-                tu.SetEndTurnInteractable(false);
-                break;
+    //         case TurnPhase.TileEventPending:
+    //             tu.SetRollInteractable(false);
+    //             tu.SetEndTurnInteractable(false);
+    //             break;
 
-            case TurnPhase.Proposal:
-                // no buttons; ProposalUI flow owns the phase
-                break;
+    //         case TurnPhase.Proposal:
+    //             // no buttons; ProposalUI flow owns the phase
+    //             break;
 
-            case TurnPhase.EndReady:
-                // <<< CHANGED: keep button disabled because we auto-end >>>
-                tu.SetEndTurnInteractable(false);
-                break;
-        }
-    }
+    //         case TurnPhase.EndReady:
+    //             // <<< CHANGED: keep button disabled because we auto-end >>>
+    //             tu.SetEndTurnInteractable(false);
+    //             break;
+    //     }
+    // }
 
     [Server]
     public bool IsCurrentPawn(PlayerPawn pawn)

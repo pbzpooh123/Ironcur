@@ -15,6 +15,7 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     public readonly SyncVar<int> colorIndex = new();
 
     private LobbyUI lobbyUI;
+    
 
     public override void OnStartServer()
      {
@@ -138,7 +139,7 @@ public class NetworkLobbyPlayer : NetworkBehaviour
 
     /* ---------------- Game HUD bridge (unchanged) ---------------- */
 
-    [ObserversRpc]
+   [ObserversRpc]
     public void TargetSetHUD(int slotIndex, string name, int initialMoney, int ownerConnectionId)
     {
         StartCoroutine(WaitForHUD(slotIndex, name, initialMoney, ownerConnectionId));
@@ -149,8 +150,9 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         while (GameHUD.Instance == null)
             yield return null;
 
-        var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, initialMoney);
+        var panel = GameHUD.Instance.CreatePlayerPanel(slotIndex, name, initialMoney, ownerConnectionId);
 
+        // bind the panel to the pawn (optional but nice)
         foreach (var pawn in FindObjectsOfType<PlayerPawn>())
         {
             if (pawn.Owner != null && pawn.Owner.ClientId == ownerConnectionId)
@@ -161,4 +163,5 @@ public class NetworkLobbyPlayer : NetworkBehaviour
             }
         }
     }
+
 }

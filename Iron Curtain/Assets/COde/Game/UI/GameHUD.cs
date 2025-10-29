@@ -22,6 +22,11 @@ public class GameHUD : MonoBehaviour
     private readonly Dictionary<string, PlayerInfoPanel> _panelsByName = new();
     // cid  → panel
     private readonly Dictionary<int, PlayerInfoPanel> _panelsByCid = new();
+    [SerializeField] private List<PlayerInfoPanel> _debugPanels = new();
+
+    // GameHUD.cs (fields)
+    private int _pendingHighlightCid = -1;
+
 
     private void Awake()
     {
@@ -49,17 +54,14 @@ public class GameHUD : MonoBehaviour
         GameObject panelObj = Instantiate(playerPanelPrefab, anchors[slotIndex]);
         panelObj.name = $"PlayerPanel_{slotIndex}";
 
-        var panel = panelObj.GetComponent<PlayerInfoPanel>();
-        if (panel != null)
+        var infoPanel = panelObj.GetComponent<PlayerInfoPanel>();
+        if (infoPanel != null)
         {
-            panel.SetInfo(name, money);
-            panel.SetOwnerCid(ownerCid);
+            infoPanel.SetInfo(name, money);
+            infoPanel.SetOwnerCid(ownerCid); // this calls NotifyPanelCidChanged
         }
-
-        RegisterPanel(panel, name, ownerCid);
-
-        Debug.Log($"[GameHUD] Spawned Player Panel for {name} (cid={ownerCid}) in slot {slotIndex}");
-        return panel;
+        RegisterPanel(infoPanel, name, ownerCid);
+        return infoPanel;
     }
 
     public PlayerInfoPanel FindPanelByName(string name)
@@ -97,14 +99,9 @@ public class GameHUD : MonoBehaviour
 
     private void RegisterPanel(PlayerInfoPanel panel, string name, int cid)
     {
-        if (panel == null) return;
-
-        var key = Norm(name);
-        if (!string.IsNullOrWhiteSpace(key))
-            _panelsByName[key] = panel;
-
-        if (cid >= 0)
-            _panelsByCid[cid] = panel;
+        if (!panel) return;
+        if (cid >= 0) _panelsByCid[cid] = panel;
+        if (!_debugPanels.Contains(panel)) _debugPanels.Add(panel);
     }
 
     /// <summary>Mark the current turn by player name (for older flows).</summary>
@@ -126,25 +123,42 @@ public class GameHUD : MonoBehaviour
     }
 
     /// <summary>Mark the current turn by owner connection id (recommended).</summary>
-    public void SetCurrentTurnByCid(int ownerCid)
-    {
-        // turn off any previous highlight
-        if (_currentTurnPanel) _currentTurnPanel.SetTurnActive(false);
-        _currentTurnPanel = null;
-
-        if (_panelsByCid.TryGetValue(ownerCid, out var panel) && panel != null)
-        {
-            panel.SetTurnActive(true);
-            _currentTurnPanel = panel;
-        }
-    }
-
-    /// <summary>Call when a panel’s OwnerCid changes to keep the cid→panel map in sync.</summary>
     public void NotifyPanelCidChanged(PlayerInfoPanel panel, int newCid)
     {
         if (panel == null) return;
+
+        // Remove old keys for this panel
+        foreach (var kv in new List<KeyValuePair<int, PlayerInfoPanel>>(_panelsByCid))
+            if (kv.Value == panel) _panelsByCid.Remove(kv.Key);
+
         if (newCid >= 0) _panelsByCid[newCid] = panel;
+        Debug.Log($"[GameHUD] CID map updated: {panel.OwnerName} -> cid={newCid}");
+
+        // If a highlight was requested earlier for this cid, apply it now
+        if (_pendingHighlightCid == newCid)
+            SetCurrentTurnByCid(_pendingHighlightCid);
     }
+
+    public void SetCurrentTurnByCid(int ownerCid)
+    {
+        _pendingHighlightCid = ownerCid;
+
+        if (_currentTurnPanel != null)
+            _currentTurnPanel.SetTurnActive(false);
+
+        var panel = FindPanelByCid(ownerCid);
+        if (panel == null)
+        {
+            Debug.LogWarning($"[GameHUD] SetCurrentTurnByCid({ownerCid}) but no panel found. Known CIDs: [{string.Join(",", _panelsByCid.Keys)}]");
+            _currentTurnPanel = null;
+            return;
+        }
+
+        panel.SetTurnActive(true);
+        _currentTurnPanel = panel;
+        Debug.Log($"[GameHUD] SetCurrentTurnByCid({ownerCid}) -> '{panel.OwnerName}', spriteNull={(panel.highlightImage==null||panel.highlightImage.sprite==null)}");
+    }
+
 
     private static string Norm(string s) => string.IsNullOrWhiteSpace(s) ? "" : s.Trim().ToLowerInvariant();
 }
