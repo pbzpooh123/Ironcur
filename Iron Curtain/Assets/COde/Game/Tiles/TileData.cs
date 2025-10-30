@@ -26,6 +26,12 @@ public class TileData : MonoBehaviour
     [Header("Visuals")]
     public TileVisuals visuals;
 
+    [Header("On-Land Company Effects")]
+    public bool enableStealOnLanding = true;
+    [Range(0,100)] public int stealPercentOfOwnerMoney = 10;
+    public int stealFlatMin = 0; 
+    public int stealFlatMax = 0; 
+
     private void Awake()
     {
         if (visuals == null) visuals = GetComponent<TileVisuals>();

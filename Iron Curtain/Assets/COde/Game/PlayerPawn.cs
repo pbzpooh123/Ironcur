@@ -422,6 +422,36 @@ public class PlayerPawn : NetworkBehaviour
             return;
         }
 
+        if (data.tileType == TileType.Investment && data.owner != null && data.owner != this)
+        {
+            // A) STEAL ON LANDING
+            if (data.enableStealOnLanding)
+            {
+                TurnManager.Instance.ServerBeginTileAction(this);
+
+                var ownerPawn = data.owner;
+                int ownerMoney = Mathf.Max(0, ownerPawn.money.Value);
+                int pct = Mathf.Clamp(data.stealPercentOfOwnerMoney, 0, 100);
+                int stealAmt = Mathf.RoundToInt(ownerMoney * (pct / 100f));
+                if (data.stealFlatMin > 0) stealAmt = Mathf.Max(stealAmt, data.stealFlatMin);
+                if (data.stealFlatMax > 0) stealAmt = Mathf.Min(stealAmt, data.stealFlatMax);
+                stealAmt = Mathf.Max(0, stealAmt);
+
+                if (stealAmt > 0)
+                {
+                    ownerPawn.money.Value -= stealAmt;
+                    this.money.Value += stealAmt;
+                    Notifier.Instance?.ToastAll(
+                        $"{playerName.Value} stole ${stealAmt}M from {ownerPawn.playerName.Value} at {data.companyName}!",
+                        ToastKind.Warning);
+                }
+
+                TargetShowTilePopupAndWait(Owner,
+                    $"You raided {data.companyName} and took ${stealAmt}M from {ownerPawn.playerName.Value}.");
+                return;
+            }
+        }
+
         switch (data.tileType)
         {
             case TileType.Tax:
@@ -484,23 +514,16 @@ public class PlayerPawn : NetworkBehaviour
         if (EventUI.Instance != null)
         {
             EventUI.Instance.SideeventShow(msg, true);
-
-            // You add this one-liner Ready callback on the UI side:
-            // EventUI has a Ready button that invokes this callback.
             EventUI.Instance.SetSideeventReadyCallback(() =>
             {
-                // Client → Server: mark tile complete
                 CmdTileActionComplete();
             });
         }
         else
         {
-            // Fallback: if UI missing, complete immediately to avoid deadlocks
             CmdTileActionComplete();
         }
     }
-
-    // Legacy “toast” that does NOT wait (kept for non-gated messages)
     [TargetRpc]
     private void TargetShowToast(NetworkConnection conn, string msg)
     {

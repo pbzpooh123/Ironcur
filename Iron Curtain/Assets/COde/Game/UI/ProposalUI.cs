@@ -25,9 +25,18 @@ public class ProposalUI : MonoBehaviour
     public Button prevButton;
     public Button nextButton;
 
+    [Header("Forced Buy Bar")]
+    [Tooltip("TMP_InputField for entering the percent to force-buy.")]
+    public TMP_InputField forcedBuyPercentInput;
+    [Tooltip("Button to execute forced buy for the visible company.")]
+    public Button forcedBuyButton;
+    [Tooltip("Optional label to show remaining per-turn forced-buy budget, if you expose it via a getter.")]
+    public TMP_Text forcedBuyPriceText;
+    [Range(1.0f, 3.0f)] public float forcedBuyPremium = 2.5f;
+
     private PlayerPawn currentPawn;
 
-    // Cache: the list of companies we can propose to (CompanyRecord)
+    // Companies we can target this turn
     private readonly List<CompanyRecord> _itemsCache = new();
     private int _pageIndex = 0;
 
@@ -51,6 +60,18 @@ public class ProposalUI : MonoBehaviour
             nextButton.onClick.RemoveAllListeners();
             nextButton.onClick.AddListener(OnNextPage);
         }
+
+        if (forcedBuyButton != null)
+        {
+            forcedBuyButton.onClick.RemoveAllListeners();
+            forcedBuyButton.onClick.AddListener(OnClickForcedBuy);
+        }
+
+        if (forcedBuyPercentInput != null)
+        {
+            forcedBuyPercentInput.onValueChanged.RemoveAllListeners();
+            forcedBuyPercentInput.onValueChanged.AddListener(_ => UpdateForcedBuyUI());
+        }
     }
 
     public void Show(PlayerPawn pawn)
@@ -59,9 +80,7 @@ public class ProposalUI : MonoBehaviour
         panel.SetActive(true);
         Refresh();
 
-        if (TurnManager.Instance != null && TurnManager.Instance.IsServerInitialized)
-            TurnManager.Instance.InProposalPhaseFor(pawn);
-
+        // Lock roll/end buttons during proposal
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null) ui.SetEndTurnInteractable(false);
         if (ui != null) ui.SetRollInteractable(false);
@@ -72,24 +91,25 @@ public class ProposalUI : MonoBehaviour
         if (panel == null || !panel.activeSelf) return;
         if (MarketManager.Instance == null || currentPawn == null) return;
 
-    
         _itemsCache.Clear();
 
         foreach (var kv in MarketManager.Instance.companies)
         {
             var c = kv.Value;
             if (c == null) continue;
-            if (c.owner == null || c.owner == currentPawn) continue;              // must belong to someone else
-            if (c.GetOwnership(currentPawn) >= 100) continue;                     // you already have 100%
-            if (c.GetOwnership(c.owner) <= 0) continue;
+            if (c.owner == null || c.owner == currentPawn) continue;                // must belong to someone else
+            if (c.GetOwnership(currentPawn) >= 100) continue;                       // you already have 100%
+            if (c.GetOwnership(c.owner) <= 0) continue;                             // owner must still have some
             if (MarketManager.Instance.HasSubmittedThisTurn(currentPawn, c.companyName))
-                continue;
+                continue;                                                           // you already proposed to this one
 
             _itemsCache.Add(c);
         }
 
-        _pageIndex = 0;
+        _pageIndex = Mathf.Clamp(_pageIndex, 0, GetMaxPageIndex());
         RenderPageOnly();
+        UpdateForcedBuyBarState();
+        UpdateForcedBuyUI(); 
     }
 
     private void RenderPageOnly()
@@ -105,7 +125,7 @@ public class ProposalUI : MonoBehaviour
             return;
         }
 
-        int pageSize = Mathf.Max(1, rowsPerPage); // set to 1 for single row
+        int pageSize = Mathf.Max(1, rowsPerPage);
         int start = _pageIndex * pageSize;
         int endExclusive = Mathf.Min(start + pageSize, _itemsCache.Count);
 
@@ -127,6 +147,8 @@ public class ProposalUI : MonoBehaviour
         if (_itemsCache.Count == 0) return;
         _pageIndex = Mathf.Max(0, _pageIndex - 1);
         RenderPageOnly();
+        UpdateForcedBuyBarState();
+        UpdateForcedBuyUI(); 
     }
 
     private void OnNextPage()
@@ -134,6 +156,8 @@ public class ProposalUI : MonoBehaviour
         if (_itemsCache.Count == 0) return;
         _pageIndex = Mathf.Min(GetMaxPageIndex(), _pageIndex + 1);
         RenderPageOnly();
+        UpdateForcedBuyBarState();
+        UpdateForcedBuyUI(); 
     }
 
     private int GetMaxPageIndex()
@@ -178,7 +202,7 @@ public class ProposalUI : MonoBehaviour
     {
         if (panel != null) panel.SetActive(false);
 
-        // Tell server only if we're the current pawn
+        // Tell server only if we're the current pawn and still in Proposal phase
         var local = FindLocalOwnedPawn();
         if (local != null && TurnManager.Instance.IsCurrentPawn(local) &&
             TurnManager.Instance.InProposalPhaseFor(local))
@@ -203,9 +227,102 @@ public class ProposalUI : MonoBehaviour
             "• Enter % and price you’ll pay.\n" +
             "• You can’t exceed 100% total.\n" +
             "• Owner can’t sell more than they own.\n" +
-            "• If accepted, shares move and cash transfers.";
+            "• If accepted, shares move and cash transfers.\n" +
+            "• Or use Forced Buy to instantly acquire % at a Absurd cost.";
         hintPanel.SetActive(true);
     }
 
     public void OnHintGotIt() => hintPanel?.SetActive(false);
+
+    /* ================== Forced Buy bar ================== */
+
+    private void UpdateForcedBuyBarState()
+    {
+        bool hasTarget = (_itemsCache.Count > 0);
+        if (forcedBuyButton != null) forcedBuyButton.interactable = hasTarget;
+        if (forcedBuyPercentInput != null)
+        {
+            if (string.IsNullOrWhiteSpace(forcedBuyPercentInput.text))
+                forcedBuyPercentInput.text = "10"; // sensible default
+        }
+    }
+
+    private void OnClickForcedBuy()
+    {
+        UpdateForcedBuyUI(); 
+
+        var comp = GetVisibleCompany();
+        if (comp == null) return;
+
+        int pct = 10;
+        if (forcedBuyPercentInput && !int.TryParse(forcedBuyPercentInput.text, out pct))
+            pct = 10;
+        pct = Mathf.Clamp(pct, 1, 100);
+
+        MarketManager.Instance.CmdForceBuy(comp.companyName, pct);
+
+        if (forcedBuyButton)
+        {
+            forcedBuyButton.interactable = false;
+            StartCoroutine(ReenableForcedBuySoon());
+        }
+    }
+
+
+    private CompanyRecord GetVisibleCompany()
+    {
+        if (_itemsCache.Count == 0) return null;
+        int idx = Mathf.Clamp(_pageIndex, 0, _itemsCache.Count - 1);
+        return _itemsCache[idx];
+    }
+
+    private void UpdateForcedBuyUI()
+    {
+        var comp = GetVisibleCompany();
+        bool hasTarget = comp != null;
+
+        if (forcedBuyButton) forcedBuyButton.interactable = hasTarget;
+
+        if (!hasTarget)
+        {
+            if (forcedBuyPriceText) forcedBuyPriceText.text = "Price: —";
+            return;
+        }
+
+        // parse desired %
+        int pct = 10;
+        if (forcedBuyPercentInput && !int.TryParse(forcedBuyPercentInput.text, out pct))
+            pct = 10;
+        pct = Mathf.Clamp(pct, 1, 100);
+
+        // transferable clamp (seller has %, buyer has room)
+        var owner = comp.owner;
+        int sellerAvail = (owner != null) ? comp.GetOwnership(owner) : 0;
+        int buyerHas    = comp.GetOwnership(currentPawn);
+        int buyerRoom   = Mathf.Max(0, 100 - buyerHas);
+        int transferable = Mathf.Min(pct, sellerAvail, buyerRoom);
+
+        // price = currentPrice × (%/100) × premium
+        int currentPrice = Mathf.Max(1, comp.currentPrice);
+        float baseF = currentPrice * (transferable / 100f);
+        float finalF = baseF * Mathf.Max(1f, forcedBuyPremium);
+        int finalPrice = Mathf.Max(1, Mathf.RoundToInt(finalF));
+
+        if (forcedBuyPriceText)
+        {
+            if (transferable <= 0)
+                forcedBuyPriceText.text = "Price: — (no transferable %)";
+            else
+                forcedBuyPriceText.text =
+                    $"Price: ${finalPrice}M  ({currentPrice} × {transferable}% × {forcedBuyPremium:0.##})";
+        }
+
+        if (forcedBuyButton) forcedBuyButton.interactable = (transferable > 0);
+    }
+
+    private System.Collections.IEnumerator ReenableForcedBuySoon()
+    {
+        yield return new WaitForSecondsRealtime(0.25f);
+        if (forcedBuyButton != null) forcedBuyButton.interactable = true;
+    }
 }

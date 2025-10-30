@@ -87,6 +87,25 @@ public class MarketManager : NetworkBehaviour
     private float _globalTrendPct = 0f;
     private float _globalTrendPctPerRound = 0f;
 
+    [Header("Forced Buy (Proposal Phase)")]
+    [Tooltip("Price multiplier applied to the company's live price for the % being forced.")]
+    public float forcedBuyPriceMult = 3f;    
+
+    [Tooltip("Allow bailout marks to cover forced-buy payment.")]
+    public bool forcedBuyAllowsDebt = true;
+
+    [Tooltip("Max bailout ticks allowed to cover a single forced buy.")]
+    public int forcedBuyMaxBailouts = 10;
+
+    [Tooltip("Max total % a player can force-buy across ALL companies in one turn.")]
+    [Range(1,100)] public int forcedBuyPercentCapPerTurn = 40;
+
+    [Tooltip("Minimum % per forced-buy action.")]
+    [Range(1, 100)] public int forcedBuyMinPercent = 20;
+    
+    private readonly Dictionary<PlayerPawn, int> _forcedPctUsedThisTurn = new();
+
+
     private void Awake()
     {
         Instance = this;
@@ -99,6 +118,7 @@ public class MarketManager : NetworkBehaviour
     {
         if (pawn == null) return;
         _submittedThisTurn[pawn] = new HashSet<string>();
+         _forcedPctUsedThisTurn[pawn] = 0;
     }
 
     [Server]
@@ -1264,5 +1284,165 @@ public class MarketManager : NetworkBehaviour
     {
         if (ProposalUI.Instance != null) ProposalUI.Instance.Hide();
     }
+
+    [Server]
+    public int GetLiveCompanyPrice(string companyName, int fallbackBase)
+    {
+        if (companies.TryGetValue(companyName, out var c) && c != null && c.currentPrice > 0)
+            return c.currentPrice;
+        return fallbackBase;
+    }
+
+    [Header("Forced-Buy Policy")]
+    public bool ForcedBuyAllowsDebt = true;
+    public int MaxBailoutsPerForcedBuy = 10;
+
+    [Server]
+    private bool TryPayWithBailouts(PlayerPawn p, int amount, int maxBailouts)
+    {
+        int attempts = 0;
+        while (p.money.Value < amount && attempts < maxBailouts)
+        {
+            p.ForceBailoutOnce();
+            attempts++;
+        }
+        return p.TrySpendMoney(amount);
+    }
+
+    [Server]
+    private int GetLivePriceOrBase(string companyName, int baseCost)
+    {
+        if (companies.TryGetValue(companyName, out var c) && c != null && c.currentPrice > 0)
+            return c.currentPrice;
+        return Mathf.Max(1, baseCost);
+    }
+
+    /* Price model:
+    cost = livePrice * (percent/100f) * forcedBuyPriceMult
+    (i.e., proportional to stake acquired, at a premium)
+    */
+    [Server]
+    private bool ServerExecuteForcedBuy(PlayerPawn buyer, string companyName, int percent, out int paid, out int transferred)
+    {
+        paid = 0; transferred = 0;
+
+        if (buyer == null || string.IsNullOrWhiteSpace(companyName)) return false;
+        if (!companies.TryGetValue(companyName, out var comp) || comp == null) return false;
+
+        var seller = comp.owner;
+        if (seller == null || seller == buyer) return false;
+
+        int sellerAvail = comp.GetOwnership(seller);
+        int buyerHas = comp.GetOwnership(buyer);
+        int buyerRoom = Mathf.Max(0, 100 - buyerHas);
+        int xfer = Mathf.Min(Mathf.Max(percent, 0), sellerAvail, buyerRoom);
+        if (xfer <= 0) return false;
+
+        int live = GetLivePriceOrBase(companyName, comp.baseCost);
+        int cost = Mathf.Max(1, Mathf.RoundToInt(live * (xfer / 100f) * forcedBuyPriceMult));
+
+        bool ok = forcedBuyAllowsDebt
+            ? TryPayWithBailouts(buyer, cost, forcedBuyMaxBailouts)
+            : (buyer.money.Value >= cost && buyer.TrySpendMoney(cost));
+
+        if (!ok) return false;
+
+        seller.AddMoney(cost);
+
+        // Apply transfer
+        comp.SetOwnership(seller, sellerAvail - xfer);
+        comp.SetOwnership(buyer, buyerHas + xfer);
+
+        // Majority change?
+        var majority = comp.GetMajorityOwner();
+        if (majority != comp.owner)
+        {
+            comp.owner = majority;
+            comp.ownerName = majority.playerName.Value;
+            RpcSyncMajorityOwner(comp.companyName, comp.ownerName);
+            RpcUpdateTileOwner(comp.companyName, comp.ownerName, majority.colorIndex.Value);
+            Notifier.Instance?.ToastAll($"{majority.playerName.Value} took control of {companyName}!", ToastKind.Success);
+        }
+
+        // Sync portfolios and rows
+        buyer.ServerBroadcastPortfolio();
+        seller.ServerBroadcastPortfolio();
+        if (comp.owner != seller) comp.owner.ServerBroadcastPortfolio();
+
+        RpcSyncOwnership(companyName, buyer.playerName.Value, comp.GetOwnership(buyer));
+        RpcSyncOwnership(companyName, seller.playerName.Value, comp.GetOwnership(seller));
+        if (comp.owner != seller)
+            RpcSyncOwnership(companyName, comp.owner.playerName.Value, comp.GetOwnership(comp.owner));
+
+        paid = cost;
+        transferred = xfer;
+        return true;
+    }
+    
+    [ServerRpc(RequireOwnership = false)]
+    public void CmdForceBuy(string companyName, int requestedPercent, FishNet.Connection.NetworkConnection caller = null)
+    {
+        if (caller == null) return;
+
+        var proposer = GameManager.Instance.Players.Find(p => p.Owner == caller);
+        if (proposer == null) return;
+
+        // Only the current pawn in Proposal phase can force-buy.
+        if (!TurnManager.Instance.IsCurrentPawn(proposer) ||
+            !TurnManager.Instance.InProposalPhaseFor(proposer))
+        {
+            Debug.Log($"[Market] CmdForceBuy blocked: not current/Proposal.");
+            return;
+        }
+        if (EventManager.Instance != null && EventManager.Instance.IsProposalBlockedNow())
+            return;
+
+        requestedPercent = Mathf.Clamp(requestedPercent, forcedBuyMinPercent, 100);
+
+        // Per-turn cap budget
+        if (!_forcedPctUsedThisTurn.TryGetValue(proposer, out var used))
+            _forcedPctUsedThisTurn[proposer] = used = 0;
+
+        int remainingBudget = Mathf.Max(0, forcedBuyPercentCapPerTurn - used);
+        if (remainingBudget <= 0)
+        {
+            TargetToast(caller, $"Forced Buy cap reached ({forcedBuyPercentCapPerTurn}% this turn).");
+            return;
+        }
+
+        int attemptPct = Mathf.Min(requestedPercent, remainingBudget);
+
+        // Execute
+        if (!companies.TryGetValue(companyName, out var comp) || comp == null || comp.owner == null || comp.owner == proposer)
+        {
+            TargetToast(caller, "Forced Buy failed: invalid target.");
+            return;
+        }
+
+        if (ServerExecuteForcedBuy(proposer, companyName, attemptPct, out int paid, out int xfer))
+        {
+            _forcedPctUsedThisTurn[proposer] = used + xfer;
+            TargetToast(caller, $"Forced Buy success: +{xfer}% {companyName} for ${paid}M. Used { _forcedPctUsedThisTurn[proposer] }%/{forcedBuyPercentCapPerTurn}% this turn.");
+            // (Optional) auto-close proposal panel when budget is exhausted:
+            if (_forcedPctUsedThisTurn[proposer] >= forcedBuyPercentCapPerTurn)
+                TargetHideProposal(caller);
+        }
+        else
+        {
+            TargetToast(caller, $"Forced Buy failed (not enough funds or no transferable %).");
+        }
+
+        // Ensure Review UI refreshes for the seller if open
+        var seller = comp?.owner; // owner after transfer
+        if (seller != null && seller.Owner != null)
+            TargetRefreshReviewUI(seller.Owner);
+    }
+
+    // tiny helpers you already have variants of:
+    [TargetRpc] private void TargetToast(FishNet.Connection.NetworkConnection conn, string msg)
+    {
+        Notifier.Instance?.ToastAll(msg, ToastKind.Info);
+    }
+
 
 }
