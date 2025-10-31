@@ -246,28 +246,7 @@ public class PlayerPawn : NetworkBehaviour
         // Only the server moves the transform
         StopAllCoroutines();
         StartCoroutine(ServerMoveStepByStep(steps));
-        if (Owner != null)
-            TargetMoveSteps(Owner, steps);
-
-        RpcMoveStepsOthers(steps);
        
-    }
-
-
-    [TargetRpc]
-    private void TargetMoveSteps(FishNet.Connection.NetworkConnection conn, int steps)
-    {
-        StopAllCoroutines();
-        StartCoroutine(MoveStepByStep(steps));
-    }
-
-    [ObserversRpc]
-    private void RpcMoveStepsOthers(int steps)
-    {
-        if (IsOwner) return;
-
-        StopAllCoroutines();
-        StartCoroutine(MoveStepByStep(steps));
     }
 
     [ServerRpc]

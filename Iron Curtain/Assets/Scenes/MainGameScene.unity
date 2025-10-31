@@ -13158,7 +13158,6 @@ GameObject:
   - component: {fileID: 1024428438}
   - component: {fileID: 1024428439}
   - component: {fileID: 1024428440}
-  - component: {fileID: 1024428442}
   - component: {fileID: 1024428441}
   - component: {fileID: 1024428443}
   - component: {fileID: 1024428444}
@@ -13406,7 +13405,6 @@ MonoBehaviour:
   forcedBuyPercentInput: {fileID: 2093423223}
   forcedBuyButton: {fileID: 1963508288}
   forcedBuyPriceText: {fileID: 690522333}
-  forcedBuyPremium: 2.5
 --- !u!114 &1024428434
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13544,21 +13542,6 @@ MonoBehaviour:
     Rotation: {x: 0, y: 0, z: 0, w: 0}
     Scale: {x: 0, y: 0, z: 0}
     IsValid: 0
---- !u!114 &1024428442
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1024428421}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fb3915e0d62d7134d85579cafd0e4b13, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _componentIndexCache: 255
-  _addedNetworkObject: {fileID: 1024428441}
-  _networkObjectCache: {fileID: 0}
 --- !u!114 &1024428443
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14656,13 +14639,8 @@ MonoBehaviour:
   AllowDebtOnAccept: 1
   MaxAutoBailoutsPerAccept: 5
   dividendYield: 0.483
-  forcedBuyPriceMult: 3
-  forcedBuyAllowsDebt: 1
-  forcedBuyMaxBailouts: 10
   forcedBuyPercentCapPerTurn: 40
   forcedBuyMinPercent: 20
-  ForcedBuyAllowsDebt: 1
-  MaxBailoutsPerForcedBuy: 10
 --- !u!4 &1113485080
 Transform:
   m_ObjectHideFlags: 0

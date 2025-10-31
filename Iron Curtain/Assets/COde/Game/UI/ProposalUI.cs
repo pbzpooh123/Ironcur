@@ -30,9 +30,8 @@ public class ProposalUI : MonoBehaviour
     public TMP_InputField forcedBuyPercentInput;
     [Tooltip("Button to execute forced buy for the visible company.")]
     public Button forcedBuyButton;
-    [Tooltip("Optional label to show remaining per-turn forced-buy budget, if you expose it via a getter.")]
+    [Tooltip("Label that shows the exact price the server will charge.")]
     public TMP_Text forcedBuyPriceText;
-    [Range(1.0f, 3.0f)] public float forcedBuyPremium = 2.5f;
 
     private PlayerPawn currentPawn;
 
@@ -84,6 +83,13 @@ public class ProposalUI : MonoBehaviour
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null) ui.SetEndTurnInteractable(false);
         if (ui != null) ui.SetRollInteractable(false);
+
+        // keep the price text in sync with cash (surcharge is % of cash)
+        if (currentPawn != null)
+        {
+            currentPawn.money.OnChange -= OnLocalMoneyChanged;
+            currentPawn.money.OnChange += OnLocalMoneyChanged;
+        }
     }
 
     public void Refresh()
@@ -97,11 +103,11 @@ public class ProposalUI : MonoBehaviour
         {
             var c = kv.Value;
             if (c == null) continue;
-            if (c.owner == null || c.owner == currentPawn) continue;                // must belong to someone else
-            if (c.GetOwnership(currentPawn) >= 100) continue;                       // you already have 100%
-            if (c.GetOwnership(c.owner) <= 0) continue;                             // owner must still have some
+            if (c.owner == null || c.owner == currentPawn) continue;      // must belong to someone else
+            if (c.GetOwnership(currentPawn) >= 100) continue;             // you already have 100%
+            if (c.GetOwnership(c.owner) <= 0) continue;                   // owner must still have some
             if (MarketManager.Instance.HasSubmittedThisTurn(currentPawn, c.companyName))
-                continue;                                                           // you already proposed to this one
+                continue;                                                 // already proposed to this one
 
             _itemsCache.Add(c);
         }
@@ -109,7 +115,7 @@ public class ProposalUI : MonoBehaviour
         _pageIndex = Mathf.Clamp(_pageIndex, 0, GetMaxPageIndex());
         RenderPageOnly();
         UpdateForcedBuyBarState();
-        UpdateForcedBuyUI(); 
+        UpdateForcedBuyUI();
     }
 
     private void RenderPageOnly()
@@ -148,7 +154,7 @@ public class ProposalUI : MonoBehaviour
         _pageIndex = Mathf.Max(0, _pageIndex - 1);
         RenderPageOnly();
         UpdateForcedBuyBarState();
-        UpdateForcedBuyUI(); 
+        UpdateForcedBuyUI();
     }
 
     private void OnNextPage()
@@ -157,7 +163,7 @@ public class ProposalUI : MonoBehaviour
         _pageIndex = Mathf.Min(GetMaxPageIndex(), _pageIndex + 1);
         RenderPageOnly();
         UpdateForcedBuyBarState();
-        UpdateForcedBuyUI(); 
+        UpdateForcedBuyUI();
     }
 
     private int GetMaxPageIndex()
@@ -183,8 +189,9 @@ public class ProposalUI : MonoBehaviour
 
     private void CloseAndNotifyServer()
     {
-        panel.SetActive(false);
-        MarketManager.Instance.CmdNotifyProposalClosed();
+        Hide(); // also unhooks money change
+        if (MarketManager.Instance != null)
+            MarketManager.Instance.CmdNotifyProposalClosed();
     }
 
     public ProposalEntry FindEntryForCompany(string companyName)
@@ -202,12 +209,16 @@ public class ProposalUI : MonoBehaviour
     {
         if (panel != null) panel.SetActive(false);
 
+        if (currentPawn != null)
+            currentPawn.money.OnChange -= OnLocalMoneyChanged;
+
         // Tell server only if we're the current pawn and still in Proposal phase
         var local = FindLocalOwnedPawn();
         if (local != null && TurnManager.Instance.IsCurrentPawn(local) &&
             TurnManager.Instance.InProposalPhaseFor(local))
         {
-            MarketManager.Instance.CmdNotifyProposalClosed();
+            if (MarketManager.Instance != null)
+                MarketManager.Instance.CmdNotifyProposalClosed();
         }
     }
 
@@ -228,7 +239,7 @@ public class ProposalUI : MonoBehaviour
             "• You can’t exceed 100% total.\n" +
             "• Owner can’t sell more than they own.\n" +
             "• If accepted, shares move and cash transfers.\n" +
-            "• Or use Forced Buy to instantly acquire % at a Absurd cost.";
+            "• Or use Forced Buy to instantly acquire % at a premium.";
         hintPanel.SetActive(true);
     }
 
@@ -240,34 +251,18 @@ public class ProposalUI : MonoBehaviour
     {
         bool hasTarget = (_itemsCache.Count > 0);
         if (forcedBuyButton != null) forcedBuyButton.interactable = hasTarget;
+
         if (forcedBuyPercentInput != null)
         {
             if (string.IsNullOrWhiteSpace(forcedBuyPercentInput.text))
-                forcedBuyPercentInput.text = "10"; // sensible default
+            {
+                int minPct = (MarketManager.Instance != null)
+                    ? MarketManager.Instance.forcedBuyMinPercent
+                    : 10;
+                forcedBuyPercentInput.text = Mathf.Clamp(minPct, 1, 100).ToString();
+            }
         }
     }
-
-    private void OnClickForcedBuy()
-    {
-        UpdateForcedBuyUI(); 
-
-        var comp = GetVisibleCompany();
-        if (comp == null) return;
-
-        int pct = 10;
-        if (forcedBuyPercentInput && !int.TryParse(forcedBuyPercentInput.text, out pct))
-            pct = 10;
-        pct = Mathf.Clamp(pct, 1, 100);
-
-        MarketManager.Instance.CmdForceBuy(comp.companyName, pct);
-
-        if (forcedBuyButton)
-        {
-            forcedBuyButton.interactable = false;
-            StartCoroutine(ReenableForcedBuySoon());
-        }
-    }
-
 
     private CompanyRecord GetVisibleCompany()
     {
@@ -279,50 +274,92 @@ public class ProposalUI : MonoBehaviour
     private void UpdateForcedBuyUI()
     {
         var comp = GetVisibleCompany();
-        bool hasTarget = comp != null;
+        if (forcedBuyButton) forcedBuyButton.interactable = (comp != null);
 
-        if (forcedBuyButton) forcedBuyButton.interactable = hasTarget;
-
-        if (!hasTarget)
+        if (comp == null)
         {
             if (forcedBuyPriceText) forcedBuyPriceText.text = "Price: —";
             return;
         }
 
-        // parse desired %
-        int pct = 10;
-        if (forcedBuyPercentInput && !int.TryParse(forcedBuyPercentInput.text, out pct))
+        int pct;
+        if (!forcedBuyPercentInput || !int.TryParse(forcedBuyPercentInput.text, out pct))
             pct = 10;
-        pct = Mathf.Clamp(pct, 1, 100);
 
-        // transferable clamp (seller has %, buyer has room)
-        var owner = comp.owner;
-        int sellerAvail = (owner != null) ? comp.GetOwnership(owner) : 0;
-        int buyerHas    = comp.GetOwnership(currentPawn);
-        int buyerRoom   = Mathf.Max(0, 100 - buyerHas);
-        int transferable = Mathf.Min(pct, sellerAvail, buyerRoom);
+        // Respect server’s min percent
+        int minPct = (MarketManager.Instance != null) ? MarketManager.Instance.forcedBuyMinPercent : 1;
+        pct = Mathf.Clamp(pct, Mathf.Max(1, minPct), 100);
 
-        // price = currentPrice × (%/100) × premium
-        int currentPrice = Mathf.Max(1, comp.currentPrice);
-        float baseF = currentPrice * (transferable / 100f);
-        float finalF = baseF * Mathf.Max(1f, forcedBuyPremium);
-        int finalPrice = Mathf.Max(1, Mathf.RoundToInt(finalF));
+        // Exact preview (includes surcharge)
+        int transferablePct, livePriceUsed;
+        int finalPrice = MarketManager.Instance.ClientPreviewForcedBuyPrice(
+            comp, currentPawn, pct, out transferablePct, out livePriceUsed
+        );
+
+        if (transferablePct <= 0)
+        {
+            if (forcedBuyPriceText) forcedBuyPriceText.text = "Price: — (no transferable %)";
+            if (forcedBuyButton) forcedBuyButton.interactable = false;
+            return;
+        }
+
+        // Build the breakdown (core + surcharge) to match server formula
+        float prem = Mathf.Max(1f, MarketManager.Instance.forcedBuyPriceMult.Value);
+        float coreF = livePriceUsed * (transferablePct / 100f) * prem;
+        int core = Mathf.Max(1, Mathf.RoundToInt(coreF));
+
+        float surchargeRate = Mathf.Max(0f, MarketManager.Instance.forcedBuySurchargeOfCash.Value);
+        int buyerCash = Mathf.Max(0, currentPawn != null ? currentPawn.money.Value : 0);
+        int surcharge = Mathf.RoundToInt(buyerCash * surchargeRate);
+
+        bool allowsDebt = MarketManager.Instance.forcedBuyAllowsDebt.Value;
+        bool enoughCash = allowsDebt || buyerCash >= finalPrice;
 
         if (forcedBuyPriceText)
         {
-            if (transferable <= 0)
-                forcedBuyPriceText.text = "Price: — (no transferable %)";
-            else
-                forcedBuyPriceText.text =
-                    $"Price: ${finalPrice}M  ({currentPrice} × {transferable}% × {forcedBuyPremium:0.##})";
+            // Example: "Price: $430M (core≈$300M + surcharge≈$130M)"
+            forcedBuyPriceText.text = enoughCash
+                ? $"Price: ${finalPrice}M  (core≈${core}M + surcharge≈${surcharge}M)"
+                : $"Price: ${finalPrice}M  (core≈${core}M + surcharge≈${surcharge}M) — Not enough cash";
         }
 
-        if (forcedBuyButton) forcedBuyButton.interactable = (transferable > 0);
+        if (forcedBuyButton) forcedBuyButton.interactable = enoughCash;
+    }
+
+    private void OnClickForcedBuy()
+    {
+        var comp = GetVisibleCompany();
+        if (comp == null) return;
+
+        int pct = 10;
+        if (forcedBuyPercentInput && !int.TryParse(forcedBuyPercentInput.text, out pct))
+            pct = 10;
+
+        // Send the *transferable* pct so UI and server match 1:1
+        int transferablePct, _;
+        MarketManager.Instance.ClientPreviewForcedBuyPrice(comp, currentPawn, pct, out transferablePct, out _);
+        if (transferablePct <= 0) return;
+
+        MarketManager.Instance.CmdForceBuy(comp.companyName, transferablePct);
+
+        if (forcedBuyButton)
+        {
+            forcedBuyButton.interactable = false;
+            StartCoroutine(ReenableForcedBuySoon());
+        }
     }
 
     private System.Collections.IEnumerator ReenableForcedBuySoon()
     {
         yield return new WaitForSecondsRealtime(0.25f);
         if (forcedBuyButton != null) forcedBuyButton.interactable = true;
+    }
+
+    /* ======== Local cash change hook for live surcharge preview ======== */
+
+    private void OnLocalMoneyChanged(int oldVal, int newVal, bool asServer)
+    {
+        if (panel != null && panel.activeInHierarchy)
+            UpdateForcedBuyUI();
     }
 }
