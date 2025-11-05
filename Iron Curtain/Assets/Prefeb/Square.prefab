@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6742183071073820877}
   - component: {fileID: 569446441907469979}
   - component: {fileID: 5592249215486078974}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Square
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -97,8 +97,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 12d26bb0789af2845bf6ebd0f8d565cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  owner: {fileID: 0}
   sr: {fileID: 569446441907469979}
   life: 0.35
   color: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  startScale: 0.85
-  endScale: 1.15
+  startScale: 50
+  endScale: 80

@@ -330,8 +330,10 @@ public class PlayerPawn : NetworkBehaviour
 
         for (int i = 1; i <= steps; i++)
         {
+            
             int nextTile = (currentTile + 1) % tileCount;
             Vector3 targetPos = GameManager.Instance.GetTilePosition(nextTile);
+            TileHighlighter.Instance?.FlashPassAt(targetPos, 1f);
 
             // move the authoritative transform (server only)
             while (Vector3.Distance(transform.position, targetPos) > 0.05f)
