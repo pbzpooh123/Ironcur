@@ -1059,7 +1059,7 @@ public class EventManager : NetworkBehaviour
         }
 
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowSideEvent(c, $"Benefactor Donation: Others paid {receiver.playerName.Value} up to ${amountEach}M each.", false);
+            TargetShowSideEvent(c, $"มีผู้ใหญ่ใจดีมอบเงินทุนให้คุณ: ทุกคนจ่ายเงินให้ {receiver.playerName.Value} สูงสุด ${amountEach}M คนละ.", false);
 
 
         ResumeAfterEvent();
@@ -1155,7 +1155,7 @@ public class EventManager : NetworkBehaviour
 
         RpcSetRollMode(ForcedRollTierUI.RollMode.Media);
 
-        string header = $"Roll a d6. Highest gets ${_mediaWinnerPayout}M; others get ${_mediaOtherPayout}M.";
+        string header = $"ทอยลูกเต๋า d6. ผู้ที่ได้สูงสุดจะได้รับ ${_mediaWinnerPayout}M; คนอื่นๆ จะได้รับ ${_mediaOtherPayout}M.";
         foreach (var kv in FishNet.InstanceFinder.ServerManager.Clients)
             TargetShowForcedRollTier(kv.Value, header, ids.ToArray(), ToNames(ids, names), kv.Key);
 
@@ -1252,7 +1252,7 @@ public class EventManager : NetworkBehaviour
         }
 
 
-        string footer = $"Max {maxRoll}. Winners: {winners.Count}. Winner +${_mediaWinnerPayout}M, others +${_mediaOtherPayout}M.";
+        string footer = $"สูงสุด {maxRoll}. ผู้ชนะ: {winners.Count}. ผู้ชนะ +${_mediaWinnerPayout}M, คนอื่นๆ +${_mediaOtherPayout}M.";
         foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
             TargetSetFooterAndEnableClose(c, footer);
 
@@ -1388,7 +1388,7 @@ public class EventManager : NetworkBehaviour
             }
 
             foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowSideEvent(c, $"Cyber Attack! {target.playerName.Value} pays ${ransom}M to {chooser.playerName.Value}. (Paid ${Mathf.Min(ransom, before)}M)", false);
+                TargetShowSideEvent(c, $"การโจมตีทางไซเบอร์! {target.playerName.Value} จ่าย ${ransom}M ให้ {chooser.playerName.Value}. (จ่ายจริง ${Mathf.Min(ransom, before)}M)", false);
 
             _tsCyberAttackMode = false;
             _tsRansomRate = 0f;
@@ -1471,7 +1471,7 @@ public class EventManager : NetworkBehaviour
         if (targets.Count == 0)
         {
             foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowSideEvent(c, "Cyber Attack: No valid targets.", false);
+                TargetShowSideEvent(c, "การโจมตีทางไซเบอร์: ไม่มีเป้าหมายที่ถูกต้อง.", false);
             _tsCyberAttackMode = false;
             _tsRansomRate = 0f;
             ResumeAfterEvent();

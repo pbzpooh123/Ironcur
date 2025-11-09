@@ -484,7 +484,7 @@ public class TurnManager : NetworkBehaviour
     private void RpcUpdateRoundUI(int roundsLeft, int eventIn, string nextEventName)
     {
         if (roundtext != null)
-            roundtext.text = $"Rounds left: {roundsLeft}";
+            roundtext.text = $"รอบที่ยังคงเหลือ: {roundsLeft}";
 
         TurnUI.Instance?.SetNextMainEventETA(eventIn);
     }
@@ -540,7 +540,7 @@ public class TurnManager : NetworkBehaviour
 
         MarketManager.Instance?.OnMatchEnded();
         EventManager.Instance?.OnMatchEnded();
-        if (roundtext != null) roundtext.text = "Game Ended";
+        if (roundtext != null) roundtext.text = "เกมจบแล้ว";
 
         var players = GameManager.Instance.Players;
         int n = players.Count;
