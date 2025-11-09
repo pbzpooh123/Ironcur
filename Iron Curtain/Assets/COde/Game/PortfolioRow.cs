@@ -23,6 +23,6 @@ public class PortfolioRow : MonoBehaviour
         int estPayout   = Mathf.RoundToInt(baseIncome * ownRatio * multiplier);
 
         if (estPayoutText != null)
-            estPayoutText.text = $"Est. +${estPayout}";
+            estPayoutText.text = $"ประมาณค่า. +${estPayout}";
     }
 }

@@ -230,7 +230,7 @@ public class MarketManager : NetworkBehaviour
         RpcRefreshLocalPortfolioUI();
 
         if (ownerPawn != null)
-            Notifier.Instance?.ToastAll($"{ownerPawn.playerName.Value} took control of {companyName}!", ToastKind.Info);
+            Notifier.Instance?.ToastAll($"{ownerPawn.playerName.Value} ได้ซื้อ {companyName} แล้ว!", ToastKind.Info);
     }
 
     [ObserversRpc]
@@ -551,7 +551,7 @@ public class MarketManager : NetworkBehaviour
 
             RpcSyncMajorityOwner(companyName, company.ownerName);
             RpcUpdateTileOwner(companyName, company.ownerName, majority.colorIndex.Value);
-            Notifier.Instance?.ToastAll($"{majority.playerName.Value} took control of {companyName}!", ToastKind.Success);
+            Notifier.Instance?.ToastAll($"{majority.playerName.Value} เข้าควบคุม {companyName}!", ToastKind.Success);
         }
 
         proposal.proposer.ServerBroadcastPortfolio();
@@ -1300,7 +1300,7 @@ public class MarketManager : NetworkBehaviour
             comp.ownerName = majority.playerName.Value;
             RpcSyncMajorityOwner(comp.companyName, comp.ownerName);
             RpcUpdateTileOwner(comp.companyName, comp.ownerName, majority.colorIndex.Value);
-            Notifier.Instance?.ToastAll($"{majority.playerName.Value} took control of {companyName}!", ToastKind.Success);
+            Notifier.Instance?.ToastAll($"{majority.playerName.Value} ได้เข้าควบคุม {companyName} แล้ว!", ToastKind.Success);
         }
 
         buyer.ServerBroadcastPortfolio();
@@ -1314,7 +1314,7 @@ public class MarketManager : NetworkBehaviour
 
         paid = cost;
         transferred = xfer;
-        Notifier.Instance?.ToastAll($"{buyer.playerName.Value} Forced Buy success: +{xfer}% {companyName} for ${paid}M", ToastKind.Success);
+        Notifier.Instance?.ToastAll($"{buyer.playerName.Value} ได้บังคับซื้อสำเร็จ: +{xfer}% {companyName} ในราคา ${paid}M", ToastKind.Success);
         return true;
     }
 
