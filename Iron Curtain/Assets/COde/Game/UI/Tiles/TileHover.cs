@@ -15,8 +15,8 @@ public class TileHover : MonoBehaviour, IHoverProvider
         switch (_td.tileType)
         {
             case TileType.Investment:
-                info.title = string.IsNullOrEmpty(_td.companyName) ? "Company" : _td.companyName;
-                info.subtitle = string.IsNullOrEmpty(_td.sector) ? "Sector: —" : $"Sector: {_td.sector}";
+                info.title = string.IsNullOrEmpty(_td.companyName) ? "บริษัท" : _td.companyName;
+                info.subtitle = string.IsNullOrEmpty(_td.sector) ? "เป็นบริษัทประเภท: —" : $"เป็นบริษัทประเภท: {_td.sector}";
 
                 // price/current price
                 int price = _td.companyCost;
@@ -43,8 +43,8 @@ public class TileHover : MonoBehaviour, IHoverProvider
                     ownerName = _td.owner.playerName.Value;
                 }
 
-                info.line1 = $"Owner: {ownerName}{ownerPct}";
-                info.line2 = $"Price: ${price}M   •   Base Income: ${_td.baseFactoryIncome}M";
+                info.line1 = $"เจ้าของ: {ownerName}{ownerPct}";
+                info.line2 = $"ราคา: ${price}M   •   รายได้พื้นฐาน: ${_td.baseFactoryIncome}M";
 
                 // tint by owner color if available
                 if (_td.owner != null)
@@ -57,33 +57,33 @@ public class TileHover : MonoBehaviour, IHoverProvider
 
             case TileType.Event:
                 info.title = "Event";
-                info.subtitle = "Random event tile";
-                info.line1 = "Something unexpected may happen.";
+                info.subtitle = "อะไรจะเกิดขึ้นก็ได้";
+                info.line1 = "—";
                 info.line2 = "—";
                 info.tint = new Color(0.6f, 0.8f, 1f, 1f);
                 break;
 
             case TileType.Tax:
-                info.title = "Tax";
-                info.subtitle = "Pay when you land here";
-                info.line1 = $"Flat: ${_td.taxFlat}M  •  Rate: {_td.taxPercent}%";
-                info.line2 = "Bailout may trigger if short on cash.";
+                info.title = "ภาษี";
+                info.subtitle = "จ่ายเมื่อคุณลงที่นี่";
+                info.line1 = $"ราคาเริ่มต้น: ${_td.taxFlat}M  •  อัตรา: {_td.taxPercent}%";
+                info.line2 = "จ่ายมากขึ้นถ้าคุณรวย.";
                 info.tint = new Color(1f, 0.6f, 0.4f, 1f);
                 break;
 
             case TileType.Bonus:
-                info.title = "Bonus";
-                info.subtitle = "Receive funds";
-                info.line1 = $"Gain: ${_td.bonusAmount}M";
-                info.line2 = "Lucky day.";
+                info.title = "โบนัส";
+                info.subtitle = "รับเงินพิเศษ!";
+                info.line1 = $"ได้รับ: ${_td.bonusAmount}M";
+                info.line2 = "วันโชคดี.";
                 info.tint = new Color(0.5f, 1f, 0.6f, 1f);
                 break;
 
             case TileType.GoToJail:
-                info.title = "Go To Jail";
-                info.subtitle = "Move to Jail tile";
-                info.line1 = $"Skip {_td.jailSkipTurns} turns";
-                info.line2 = "Use events or effects to get out earlier.";
+                info.title = "ไปคุก";
+                info.subtitle = "ไปที่ช่องคุก";
+                info.line1 = $"ข้าม {_td.jailSkipTurns} เทิร์น";
+                info.line2 = "—";
                 info.tint = new Color(1f, 0.4f, 0.4f, 1f);
                 break;
 
