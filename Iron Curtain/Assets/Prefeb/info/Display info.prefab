@@ -552,14 +552,14 @@ RectTransform:
   m_GameObject: {fileID: 4510847317881249337}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5371479, y: 0.91045094, z: 0.91045094}
+  m_LocalScale: {x: 0.92077893, y: 1.560695, z: 1.560695}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2479898681294742902}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 540, y: -42}
+  m_AnchoredPosition: {x: 505.4, y: -46}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8394394577897151940
@@ -686,14 +686,14 @@ RectTransform:
   m_GameObject: {fileID: 6757752787981676813}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.6817809, y: 1.1556, z: 1.1556}
+  m_LocalScale: {x: 0.8601348, y: 1.4579049, z: 1.4579049}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2479898681294742902}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 85.7, y: -252}
+  m_AnchoredPosition: {x: 88.5, y: -240}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4922716951878227106
@@ -787,7 +787,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: 0, y: 2.1354876, z: -324.4198, w: -13.869308}
+  m_margin: {x: 0, y: 2.1354876, z: -193.50458, w: -13.869308}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
@@ -820,14 +820,14 @@ RectTransform:
   m_GameObject: {fileID: 8036352027181013686}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.6817809, y: 1.1556, z: 1.1556}
+  m_LocalScale: {x: 1.0626236, y: 1.801118, z: 1.801118}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2479898681294742902}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 471, y: -267}
+  m_AnchoredPosition: {x: 493.9, y: -244}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6709937041119004111
@@ -921,7 +921,7 @@ MonoBehaviour:
   m_VertexBufferAutoSizeReduction: 0
   m_useMaxVisibleDescender: 1
   m_pageToDisplay: 1
-  m_margin: {x: -24.234924, y: 0, z: -92.444954, w: -1.4764805}
+  m_margin: {x: -24.234924, y: 0, z: 1.5835648, w: -1.4764805}
   m_isUsingLegacyAnimationComponent: 0
   m_isVolumetricText: 0
   m_hasFontAssetChanged: 0
