@@ -12,12 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cbe400ba1a1d1f4abe7d0e1b90b131b, type: 3}
   m_Name: Main Event 4
   m_EditorClassIdentifier: 
-  eventName: Korean War
-  description: 'Steel & Iron Production: +100% revenue for 3 rounds
-
-    Weapon Manufacturing:
-    +200% revenue for 3 rounds'
-  history: Military Conflict on the Korean Peninsula
+  eventName: "\u0E2A\u0E07\u0E04\u0E23\u0E32\u0E21\u0E40\u0E01\u0E32\u0E2B\u0E25\u0E35"
+  description: "\u0E1A\u0E23\u0E34\u0E29\u0E31\u0E17\u0E1C\u0E25\u0E34\u0E15\u0E40\u0E2B\u0E25\u0E47\u0E01\u0E41\u0E25\u0E30\u0E40\u0E2B\u0E25\u0E47\u0E01\u0E01\u0E25\u0E49\u0E32:
+    \u0E23\u0E32\u0E22\u0E44\u0E14\u0E49 +100% \u0E40\u0E1B\u0E47\u0E19\u0E40\u0E27\u0E25\u0E32
+    3 \u0E23\u0E2D\u0E1A\n\u0E1A\u0E23\u0E34\u0E29\u0E31\u0E17\u0E1C\u0E25\u0E34\u0E15\u0E2D\u0E32\u0E27\u0E38\u0E18:
+    \u0E23\u0E32\u0E22\u0E44\u0E14\u0E49 +200% \u0E40\u0E1B\u0E47\u0E19\u0E40\u0E27\u0E25\u0E32
+    3 \u0E23\u0E2D\u0E1A"
+  history: "\u0E04\u0E27\u0E32\u0E21\u0E02\u0E31\u0E14\u0E41\u0E22\u0E49\u0E07\u0E17\u0E32\u0E07\u0E17\u0E2B\u0E32\u0E23\u0E1A\u0E19\u0E04\u0E32\u0E1A\u0E2A\u0E21\u0E38\u0E17\u0E23\u0E40\u0E01\u0E32\u0E2B\u0E25\u0E35"
   type: 1
   mode: 0
   requiredCompanyName: 
