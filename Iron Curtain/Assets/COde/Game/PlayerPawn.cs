@@ -41,16 +41,34 @@ public class PlayerPawn : NetworkBehaviour
         if (money.Value == 0)
             money.Value = 1000;
 
+        // --- Name from lobby if possible ---
         if (Owner?.FirstObject != null &&
             Owner.FirstObject.TryGetComponent(out NetworkLobbyPlayer lobby))
         {
-            colorIndex.Value = PlayerColors.ClampOrUnset(lobby.colorIndex.Value);
-
-            // also propagate name once, on the server
             playerName.Value = string.IsNullOrWhiteSpace(lobby.playerName.Value)
                 ? $"P{Owner.ClientId}"
                 : lobby.playerName.Value.Trim();
         }
+        else
+        {
+            playerName.Value = $"P{Owner?.ClientId ?? -1}";
+        }
+
+        // --- Slot / character index from ColorLockManager (authoritative) ---
+        int slotFromLock = -1;
+        if (ColorLockManager.Instance != null &&
+            ColorLockManager.Instance.TryGetSlotForCid(Owner.ClientId, out slotFromLock))
+        {
+            colorIndex.Value = PlayerColors.ClampOrUnset(slotFromLock);
+        }
+        else
+        {
+            // Fallback: PlayerPrefs or default 0 if for some reason the lock isn't ready
+            int pref = PlayerPrefs.GetInt("ColorIndex", 0);
+            colorIndex.Value = PlayerColors.ClampOrUnset(pref);
+        }
+
+        Debug.Log($"[PlayerPawn] OnStartServer cid={Owner.ClientId} slotFromLock={slotFromLock} finalColorIndex={colorIndex.Value}");
     }
 
 
@@ -140,7 +158,11 @@ public class PlayerPawn : NetworkBehaviour
         if (_sr == null)
         {
             _sr = GetComponentInChildren<SpriteRenderer>();
-            if (_sr == null) return;
+            if (_sr == null)
+            {
+                Debug.LogWarning("[PlayerPawn] No SpriteRenderer found for ApplyColor on " + gameObject.name);
+                return;
+            }
         }
 
         // 1) Set sprite from CharacterLibrary
@@ -149,8 +171,21 @@ public class PlayerPawn : NetworkBehaviour
         {
             var sprite = lib.GetSprite(idx);
             if (sprite != null)
+            {
                 _sr.sprite = sprite;
+                Debug.Log($"[PlayerPawn] Applied character sprite index {idx} on {gameObject.name} (sprite={sprite.name})");
+            }
+            else
+            {
+                Debug.LogWarning($"[PlayerPawn] No sprite in CharacterLibrary for index {idx} on {gameObject.name}");
+            }
         }
+        else
+        {
+            Debug.LogWarning("[PlayerPawn] CharacterLibrary.Instance is null on client when applying index " + idx);
+        }
+
+        // 2) Optional tint – you can change this to Color.white if you don't want per-player color tint anymore
         _sr.color = PlayerColors.GetOr(Color.white, idx);
     }
 
