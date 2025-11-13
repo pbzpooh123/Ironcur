@@ -102,15 +102,13 @@ public class TurnUI : MonoBehaviour
         SetEndTurnInteractable(false);
     }
 
-    
-
-        private PlayerPawn GetOrFindLocalPawn()
-        {
-            if (myPawn != null && myPawn && myPawn.IsOwner) return myPawn;
-            foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
-                if (p != null && p.IsOwner) { myPawn = p; break; }
-            return myPawn;
-  }
+    private PlayerPawn GetOrFindLocalPawn()
+    {
+        if (myPawn != null && myPawn && myPawn.IsOwner) return myPawn;
+        foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
+            if (p != null && p.IsOwner) { myPawn = p; break; }
+        return myPawn;
+    }
 
     private void OnRollDiceClicked()
     {
@@ -174,7 +172,6 @@ public class TurnUI : MonoBehaviour
     /* ---------- Next Main Event content (from EventManager) ---------- */
     public void SetNextMainEvent(string name, string history)
     {
-        // NOTE: you had a small name mismatch earlier (nextEventText vs nextMainEventText).
         if (nextMainEventText)
             nextMainEventText.text = string.IsNullOrWhiteSpace(name) ? "—" : name;
 
@@ -199,15 +196,15 @@ public class TurnUI : MonoBehaviour
 
         if (rounds <= 0)
         {
-            nextMainEventEtaText.text = "Main event: now";
+            nextMainEventEtaText.text = "เหตุการณ์หลัก: เกิดในรอบนี้";
         }
         else if (rounds == 1)
         {
-            nextMainEventEtaText.text = "Main event in 1 round";
+            nextMainEventEtaText.text = "เหตุการณ์หลักจะเกิดในอีก 1 รอบ";
         }
         else
         {
-            nextMainEventEtaText.text = $"Main event in {rounds} rounds";
+            nextMainEventEtaText.text = $"เหตุการณ์หลักจะเกิดในอีก {rounds} รอบ";
         }
     }
 
@@ -224,7 +221,6 @@ public class TurnUI : MonoBehaviour
 
     private void ApplyNextEventCollapsed()
     {
-
         if (nextEventContainer && !nextEventContainer.activeSelf)
             nextEventContainer.SetActive(true);
 
@@ -243,7 +239,6 @@ public class TurnUI : MonoBehaviour
         }
         else
         {
-            // Fallback: old behaviour (just show/hide)
             if (nextEventContainer)
                 nextEventContainer.SetActive(!_nextEventCollapsed);
         }
@@ -263,7 +258,6 @@ public class TurnUI : MonoBehaviour
         {
             t += Time.unscaledDeltaTime;
             float k = Mathf.Clamp01(t / duration);
-            // smoothstep for nicer easing
             k = k * k * (3f - 2f * k);
             nextEventPanelRect.anchoredPosition = Vector2.Lerp(start, target, k);
             yield return null;
@@ -277,7 +271,7 @@ public class TurnUI : MonoBehaviour
 
     public void ApplyTurnState(TurnPhase phase, int ownerCid)
     {
-         _pendingPhase = phase;
+        _pendingPhase = phase;
         _pendingOwnerCid = ownerCid;
         _hasPendingState = true;
         GameHUD.Instance?.SetCurrentTurnByCid(ownerCid);
@@ -325,9 +319,12 @@ public class TurnUI : MonoBehaviour
                 // other phases keep buttons disabled
         }
 
+        // NEW: show “what to do now” text
+        SetPhaseHint(phase, isMyTurn);
+
         _applyCo = null;
     }
-    
+
     public void SetPhaseTimer(TurnPhase phase, int seconds, int ownerCid)
     {
         if (phaseLabelText) phaseLabelText.text = PhaseToShortText(phase);
@@ -336,19 +333,50 @@ public class TurnUI : MonoBehaviour
         {
             phaseTimerText.text  = Mathf.Max(0, seconds).ToString() + "s";
         }
-
-        // You can also dim buttons here if needed; we already handle per-phase interactability elsewhere.
     }
 
     private string PhaseToShortText(TurnPhase p) => p switch
     {
-        TurnPhase.Review => "Review",
-        TurnPhase.Rolling => "Rolling",
-        TurnPhase.TileEventPending => "Event",
-        TurnPhase.Proposal => "Proposal",
-        TurnPhase.EndReady => "Ending",
-        _ => "—"
+        TurnPhase.Review          => "Review",
+        TurnPhase.Rolling         => "Rolling",
+        TurnPhase.TileEventPending=> "Event",
+        TurnPhase.Proposal        => "Proposal",
+        TurnPhase.EndReady        => "Ending",
+        _                         => "—"
     };
-    
 
+    // NEW: phase → Thai instruction text
+    public void SetPhaseHint(TurnPhase phase, bool isMyTurn)
+    {
+        if (!messageTMP) return;
+
+        if (!isMyTurn)
+        {
+            messageTMP.text = "รอให้ผู้เล่นคนอื่นจบเทิร์นของเขา...";
+            return;
+        }
+
+        switch (phase)
+        {
+            case TurnPhase.Review:
+                messageTMP.text = "ตรวจข้อเสนอซื้อหุ้นในบริษัทของคุณ แล้วเลือกว่าจะรับหรือไม่ จากนั้นกด 'ปิด'";
+                break;
+
+            case TurnPhase.Rolling:
+                messageTMP.text = "กดปุ่ม 'ทอยลูกเต๋า' เพื่อเดินตัวหมากของคุณ";
+                break;
+
+            case TurnPhase.TileEventPending:
+                messageTMP.text = "อ่านผลเหตุการณ์ให้จบ แล้วกดปุ่มตามที่เกมบอก 'ทอยเต๋า/พร้อม' จากนั้นกด 'ปิด'";
+                break;
+
+            case TurnPhase.Proposal:
+                messageTMP.text = "เปิดหน้าต่างตลาด ส่งข้อเสนอ/บังคับซื้อ จากนั้นกด 'ปิด'";
+                break;
+
+            default:
+                messageTMP.text = "";
+                break;
+        }
+    }
 }

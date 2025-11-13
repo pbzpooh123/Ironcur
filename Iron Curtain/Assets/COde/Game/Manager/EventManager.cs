@@ -177,7 +177,7 @@ public class EventManager : NetworkBehaviour
 
         var chooser = TurnManager.Instance?.GetCurrentPawn();
 
-        if (e.eventName == "Fundraising for New Business Development")
+        if (e.eventName == "การระดมทุนเพื่อพัฒนาธุรกิจใหม่")
         {
             TurnManager.Instance.ServerBeginTileAction(pawn);
             _resume = ResumeContext.Tile;
@@ -187,7 +187,7 @@ public class EventManager : NetworkBehaviour
             StartCoroutine(CoBenefactorDonationTile(pawn, 100));
             return;
         }
-        else if (e.eventName == "Your Business Gains Media Attention!")
+        else if (e.eventName == "ธุรกิจของคุณได้รับความสนใจจากสื่อ!")
         {
             TurnManager.Instance.ServerBeginTileAction(pawn);
             _resume = ResumeContext.Tile;
@@ -195,7 +195,7 @@ public class EventManager : NetworkBehaviour
             StartMediaAttentionAllRoll(winPayout: 1000, otherPayout: 100);
             return;
         }
-        else if (e.eventName == "Your Business Is Hit by a Cyber Attack!")
+        else if (e.eventName == "คุณได้ทำการโจมตีทางไซเบอร์!")
         {
             TurnManager.Instance.ServerBeginTileAction(pawn);
             _resume = ResumeContext.Tile;

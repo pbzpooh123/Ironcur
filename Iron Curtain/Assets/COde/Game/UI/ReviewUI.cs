@@ -215,12 +215,11 @@ public class ReviewUI : MonoBehaviour
     public void ShowFirstTimeHint()
     {
         if (hintPanel == null) return;
-        hintTitle.text = "How review works";
+        hintTitle.text = "การดูข้อเสนอทำงานอย่างไร";
         hintBody.text =
-            "• See all offers made to your companies.\n" +
-            "• Accept to sell % and receive cash.\n" +
-            "• Reject to keep your shares.\n" +
-            "• Majority (>60%) can flip tile ownership color.";
+            "• ดูข้อเสนอทั้งหมดที่ทำกับบริษัทของคุณ.\n" +
+            "• ยอมรับเพื่อขาย % และรับเงินสด.\n" +
+            "• ปฏิเสธเพื่อเก็บหุ้นของคุณไว้.\n";
         hintPanel.SetActive(true);
     }
 

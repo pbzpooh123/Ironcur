@@ -232,14 +232,15 @@ public class ProposalUI : MonoBehaviour
     public void ShowFirstTimeHint()
     {
         if (hintPanel == null) return;
-        hintTitle.text = "How proposals work";
+        hintTitle.text = "การเสนอซื้อหุ้นทำงานอย่างไร";
         hintBody.text =
-            "• Pick a company you don’t own.\n" +
-            "• Enter % and price you’ll pay.\n" +
-            "• You can’t exceed 100% total.\n" +
-            "• Owner can’t sell more than they own.\n" +
-            "• If accepted, shares move and cash transfers.\n" +
-            "• Or use Forced Buy to instantly acquire % at a premium.";
+            "• เลือกบริษัทที่คุณยังไม่ได้เป็นเจ้าของหุ้น.\n" +
+            "• กรอก % และราคาที่คุณจะจ่าย.\n" +
+            "• คุณไม่ซื้อสามารถเกิน 100% ของตัวหุ้นทั้งหมดได้.\n" +
+            "• เจ้าของไม่สามารถขายเกินกว่าที่พวกเขามีอยู่ได้.\n" +
+            "• หากได้รับการยอมรับ หุ้นจะถูกโอนและเงินจะถูกหักไป.\n" +
+            "• หากคุณถือหุ้นมากกว่า 60% คุณจะกลายเป็นเจ้าของโรงงานแทน" +
+            "• หรือใช้การบังคับซื้อเพื่อซื้อ % โดยทันทีที่ในราคาที่สูงกว่า.";
         hintPanel.SetActive(true);
     }
 
@@ -319,8 +320,8 @@ public class ProposalUI : MonoBehaviour
         {
             // Example: "Price: $430M (core≈$300M + surcharge≈$130M)"
             forcedBuyPriceText.text = enoughCash
-                ? $"Price: ${finalPrice}M  (core≈${core}M + surcharge≈${surcharge}M)"
-                : $"Price: ${finalPrice}M  (core≈${core}M + surcharge≈${surcharge}M) — Not enough cash";
+                ? $"ราคา: ${finalPrice}M  (core≈${core}M + surcharge≈${surcharge}M)"
+                : $"ราคา: ${finalPrice}M  (core≈${core}M + surcharge≈${surcharge}M) — เงินสดไม่เพียงพอ";
         }
 
         if (forcedBuyButton) forcedBuyButton.interactable = enoughCash;

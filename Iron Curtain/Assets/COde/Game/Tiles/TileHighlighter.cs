@@ -9,10 +9,10 @@ public class TileHighlighter : MonoBehaviour
     public HighlightPulse pulsePrefab;
     public int poolSize = 32;
 
-    [Header("Position Offsets")]
-    [Tooltip("Offset in world units from the tile position (X/Y).")]
-    public float xOffset = 0f;
-    public float yOffset = 0.1f;
+    [Header("Local offset (board space)")]
+    [Tooltip("Offset in the board's local X/Y (so it works even if the board is rotated).")]
+    public float localXOffset = 0f;
+    public float localYOffset = 0.1f;
 
     [Tooltip("Z offset so highlight renders above the board.")]
     public float zOffset = -0.1f;
@@ -42,7 +42,7 @@ public class TileHighlighter : MonoBehaviour
         if (_pool.Count > 0)
         {
             var p = _pool.Dequeue();
-            _pool.Enqueue(p); // simple ring buffer reuse
+            _pool.Enqueue(p); // ring buffer
             return p;
         }
         return Instantiate(pulsePrefab, _root);
@@ -60,16 +60,21 @@ public class TileHighlighter : MonoBehaviour
 
         var p = Get();
 
-        // apply offsets
-        var pos = worldPos;
-        pos.x += xOffset;
-        pos.y += yOffset;
+        // Convert hit position into THIS object's local space (board space)
+        Vector3 local = transform.InverseTransformPoint(worldPos);
+
+        // Apply offset along board's own X/Y axes
+        local.x += localXOffset;
+        local.y += localYOffset;
+
+        // Convert back to world
+        Vector3 pos = transform.TransformPoint(local);
         pos.z += zOffset;
 
         p.transform.position = pos;
         p.color = c;
 
-
+        // keep your original scaling logic
         p.startScale = size * 85f;
         p.endScale   = size * 115f;
 
