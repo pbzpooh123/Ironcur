@@ -22,15 +22,17 @@ public class InvestmentUI : MonoBehaviour
 
     private void Awake() => Instance = this;
 
-    public void ShowOptions(PlayerPawn pawn, int tileIndex, string companyName, int costMaybeBase, bool isCompany)
+    public void ShowOptions(PlayerPawn pawn, int tileIndex, string companyName, int finalCostFromServer, bool isCompany)
     {
         currentPawn = pawn;
         currentTileIndex = tileIndex;
 
-        // UI placeholder while we fetch/compute
-        if (titleText) titleText.text = $"ซื้อ {companyName}นี่ไหม?";
-        if (costText)  costText.text  = "ราคา: —";
-        if (buyButton) buyButton.interactable = false;
+        if (titleText) titleText.text = $"ซื้อ {companyName} นี้ไหม?";
+
+        _effectiveCost = Mathf.Max(1, finalCostFromServer);
+
+        if (costText)
+            costText.text = $"ราคา: ${_effectiveCost}M";
 
         panel.SetActive(true);
 
@@ -39,74 +41,21 @@ public class InvestmentUI : MonoBehaviour
         buyButton.onClick.AddListener(OnBuyCompanyClicked);
         skipButton.onClick.AddListener(OnSkipClicked);
 
-        // live money gate once price is ready
         pawn.money.OnChange -= OnMoneyChanged;
         pawn.money.OnChange += OnMoneyChanged;
 
-        // disable EndTurn while popup is up
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null) ui.ForceDisableEndTurn();
 
-        // Start (re)computing price safely
-        if (_priceCo != null) StopCoroutine(_priceCo);
-        _priceCo = StartCoroutine(CoComputePrice(costMaybeBase));
+        if (buyButton)
+            buyButton.interactable = (pawn.money.Value >= _effectiveCost);
     }
 
-    private IEnumerator CoComputePrice(int costFallback)
-    {
-        _effectiveCost = -1;
-
-        // Wait a few frames for tile & EventManager to be ready (scene startup race)
-        var timeout = 0.5f; // seconds
-        TileData tile = null;
-
-        while (timeout > 0f)
-        {
-            if (GameManager.Instance != null &&
-                GameManager.Instance.boardTiles != null &&
-                currentTileIndex >= 0 &&
-                currentTileIndex < GameManager.Instance.boardTiles.Length)
-            {
-                var go = GameManager.Instance.boardTiles[currentTileIndex];
-                if (go) tile = go.GetComponent<TileData>();
-            }
-
-            // We need at least some base cost (>0). Use tile first, then fallback arg.
-            int baseCost = (tile != null && tile.companyCost > 0) ? tile.companyCost
-                                                                  : (costFallback > 0 ? costFallback : 0);
-
-            if (baseCost > 0) // good to compute now
-            {
-                float mult = 1f;
-                if (EventManager.Instance != null && tile != null)
-                    mult = EventManager.Instance.GetActiveSectorPriceMult(tile.sector);
-
-                // Mirror server formula and clamp
-                _effectiveCost = Mathf.Max(1, Mathf.RoundToInt(Mathf.Max(1, baseCost) * Mathf.Max(0f, mult)));
-                break;
-            }
-
-            timeout -= Time.unscaledDeltaTime;
-            yield return null;
-        }
-
-        // Final guard: never show 0 even if authoring was wrong
-        if (_effectiveCost < 1) _effectiveCost = 1;
-
-        // Update UI
-        if (costText)
-            costText.text = $"ราคา: ${_effectiveCost}M";
-
-        if (buyButton && currentPawn != null)
-            buyButton.interactable = (currentPawn.money.Value >= _effectiveCost);
-
-        _priceCo = null;
-    }
 
     private void OnMoneyChanged(int oldVal, int newVal, bool asServer)
     {
         if (!panel || !panel.activeInHierarchy || buyButton == null) return;
-        if (_effectiveCost < 1) { buyButton.interactable = false; return; } // wait for price
+        if (_effectiveCost < 1) { buyButton.interactable = false; return; }
         buyButton.interactable = newVal >= _effectiveCost;
     }
 
@@ -114,7 +63,6 @@ public class InvestmentUI : MonoBehaviour
     {
         if (currentPawn == null) return;
         buyButton.interactable = false;
-        // Server recomputes authoritatively (already correct on your side)
         MarketManager.Instance.CmdBuyCompany(currentTileIndex);
         CloseAndContinue();
     }
@@ -123,7 +71,6 @@ public class InvestmentUI : MonoBehaviour
 
     public void CloseAndContinue()
     {
-        if (_priceCo != null) { StopCoroutine(_priceCo); _priceCo = null; }
         if (currentPawn != null) currentPawn.money.OnChange -= OnMoneyChanged;
 
         if (panel) panel.SetActive(false);

@@ -16,17 +16,29 @@ public class TurnUI : MonoBehaviour
     [Header("Rounds")]
     public TMP_Text roundsLeftText;
 
-    [Header("Next Main Event (collapsible)")]
-    [Tooltip("Parent panel that contains the next event UI (title, history, ETA row).")]
-    public GameObject nextEventContainer;     // drag the whole section here
-    public Button nextEventToggleButton;      // a small arrow button in the header
-    public RectTransform nextEventChevron;    // Image RectTransform of the chevron icon
-
     [Space(6)]
     public TMP_Text nextMainEventText;        // event title/name (from EventManager)
     public TMP_Text nextMainEventHistory;     // short history/blurb (from EventManager)
     public TMP_Text nextMainEventEtaText;     // “Main event in X rounds” (from TurnManager)
 
+    [Header("Next Main Event")]
+    public GameObject nextEventContainer;     // existing
+    public Button nextEventToggleButton;      // existing
+    public RectTransform nextEventChevron;    // existing
+
+    [Header("Next Event Slide")]
+    public RectTransform nextEventPanelRect;
+
+    [Tooltip("Anchored position when panel is fully visible.")]
+    public Vector2 nextEventExpandedPos;
+
+    [Tooltip("Anchored position when panel is hidden (off-screen or collapsed).")]
+    public Vector2 nextEventCollapsedPos;
+
+    [Tooltip("Duration of slide animation in seconds.")]
+    public float nextEventSlideDuration = 0.25f;
+
+    private Coroutine _nextEventSlideCo;
     private PlayerPawn myPawn;
     public static TurnUI Instance;
 
@@ -212,16 +224,54 @@ public class TurnUI : MonoBehaviour
 
     private void ApplyNextEventCollapsed()
     {
-        if (nextEventContainer)
-            nextEventContainer.SetActive(!_nextEventCollapsed);
 
-        // Rotate chevron: collapsed = pointing right, expanded = down.
+        if (nextEventContainer && !nextEventContainer.activeSelf)
+            nextEventContainer.SetActive(true);
+
         if (nextEventChevron)
         {
-            // Adjust angles to match your art if needed.
             float z = _nextEventCollapsed ? 0f : 0f;
             nextEventChevron.localEulerAngles = new Vector3(0f, 0f, z);
         }
+
+        if (nextEventPanelRect)
+        {
+            if (_nextEventSlideCo != null)
+                StopCoroutine(_nextEventSlideCo);
+
+            _nextEventSlideCo = StartCoroutine(SlideNextEventPanel(_nextEventCollapsed));
+        }
+        else
+        {
+            // Fallback: old behaviour (just show/hide)
+            if (nextEventContainer)
+                nextEventContainer.SetActive(!_nextEventCollapsed);
+        }
+    }
+
+    private IEnumerator SlideNextEventPanel(bool collapse)
+    {
+        if (nextEventPanelRect == null) yield break;
+
+        Vector2 start = nextEventPanelRect.anchoredPosition;
+        Vector2 target = collapse ? nextEventCollapsedPos : nextEventExpandedPos;
+
+        float t = 0f;
+        float duration = Mathf.Max(0.01f, nextEventSlideDuration);
+
+        while (t < duration)
+        {
+            t += Time.unscaledDeltaTime;
+            float k = Mathf.Clamp01(t / duration);
+            // smoothstep for nicer easing
+            k = k * k * (3f - 2f * k);
+            nextEventPanelRect.anchoredPosition = Vector2.Lerp(start, target, k);
+            yield return null;
+        }
+
+        nextEventPanelRect.anchoredPosition = target;
+
+        _nextEventSlideCo = null;
     }
 
 

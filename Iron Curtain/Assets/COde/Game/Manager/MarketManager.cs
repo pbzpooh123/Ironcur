@@ -138,13 +138,16 @@ public class MarketManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void CmdBuyCompany(int tileIndex, NetworkConnection conn = null)
     {
-        var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
-        var tile = GameManager.Instance.boardTiles[tileIndex].GetComponent<TileData>();
-        float priceMult = EventManager.Instance ? EventManager.Instance.GetActiveSectorPriceMult(tile.sector) : 1f;
-        int effectiveCost = Mathf.RoundToInt(tile.companyCost * priceMult);
-        if (!pawn.TrySpendMoney(effectiveCost)) return;
+            var pawn = GameManager.Instance.Players.Find(p => p.Owner == conn);
+            if (pawn == null) return;
+            var tileGO = GameManager.Instance.boardTiles[tileIndex];
+            if (tileGO == null) return;
+            var tile = tileGO.GetComponent<TileData>();
+            if (tile == null) return;
+            int effectiveCost = ComputeEffectivePrice(tile);
+            if (!pawn.TrySpendMoney(effectiveCost)) return;
+            string key = tile.companyName;
 
-        string key = tile.companyName;
         if (!companies.ContainsKey(key))
         {
             var record = new CompanyRecord(key, effectiveCost, pawn, tile.sector);
@@ -1377,4 +1380,30 @@ public class MarketManager : NetworkBehaviour
     {
         Notifier.Instance?.ToastAll(msg, ToastKind.Info);
     }
+
+    public int ComputeEffectivePrice(TileData tile)
+    {
+        if (tile == null) return 1;
+
+        // 1) Base cost 
+        int baseCost = Mathf.Max(1, tile.companyCost);
+
+        if (companies != null &&
+            companies.TryGetValue(tile.companyName, out var comp) &&
+            comp != null && comp.currentPrice > 0)
+        {
+            baseCost = Mathf.Max(1, comp.currentPrice);
+        }
+
+        // 2) Sector multiplier from events 
+        float mult = 1f;
+        if (EventManager.Instance != null)
+            mult *= EventManager.Instance.GetActiveSectorPriceMult(tile.sector);
+
+        // 3) Global trend
+
+        int finalCost = Mathf.RoundToInt(baseCost * mult);
+        return Mathf.Max(1, finalCost);
+    }
+
 }

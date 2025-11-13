@@ -173,16 +173,7 @@ public class PlayerPawn : NetworkBehaviour
             if (sprite != null)
             {
                 _sr.sprite = sprite;
-                Debug.Log($"[PlayerPawn] Applied character sprite index {idx} on {gameObject.name} (sprite={sprite.name})");
             }
-            else
-            {
-                Debug.LogWarning($"[PlayerPawn] No sprite in CharacterLibrary for index {idx} on {gameObject.name}");
-            }
-        }
-        else
-        {
-            Debug.LogWarning("[PlayerPawn] CharacterLibrary.Instance is null on client when applying index " + idx);
         }
 
         // 2) Optional tint – you can change this to Color.white if you don't want per-player color tint anymore
@@ -390,39 +381,10 @@ public class PlayerPawn : NetworkBehaviour
 
             yield return new WaitForSeconds(0.1f);
         }
+        TileHighlighter.Instance?.FlashLandAt(GameManager.Instance.GetTilePosition(currentTile), 1f);
 
         // now that server is at the final tile, process tile logic
         HandleTileLogic();
-    }
-
-    private IEnumerator MoveStepByStep(int steps)
-    {
-        int tileCount = GameManager.Instance.TileCount;
-
-        for (int i = 1; i <= steps; i++)
-        {
-            int nextTile = (currentTile + 1) % tileCount;
-            Vector3 targetPos = GameManager.Instance.GetTilePosition(nextTile);
-
-            // pass flash 
-            TileHighlighter.Instance?.FlashPassAt(targetPos, size: 1f);
-
-            while (Vector3.Distance(transform.position, targetPos) > 0.05f)
-            {
-                transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
-                yield return null;
-            }
-
-            transform.position = targetPos;
-            currentTile = nextTile;
-            yield return new WaitForSeconds(0.1f);
-        }
-
-        Vector3 landPos = GameManager.Instance.GetTilePosition(currentTile);
-        TileHighlighter.Instance?.FlashLandAt(landPos, size: 1.1f);
-
-        if (IsServerInitialized)
-            HandleTileLogic();
     }
 
 
@@ -438,15 +400,14 @@ public class PlayerPawn : NetworkBehaviour
 
         if (data.tileType == TileType.Event)
         {
-            // Tile Event uses EventManager (which brackets & acks internally)
             EventManager.Instance.TriggerTileEvent(this);
             return;
         }
 
         if (data.tileType == TileType.Investment && data.owner == null)
         {
-            // Investment UI already gates completion via its own Ready → Cmd
-            TargetShowInvestmentUI(Owner, currentTile, data.companyName, data.companyCost, true);
+             int price = MarketManager.Instance.ComputeEffectivePrice(data);
+            TargetShowInvestmentUI(Owner, currentTile, data.companyName, price, true);
             return;
         }
 

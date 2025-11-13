@@ -16,9 +16,11 @@ public class TileHover : MonoBehaviour, IHoverProvider
         {
             case TileType.Investment:
                 info.title = string.IsNullOrEmpty(_td.companyName) ? "บริษัท" : _td.companyName;
-                info.subtitle = string.IsNullOrEmpty(_td.sector) ? "เป็นบริษัทประเภท: —" : $"เป็นบริษัทประเภท: {_td.sector}";
+                info.subtitle = string.IsNullOrEmpty(_td.sector)
+                    ? "ประเภทธุรกิจ: —"
+                    : $"ประเภทธุรกิจ: {_td.sector}";
 
-                // price/current price
+                // ราคา / ราคาล่าสุด
                 int price = _td.companyCost;
                 if (MarketManager.Instance != null &&
                     MarketManager.Instance.companies.TryGetValue(_td.companyName, out var comp) &&
@@ -27,8 +29,8 @@ public class TileHover : MonoBehaviour, IHoverProvider
                     price = comp.currentPrice;
                 }
 
-                // owner + percent
-                string ownerName = "—";
+                // เจ้าของ + เปอร์เซ็นต์
+                string ownerName = "ไม่มี";
                 string ownerPct  = "";
                 if (MarketManager.Instance != null &&
                     MarketManager.Instance.companies.TryGetValue(_td.companyName, out var c2) &&
@@ -46,57 +48,61 @@ public class TileHover : MonoBehaviour, IHoverProvider
                 info.line1 = $"เจ้าของ: {ownerName}{ownerPct}";
                 info.line2 = $"ราคา: ${price}M   •   รายได้พื้นฐาน: ${_td.baseFactoryIncome}M";
 
-                // tint by owner color if available
+                // สีเจ้าของ (ถ้ามี)
                 if (_td.owner != null)
                 {
                     var col = PlayerColors.GetOr(Color.white, _td.owner.colorIndex.Value);
                     col.a = 1f;
                     info.tint = col;
                 }
+                else
+                {
+                    info.tint = Color.white;
+                }
                 break;
 
             case TileType.Event:
-                info.title = "Event";
-                info.subtitle = "อะไรจะเกิดขึ้นก็ได้";
-                info.line1 = "—";
-                info.line2 = "—";
+                info.title = "ช่องเหตุการณ์";
+                info.subtitle = "สุ่มเหตุการณ์ดี / ร้าย";
+                info.line1 = "ผลจะขึ้นกับการ์ดเหตุการณ์ในเทิร์นนี้.";
+                info.line2 = "อาจได้เงิน เสียเงิน หรือเกิดผลพิเศษอื่น ๆ";
                 info.tint = new Color(0.6f, 0.8f, 1f, 1f);
                 break;
 
             case TileType.Tax:
-                info.title = "ภาษี";
-                info.subtitle = "จ่ายเมื่อคุณลงที่นี่";
-                info.line1 = $"ราคาเริ่มต้น: ${_td.taxFlat}M  •  อัตรา: {_td.taxPercent}%";
-                info.line2 = "จ่ายมากขึ้นถ้าคุณรวย.";
+                info.title = "ช่องภาษี";
+                info.subtitle = "ต้องจ่ายเมื่อเดินมาลงที่นี่";
+                info.line1 = $"ภาษีคงที่: ${_td.taxFlat}M   •   อัตราตามทรัพย์สิน: {_td.taxPercent}%";
+                info.line2 = "ยิ่งมีเงินมาก ยิ่งจ่ายภาษีเยอะขึ้น.";
                 info.tint = new Color(1f, 0.6f, 0.4f, 1f);
                 break;
 
             case TileType.Bonus:
-                info.title = "โบนัส";
-                info.subtitle = "รับเงินพิเศษ!";
+                info.title = "ช่องโบนัส";
+                info.subtitle = "รับเงินพิเศษเมื่อมาลงช่องนี้";
                 info.line1 = $"ได้รับ: ${_td.bonusAmount}M";
-                info.line2 = "วันโชคดี.";
+                info.line2 = "ถือว่าเป็นวันโชคดีของคุณ!";
                 info.tint = new Color(0.5f, 1f, 0.6f, 1f);
                 break;
 
             case TileType.GoToJail:
                 info.title = "ไปคุก";
-                info.subtitle = "ไปที่ช่องคุก";
-                info.line1 = $"ข้าม {_td.jailSkipTurns} เทิร์น";
-                info.line2 = "—";
+                info.subtitle = "ย้ายตัวไปที่ช่องคุกทันที";
+                info.line1 = $"ต้องข้าม {_td.jailSkipTurns} เทิร์น";
+                info.line2 = "ระหว่างอยู่ในคุกจะทอยลูกเต๋าไม่ได้.";
                 info.tint = new Color(1f, 0.4f, 0.4f, 1f);
                 break;
 
             case TileType.Jail:
-                info.title = "Jail";
-                info.subtitle = "You’re stuck here";
-                info.line1 = $"Remaining skip turns: (server decides)";
-                info.line2 = "Some effects can release you.";
+                info.title = "คุก";
+                info.subtitle = "อยู่ในคุกจนกว่าจะถูกปล่อย";
+                info.line1 = "จำนวนเทิร์นที่ต้องข้าม: (ระบบจะคำนวณให้)";
+                info.line2 = "บางเหตุการณ์ / เอฟเฟกต์สามารถช่วยให้คุณออกจากคุกได้.";
                 info.tint = new Color(1f, 0.7f, 0.4f, 1f);
                 break;
 
             default:
-                info.title = "Tile";
+                info.title = "ช่องว่าง";
                 info.subtitle = "";
                 info.line1 = "";
                 info.line2 = "";
@@ -106,4 +112,5 @@ public class TileHover : MonoBehaviour, IHoverProvider
 
         return info;
     }
+
 }

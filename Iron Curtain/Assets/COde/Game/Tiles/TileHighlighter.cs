@@ -8,7 +8,14 @@ public class TileHighlighter : MonoBehaviour
     [Header("Pool")]
     public HighlightPulse pulsePrefab;
     public int poolSize = 32;
-    public float zOffset = -0.1f; // render just above board (adjust for your camera)
+
+    [Header("Position Offsets")]
+    [Tooltip("Offset in world units from the tile position (X/Y).")]
+    public float xOffset = 0f;
+    public float yOffset = 0.1f;
+
+    [Tooltip("Z offset so highlight renders above the board.")]
+    public float zOffset = -0.1f;
 
     [Header("Colors")]
     public Color passColor = new(0.2f, 0.6f, 1f, 1f);
@@ -22,9 +29,12 @@ public class TileHighlighter : MonoBehaviour
         Instance = this;
         _root = new GameObject("HighlightPool").transform;
         _root.SetParent(transform, false);
+
         for (int i = 0; i < poolSize; i++)
             _pool.Enqueue(Instantiate(pulsePrefab, _root));
-        foreach (var p in _pool) p.gameObject.SetActive(false);
+
+        foreach (var p in _pool)
+            p.gameObject.SetActive(false);
     }
 
     HighlightPulse Get()
@@ -47,13 +57,22 @@ public class TileHighlighter : MonoBehaviour
     void Spawn(Vector3 worldPos, Color c, float size)
     {
         if (!pulsePrefab) return;
+
         var p = Get();
+
+        // apply offsets
         var pos = worldPos;
+        pos.x += xOffset;
+        pos.y += yOffset;
         pos.z += zOffset;
+
         p.transform.position = pos;
         p.color = c;
+
+
         p.startScale = size * 85f;
         p.endScale   = size * 115f;
+
         p.gameObject.SetActive(true);
     }
 }

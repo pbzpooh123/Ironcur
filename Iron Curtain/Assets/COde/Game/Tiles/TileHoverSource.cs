@@ -20,61 +20,83 @@ public class TileHoverSource : MonoBehaviour, IHoverProvider
 
     public HoverInfo BuildHoverInfo()
     {
-        // Build a nice tooltip from TileData + Market
         var info = new HoverInfo();
 
         switch (_tile.tileType)
         {
             case TileType.Investment:
-                info.title = string.IsNullOrWhiteSpace(_tile.companyName) ? "Company" : _tile.companyName;
-                // price: prefer live market price if exists
+            {
+                info.title = string.IsNullOrWhiteSpace(_tile.companyName)
+                    ? "บริษัท"
+                    : _tile.companyName;
                 int price = _tile.companyCost;
-                if (MarketManager.Instance &&
-                    MarketManager.Instance.companies.TryGetValue(_tile.companyName, out var comp) &&
-                    comp != null && comp.currentPrice > 0)
-                    price = comp.currentPrice;
+                if (MarketManager.Instance != null)
+                {
+                    price = MarketManager.Instance.ComputeEffectivePrice(_tile);
+                }
 
-                string ownerName = _tile.owner ? _tile.owner.playerName.Value : "Unowned";
+
+                // เจ้าของ
+                string ownerName = _tile.owner
+                    ? _tile.owner.playerName.Value
+                    : "ยังไม่มีเจ้าของ";
+
                 info.lines = new System.Collections.Generic.List<string>
                 {
-                    $"Sector: {_tile.sector}",
-                    $"Price: ${price}M",
-                    $"Owner: {ownerName}"
+                    $"ราคา: ${price}M",
+                    $"เจ้าของ: {ownerName}"
+                };
+                break;
+            }
+
+            case TileType.Event:
+                info.title = "ช่องเหตุการณ์";
+                info.lines = new()
+                {
+                    "เมื่อมาลงช่องนี้จะเกิดเหตุการณ์สุ่ม",
+                    "อาจได้เงิน เสียเงิน หรือเกิดเอฟเฟกต์พิเศษ"
                 };
                 break;
 
-            case TileType.Event:
-                info.title = "Event Tile";
-                info.lines = new() { "Trigger a random event." };
-                break;
-
             case TileType.Tax:
-                info.title = "Tax";
+                info.title = "ช่องภาษี";
                 info.lines = new()
                 {
-                    $"Flat: ${_tile.taxFlat}M",
-                    $"Rate: {_tile.taxPercent}%"
+                    $"ภาษีคงที่: ${_tile.taxFlat}M",
+                    $"อัตราตามทรัพย์สิน: {_tile.taxPercent}%"
                 };
                 break;
 
             case TileType.Bonus:
-                info.title = "Bonus";
-                info.lines = new() { $"Gain: ${_tile.bonusAmount}M" };
+                info.title = "ช่องโบนัส";
+                info.lines = new()
+                {
+                    $"ได้รับเงิน: ${_tile.bonusAmount}M",
+                    "ถือว่าเป็นรางวัลพิเศษรอบนี้"
+                };
                 break;
 
             case TileType.Jail:
-                info.title = "Jail";
-                info.lines = new() { $"Skip turns: {_tile.jailSkipTurns}" };
+                info.title = "คุก";
+                info.lines = new()
+                {
+                    $"ต้องข้ามเทิร์น: {_tile.jailSkipTurns} เทิร์น",
+                    "ระหว่างอยู่ในคุกจะทอยลูกเต๋าไม่ได้"
+                };
                 break;
 
             default:
-                info.title = "Tile";
-                info.lines = new() { "—" };
+                info.title = "ช่องว่าง";
+                info.lines = new()
+                {
+                    "ช่องนี้ยังไม่มีเอฟเฟกต์พิเศษ"
+                };
                 break;
         }
 
         return info;
     }
+
 
     // Called by HoverRaycaster if you want to manually toggle highlight (optional)
     public void SetHoverVisual(bool on)
