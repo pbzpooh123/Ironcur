@@ -723,7 +723,7 @@ MonoBehaviour:
   slotIndex: 3
   swatch: {fileID: 101673774}
   pickButton: {fileID: 101673776}
-  characterSprite: {fileID: 0}
+  characterSprite: {fileID: 21300000, guid: d9409a43d74af9a4ead13df1bcac05f6, type: 3}
 --- !u!1 &132405159
 GameObject:
   m_ObjectHideFlags: 0
@@ -5715,7 +5715,7 @@ MonoBehaviour:
   slotIndex: 1
   swatch: {fileID: 1233895492}
   pickButton: {fileID: 1233895494}
-  characterSprite: {fileID: 0}
+  characterSprite: {fileID: 21300000, guid: 7d5b7ca1011ed5d458c06cb1bfe727ae, type: 3}
 --- !u!1 &1236663099
 GameObject:
   m_ObjectHideFlags: 0
@@ -7433,7 +7433,7 @@ MonoBehaviour:
   slotIndex: 0
   swatch: {fileID: 1515447701}
   pickButton: {fileID: 1515447703}
-  characterSprite: {fileID: 21300000, guid: 2cfc2fa7b999ecd478e5b07476bcee42, type: 3}
+  characterSprite: {fileID: 21300000, guid: 7cb830af21088ab4695baabad2826775, type: 3}
 --- !u!1 &1554441649
 GameObject:
   m_ObjectHideFlags: 0
@@ -11146,7 +11146,7 @@ MonoBehaviour:
   slotIndex: 2
   swatch: {fileID: 2093345306}
   pickButton: {fileID: 2093345308}
-  characterSprite: {fileID: 0}
+  characterSprite: {fileID: 21300000, guid: 4e742a7ac6ebf2741be1d60bf4b985b7, type: 3}
 --- !u!1 &2098312464
 GameObject:
   m_ObjectHideFlags: 0
@@ -11311,7 +11311,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   characterSprites:
-  - {fileID: 21300000, guid: 2cfc2fa7b999ecd478e5b07476bcee42, type: 3}
+  - {fileID: 21300000, guid: 7cb830af21088ab4695baabad2826775, type: 3}
+  - {fileID: 21300000, guid: 7d5b7ca1011ed5d458c06cb1bfe727ae, type: 3}
+  - {fileID: 21300000, guid: 4e742a7ac6ebf2741be1d60bf4b985b7, type: 3}
+  - {fileID: 21300000, guid: d9409a43d74af9a4ead13df1bcac05f6, type: 3}
 --- !u!4 &2099007184
 Transform:
   m_ObjectHideFlags: 0
