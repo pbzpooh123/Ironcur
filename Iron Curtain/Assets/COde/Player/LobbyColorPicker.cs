@@ -12,13 +12,31 @@ public class LobbyColorBinder : MonoBehaviour
     public Image swatch;
     public Button pickButton;
 
+    [Header("Character preview")]
+    public Sprite characterSprite;
+
+
     private static LobbyColorBinder[] _all;
-    private static readonly Dictionary<int,int> _cidToSlot = new();
+    private static readonly Dictionary<int, int> _cidToSlot = new();
+    
+
 
     private void Awake()
     {
-        if (swatch != null && slotIndex >= 0 && slotIndex < PlayerColors.Palette.Length)
-            swatch.color = PlayerColors.Palette[slotIndex];
+        if (swatch != null)
+        {
+            if (characterSprite != null)
+            {
+                // Show per-character icon
+                swatch.sprite = characterSprite;
+                swatch.color = Color.white; // make sure it’s not tinted weirdly
+            }
+            else if (slotIndex >= 0 && slotIndex < PlayerColors.Palette.Length)
+            {
+                // Fallback: old color-square behavior
+                swatch.color = PlayerColors.Palette[slotIndex];
+            }
+        }
 
         if (pickButton != null)
         {
@@ -26,6 +44,7 @@ public class LobbyColorBinder : MonoBehaviour
             pickButton.onClick.AddListener(OnPick);
         }
     }
+
 
     private void OnEnable() => StartCoroutine(WaitAndRequest());
 

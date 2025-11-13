@@ -142,7 +142,15 @@ public class PlayerPawn : NetworkBehaviour
             _sr = GetComponentInChildren<SpriteRenderer>();
             if (_sr == null) return;
         }
-        // If unset, show white (or pick your neutral)
+
+        // 1) Set sprite from CharacterLibrary
+        var lib = CharacterLibrary.Instance;
+        if (lib != null)
+        {
+            var sprite = lib.GetSprite(idx);
+            if (sprite != null)
+                _sr.sprite = sprite;
+        }
         _sr.color = PlayerColors.GetOr(Color.white, idx);
     }
 

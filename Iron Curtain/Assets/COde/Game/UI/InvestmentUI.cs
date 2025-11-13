@@ -28,8 +28,8 @@ public class InvestmentUI : MonoBehaviour
         currentTileIndex = tileIndex;
 
         // UI placeholder while we fetch/compute
-        if (titleText) titleText.text = $"Found {companyName}?";
-        if (costText)  costText.text  = "Founding Cost: —";
+        if (titleText) titleText.text = $"ซื้อ {companyName}นี่ไหม?";
+        if (costText)  costText.text  = "ราคา: —";
         if (buyButton) buyButton.interactable = false;
 
         panel.SetActive(true);
@@ -95,7 +95,7 @@ public class InvestmentUI : MonoBehaviour
 
         // Update UI
         if (costText)
-            costText.text = $"Founding Cost: ${_effectiveCost}M";
+            costText.text = $"ราคา: ${_effectiveCost}M";
 
         if (buyButton && currentPawn != null)
             buyButton.interactable = (currentPawn.money.Value >= _effectiveCost);
