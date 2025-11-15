@@ -11,6 +11,9 @@ public class ReviewEntry : MonoBehaviour
     public Button acceptButton;
     public Button rejectButton;
 
+    [Header("Company Icon")]
+    public Image companyIconImage;
+
     [Header("Legacy fallback (optional)")]
     public TMP_Text infoText;       // only used if one of the 3 texts is missing
 
@@ -66,6 +69,13 @@ public class ReviewEntry : MonoBehaviour
             gameObject.SetActive(false);
             return;
         }
+
+        if (companyIconImage != null)
+            {
+                var icon = CompanyIconHelper.GetIconForCompany(_companyName);
+                companyIconImage.sprite  = icon;
+                companyIconImage.enabled = (icon != null);
+            }
 
         // Determine whether Accept can be clicked
         bool allowDebt = (MarketManager.Instance != null) && MarketManager.Instance.AllowDebtOnAccept;

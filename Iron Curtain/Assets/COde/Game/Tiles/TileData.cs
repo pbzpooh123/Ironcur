@@ -26,6 +26,9 @@ public class TileData : MonoBehaviour
     [Header("Visuals")]
     public TileVisuals visuals;
 
+    [Header("UI / Company")]
+    public Sprite companyIcon; 
+
     [Header("On-Land Company Effects")]
     public bool enableStealOnLanding = true;
     [Range(0,100)] public int stealPercentOfOwnerMoney = 10;

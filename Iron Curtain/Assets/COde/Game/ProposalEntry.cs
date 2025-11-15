@@ -10,6 +10,9 @@ public class ProposalEntry : MonoBehaviour
     public Button submitButton;
     public TMP_Text warningText; 
 
+    [Header("Company Icon")]
+    public Image companyIconImage;
+
     public string CompanyKey { get; private set; }
 
     private CompanyRecord _company;
@@ -23,6 +26,13 @@ public class ProposalEntry : MonoBehaviour
         CompanyKey = company.companyName;
 
         companyNameText.text = company.companyName;
+
+        if (companyIconImage != null)
+            {
+                var icon = CompanyIconHelper.GetIconForCompany(company.companyName);
+                companyIconImage.sprite  = icon;
+                companyIconImage.enabled = (icon != null);
+            }
 
         percentInput.onValueChanged.AddListener(_ => Validate());
         priceInput.onValueChanged.AddListener(_ => Validate());

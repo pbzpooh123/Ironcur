@@ -1144,6 +1144,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 2048985258}
+  companyIcon: {fileID: 21300000, guid: 86beca2893ef19540bc97c1984425f72, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -1806,6 +1807,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1482956140}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -2068,6 +2070,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -2143,6 +2146,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1084439456}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -2363,7 +2367,7 @@ MonoBehaviour:
   m_text: Previous
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: -8428541840191343524, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -3174,6 +3178,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 417236645}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -4027,6 +4032,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 467617597}
+  companyIcon: {fileID: 21300000, guid: a59fe239fbd7e914b9e848485c2e94c3, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -4430,7 +4436,7 @@ MonoBehaviour:
   m_text: New Text
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: e10c0dcb279d82643b89b493f665f972, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 5881658374955853620, guid: e10c0dcb279d82643b89b493f665f972, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -5309,6 +5315,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 402207188}
+  companyIcon: {fileID: 21300000, guid: 7961ba1633cbaae41b9d67ec906681e6, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -5699,6 +5706,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 391063661}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -6455,6 +6463,7 @@ MonoBehaviour:
   bonusAmount: 100
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -6533,7 +6542,7 @@ MonoBehaviour:
   m_text: Close
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: -8428541840191343524, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -6717,6 +6726,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -7726,6 +7736,7 @@ MonoBehaviour:
   bonusAmount: 100
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -7935,6 +7946,7 @@ MonoBehaviour:
   bonusAmount: 100
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -8144,6 +8156,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 2
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -9586,6 +9599,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -9852,6 +9866,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -10674,6 +10689,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1305061371}
+  companyIcon: {fileID: 21300000, guid: f6ad0f0c98484c04cbf6035a68ec7533, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -10883,6 +10899,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1665778506}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -11167,6 +11184,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -11379,6 +11397,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1625651239}
+  companyIcon: {fileID: 21300000, guid: c095b1335d572b94998b8d1e7bbf5546, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -12037,6 +12056,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 62882547}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -13534,6 +13554,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1105378268}
+  companyIcon: {fileID: 21300000, guid: df12c772ebf16a54796f10179622829a, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -14076,6 +14097,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1288571658}
+  companyIcon: {fileID: 21300000, guid: 745a036a5755bbb44830db9cf8a515ad, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -14750,6 +14772,7 @@ MonoBehaviour:
   bonusAmount: 100
   jailSkipTurns: 2
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -17070,7 +17093,7 @@ MonoBehaviour:
   m_text: Next
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: -8428541840191343524, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -17201,6 +17224,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 2068336577}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -17276,6 +17300,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -18164,6 +18189,7 @@ MonoBehaviour:
   bonusAmount: 100
   jailSkipTurns: 2
   visuals: {fileID: 413554620}
+  companyIcon: {fileID: 21300000, guid: 1ccef076ebd63624a819a626ab48cd66, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 500
@@ -18239,6 +18265,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -18802,7 +18829,7 @@ MonoBehaviour:
   m_text: Next
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: -8428541840191343524, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -19145,6 +19172,7 @@ MonoBehaviour:
   bonusAmount: 100
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -19488,6 +19516,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -19653,6 +19682,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -20073,6 +20103,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1553354581}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -20652,7 +20683,7 @@ MonoBehaviour:
   m_text: Previous
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: -8428541840191343524, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -20913,6 +20944,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 23201176}
+  companyIcon: {fileID: 21300000, guid: 576a40556bb3e7a418d948a8143af96f, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -21989,6 +22021,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -22201,6 +22234,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -23395,6 +23429,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1177376090}
+  companyIcon: {fileID: 21300000, guid: 6bdeb6aaacdeff7478d0a6e79dbf5533, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -23721,6 +23756,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -25033,6 +25069,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 735281570}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -25245,6 +25282,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 776032847}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -25855,6 +25893,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -26628,6 +26667,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 0}
+  companyIcon: {fileID: 0}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -26844,7 +26884,7 @@ MonoBehaviour:
   m_text: Close
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: -8428541840191343524, guid: 076663da17e950f429e7782eb4f779ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
