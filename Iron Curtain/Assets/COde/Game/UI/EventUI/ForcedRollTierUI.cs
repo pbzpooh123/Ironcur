@@ -21,7 +21,6 @@ public class ForcedRollTierUI : MonoBehaviour
     [Header("Footer")]
     public TMP_Text footerText;       // summary / progress
     public Button closeButton;        // single Close button (always visible)
-    public TMP_Text closeButtonLabel;
 
     // runtime
     private readonly Dictionary<int, SlotWidget> _cidToWidget = new();
@@ -83,7 +82,6 @@ public class ForcedRollTierUI : MonoBehaviour
             closeButton.onClick.RemoveAllListeners();
             closeButton.interactable = false;              // will be enabled by server
         }
-        if (closeButtonLabel) closeButtonLabel.text = "Close";
 
         if (panel) panel.SetActive(true);
     }
@@ -112,7 +110,6 @@ public class ForcedRollTierUI : MonoBehaviour
         if (!closeButton) return;
 
         closeButton.interactable = !_localCloseSent;
-        if (closeButtonLabel) closeButtonLabel.text = _localCloseSent ? "Waiting…" : "Close";
 
         closeButton.onClick.RemoveAllListeners();
         closeButton.onClick.AddListener(() =>
@@ -121,7 +118,6 @@ public class ForcedRollTierUI : MonoBehaviour
             _localCloseSent = true;
 
             closeButton.interactable = false;
-            if (closeButtonLabel) closeButtonLabel.text = "Waiting…";
 
             if (CurrentRollMode == RollMode.Media)
                 EventManager.Instance.CmdMediaClientClosed();
@@ -135,8 +131,4 @@ public class ForcedRollTierUI : MonoBehaviour
         if (footerText) footerText.text = text ?? "";
     }
 
-    public void UpdateCloseStatus(int have, int total)
-    {
-        SetFooter($"Close status: {have}/{total} players closed.");
-    }
 }
