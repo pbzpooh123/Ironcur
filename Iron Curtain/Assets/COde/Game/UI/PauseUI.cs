@@ -4,14 +4,35 @@ using TMPro;
 public class PauseUI : MonoBehaviour
 {
     public static PauseUI Instance;
-    public GameObject overlay;      // assign a dark panel
-    public TMP_Text statusText;     // "Paused by host"
 
-    void Awake() => Instance = this;
+    public GameObject overlay;     
+    public TMP_Text statusText;     
 
-    public void SetPaused(bool paused)
+    void Awake()
+    {
+        Instance = this;
+        SetPaused(false, null);
+    }
+
+    public void SetPaused(bool paused, string pausedByName)
     {
         if (overlay) overlay.SetActive(paused);
-        if (statusText) statusText.text = paused ? "Paused" : "";
+
+        if (statusText)
+        {
+            if (!paused)
+            {
+                statusText.text = "";
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(pausedByName))
+                    statusText.text = "หยุดเกมชั่วคราว";
+                else
+                    statusText.text = $"หยุดเกมโดย {pausedByName}";
+            }
+        }
+
+        Time.timeScale = paused ? 0f : 1f;
     }
 }

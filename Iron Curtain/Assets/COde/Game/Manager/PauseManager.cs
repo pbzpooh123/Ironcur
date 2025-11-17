@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using FishNet.Object;
 using FishNet.Object.Synchronizing;
+using FishNet.Connection;
 
 public class PauseManager : NetworkBehaviour
 {
@@ -9,23 +10,34 @@ public class PauseManager : NetworkBehaviour
 
     // Server truth
     public readonly SyncVar<bool> isPaused = new();
-    private readonly HashSet<int> _votes = new(); // (optional) ready for future vote system
+    private readonly HashSet<int> _votes = new(); // you can use this later if you want vote-pause
 
     private void Awake() => Instance = this;
 
     [ServerRpc(RequireOwnership = false)]
-    public void CmdSetPaused(bool paused)
+    public void CmdSetPaused(bool paused, NetworkConnection caller = null)
     {
-        // keep it simple: host/server decides
+        // Update server state
         isPaused.Value = paused;
-        RpcOnPauseState(paused);
+
+        // Figure out who pressed the button
+        string whoName = "";
+
+        if (caller != null && GameManager.Instance != null && GameManager.Instance.Players != null)
+        {
+            var pawn = GameManager.Instance.Players.Find(p => p != null && p.Owner == caller);
+            if (pawn != null)
+                whoName = pawn.playerName.Value;
+        }
+
+        // Broadcast to all clients
+        RpcOnPauseState(paused, whoName);
     }
 
     [ObserversRpc(BufferLast = true)]
-    private void RpcOnPauseState(bool paused)
+    private void RpcOnPauseState(bool paused, string pausedByName)
     {
-        // Optional: dim a pause overlay, mute sfx, etc.
-        PauseUI.Instance?.SetPaused(paused);
+        PauseUI.Instance?.SetPaused(paused, pausedByName);
     }
 
     public static bool IsPaused() => Instance != null && Instance.isPaused.Value;

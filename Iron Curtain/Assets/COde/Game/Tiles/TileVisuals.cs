@@ -12,17 +12,22 @@ public class TileVisuals : MonoBehaviour
     [Header("Tone")]
     [Range(0f,1f)] public float ownedToneLerp = 0.85f;
 
-    // NEW — wire these in the prefab
     [Header("Labels")]
     public TMP_Text priceText;     // e.g. "$150M"
     public TMP_Text surgeText;     // e.g. "×1.2"
+
+    public GameObject hoverOutline; // an image or mesh you toggle
 
     public void ShowUnclaimed()
     {
         if (mainRenderer != null)
         {
             if (unclaimedSprite) mainRenderer.sprite = unclaimedSprite;
-            mainRenderer.color = unclaimedTint;
+
+            // base tint but alpha = 0 (invisible)
+            var col = unclaimedTint;
+            col.a = 0f;
+            mainRenderer.color = col;
         }
     }
 
@@ -39,12 +44,14 @@ public class TileVisuals : MonoBehaviour
         {
             if (claimedSprite) mainRenderer.sprite = claimedSprite;
             var tone = Color.Lerp(Color.white, c, ownedToneLerp);
+
+            // fully visible when owned
             tone.a = 1f;
             mainRenderer.color = tone;
         }
     }
 
-    // ===== NEW helpers used by TileData =====
+    // ===== helpers used by TileData =====
     public void SetPrice(string txt)
     {
         if (priceText != null) priceText.text = txt;
@@ -72,8 +79,6 @@ public class TileVisuals : MonoBehaviour
         if (pawn == null) ShowUnclaimed();
         else ShowOwnedByColor(pawn.colorIndex.Value);
     }
-
-    public GameObject hoverOutline; // an image or mesh you toggle
 
     public void SetHover(bool on)
     {

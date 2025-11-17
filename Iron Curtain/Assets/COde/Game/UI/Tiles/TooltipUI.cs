@@ -1,4 +1,3 @@
-// TooltipUI.cs
 using UnityEngine;
 using TMPro;
 
@@ -9,14 +8,19 @@ public class TooltipUI : MonoBehaviour
     public static TooltipUI Instance;
 
     [Header("Refs")]
-    public RectTransform panel;      // the root RectTransform of the tooltip panel
+    public RectTransform panel;      // root RectTransform of the tooltip panel
     public TMP_Text titleTMP;
     public TMP_Text bodyTMP;
 
     [Header("Behaviour")]
-    public bool pinned = true;                      // << set true to not follow mouse
+    [Tooltip("If true, tooltip is stuck to a screen corner. If false, it follows the mouse.")]
+    public bool pinned = false;                     // DEFAULT: follow mouse
     public TooltipCorner corner = TooltipCorner.BottomRight;
-    public Vector2 margin = new Vector2(24, 24);    // distance from chosen corner (in pixels)
+    public Vector2 margin = new Vector2(24, 24);    // when pinned
+
+    [Header("Mouse follow")]
+    [Tooltip("Offset from mouse position in screen space.")]
+    public Vector2 mouseOffset = new Vector2(16f, -16f);
 
     private Canvas _canvas;
     private bool _visible;
@@ -24,9 +28,16 @@ public class TooltipUI : MonoBehaviour
     void Awake()
     {
         Instance = this;
+
+        // Make sure we actually have a canvas, even if TooltipUI is not parented directly under one
         _canvas = GetComponentInParent<Canvas>();
+        if (_canvas == null)
+            _canvas = FindObjectOfType<Canvas>();
+
         if (panel) panel.gameObject.SetActive(false);
-        ApplyCornerAnchors();   // make anchors/pivot match the chosen corner
+
+        if (pinned)
+            ApplyCornerAnchors();
     }
 
     public void PinToCorner(TooltipCorner c, Vector2? customMargin = null)
@@ -38,7 +49,10 @@ public class TooltipUI : MonoBehaviour
         RepositionPinned();
     }
 
-    public void Unpin() { pinned = false; }
+    public void Unpin()
+    {
+        pinned = false;
+    }
 
     public void Show(HoverInfo info)
     {
@@ -52,8 +66,10 @@ public class TooltipUI : MonoBehaviour
         panel.gameObject.SetActive(true);
         _visible = true;
 
-        if (pinned) RepositionPinned();
-        // if not pinned, you might still have mouse-follow logic elsewhere; we leave it off.
+        if (pinned)
+            RepositionPinned();
+        else
+            FollowMouse();
     }
 
     public void Hide()
@@ -68,11 +84,12 @@ public class TooltipUI : MonoBehaviour
         if (!_visible || !panel) return;
 
         if (pinned)
-        {
             RepositionPinned();
-        }
-        // else: intentionally do nothing → no mouse following
+        else
+            FollowMouse();
     }
+
+    /* ================= Corner mode (optional) ================= */
 
     private void ApplyCornerAnchors()
     {
@@ -95,10 +112,6 @@ public class TooltipUI : MonoBehaviour
     {
         if (!panel) return;
 
-        // anchoredPosition is from the chosen corner thanks to anchors/pivot.
-        // For right corners X should be negative to move inward; for left it’s positive.
-        // For top corners Y should be negative to move inward; for bottom it’s positive.
-
         Vector2 pos = Vector2.zero;
 
         switch (corner)
@@ -118,5 +131,52 @@ public class TooltipUI : MonoBehaviour
         }
 
         panel.anchoredPosition = pos;
+    }
+
+    /* ================= Mouse-follow mode ================= */
+
+    private void FollowMouse()
+    {
+        if (panel == null) return;
+
+        // If Canvas is Screen Space - Overlay (most common) → just use screen position directly.
+        if (_canvas == null || _canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+        {
+            Vector2 screenPos = Input.mousePosition;
+            screenPos += mouseOffset;
+            panel.position = screenPos;
+            return;
+        }
+
+        // For Screen Space - Camera or World Space
+        RectTransform parentRect = panel.parent as RectTransform;
+        if (parentRect == null) return;
+
+        Vector2 screenP = Input.mousePosition;
+        Vector2 localPos;
+
+        RectTransformUtility.ScreenPointToLocalPointInRectangle(
+            parentRect,
+            screenP,
+            _canvas.worldCamera,
+            out localPos
+        );
+
+        localPos += mouseOffset;
+
+        // Optional clamp to parent rect
+        Rect parentBounds = parentRect.rect;
+        Vector2 size = panel.rect.size;
+        Vector2 pivot = panel.pivot;
+
+        float minX = parentBounds.xMin + size.x * pivot.x;
+        float maxX = parentBounds.xMax - size.x * (1f - pivot.x);
+        float minY = parentBounds.yMin + size.y * pivot.y;
+        float maxY = parentBounds.yMax - size.y * (1f - pivot.y);
+
+        localPos.x = Mathf.Clamp(localPos.x, minX, maxX);
+        localPos.y = Mathf.Clamp(localPos.y, minY, maxY);
+
+        panel.anchoredPosition = localPos;
     }
 }
