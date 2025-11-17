@@ -120,7 +120,7 @@ public class PlayerInfoPanel : MonoBehaviour
     public void UpdateBailoutMarks(int marks)
     {
         if (bailoutText != null)
-            bailoutText.text = $"Bailouts: {marks}";
+            bailoutText.text = $"ใบแจ้งหนี้: {marks}";
     }
 
 }
