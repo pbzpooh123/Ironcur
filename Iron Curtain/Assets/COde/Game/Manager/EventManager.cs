@@ -962,7 +962,6 @@ public class EventManager : NetworkBehaviour
         if (_tierClosed.Contains(cid)) return;
 
         _tierClosed.Add(cid);
-        BroadcastTierCloseStatus(_tierClosed.Count, _tierParticipants.Count);
 
         if (_tierClosed.Count >= _tierParticipants.Count)
         {
@@ -972,17 +971,6 @@ public class EventManager : NetworkBehaviour
         }
     }
 
-    [Server]
-    private void BroadcastTierCloseStatus(int have, int total)
-    {
-        RpcUpdateTierCloseStatus(have, total);
-    }
-
-    [ObserversRpc]
-    private void RpcUpdateTierCloseStatus(int have, int total)
-    {
-        ForcedRollTierUI.Instance?.UpdateCloseStatus(have, total);
-    }
 
     [ServerRpc(RequireOwnership = false)]
     public void CmdRequestTierRoll(NetworkConnection conn = null)
@@ -1107,11 +1095,6 @@ public class EventManager : NetworkBehaviour
         ForcedRollTierUI.Instance?.EnableCloseForLocal();
     }
 
-    [ObserversRpc]
-    private void RpcUpdateMediaCloseStatus(int have, int total)
-    {
-        ForcedRollTierUI.Instance?.UpdateCloseStatus(have, total);
-    }
 
     [ObserversRpc]
     private void RpcCloseGridUI()
@@ -1269,7 +1252,6 @@ public class EventManager : NetworkBehaviour
         if (_mediaClosed.Contains(cid)) return;
 
         _mediaClosed.Add(cid);
-        RpcUpdateMediaCloseStatus(_mediaClosed.Count, _mediaParticipants.Count);
 
         if (_mediaClosed.Count >= _mediaParticipants.Count)
         {

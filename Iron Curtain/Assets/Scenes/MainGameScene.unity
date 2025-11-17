@@ -751,7 +751,7 @@ MonoBehaviour:
   m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: ecca2fcb15582034fa88478f451f59ee, type: 2}
-  m_sharedMaterial: {fileID: 4049968201797184168, guid: 8bc5e16cdd1f4a540bb7fb80750850a6, type: 2}
+  m_sharedMaterial: {fileID: -2120748961045862302, guid: ecca2fcb15582034fa88478f451f59ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -13552,7 +13552,7 @@ MonoBehaviour:
   okButton: {fileID: 816270829}
   Sidepanel: {fileID: 1932486400}
   SideeventText: {fileID: 44239341}
-  SideokButton: {fileID: 0}
+  SideokButton: {fileID: 1746620523}
 --- !u!114 &1024428430
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13676,7 +13676,6 @@ MonoBehaviour:
   slotPrefab: {fileID: 3921765244881366345, guid: 0c6ad5b0fbb798242996b73022f44695, type: 3}
   footerText: {fileID: 1367563966}
   closeButton: {fileID: 924155820}
-  closeButtonLabel: {fileID: 939423681}
 --- !u!114 &1024428438
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22558,6 +22557,17 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 8497095853494028259, guid: 87efb80dcde37f94a93e35a5e31b8138, type: 3}
   m_PrefabInstance: {fileID: 1746620521}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1746620523 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4854200937363390227, guid: 87efb80dcde37f94a93e35a5e31b8138, type: 3}
+  m_PrefabInstance: {fileID: 1746620521}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e29b1a8efbd4b44bb3f3716e73f07ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1769395465
 GameObject:
   m_ObjectHideFlags: 0
