@@ -43,6 +43,7 @@ public class TileHoverSource : MonoBehaviour, IHoverProvider
 
                 info.lines = new System.Collections.Generic.List<string>
                 {
+                    $"ประเภท: {EventManager.Instance.GetSectorDisplayName(_tile.sector)}",
                     $"ราคา: ${price}M",
                     $"เจ้าของ: {ownerName}"
                 };

@@ -4,6 +4,8 @@ using UnityEngine;
 using FishNet;
 using FishNet.Object;
 using FishNet.Connection;
+using System.Linq;
+
 
 public class EventManager : NetworkBehaviour
 {
@@ -1507,6 +1509,35 @@ public class EventManager : NetworkBehaviour
         public int expiresAtRound; // absolute round number
     }
 
+    private static readonly Dictionary<string, string> _sectorDisplayNames = new()
+    {
+        { "steel",  "เหล็ก" },
+        { "oil",    "น้ำมัน" },
+        { "bank",   "ธนาคาร" },
+        { "techo",  "เทคโนโลยี" },
+        { "food",   "อาหาร" },
+        { "commu",  "การสื่อสาร" },
+        { "electo", "การไฟฟ้า" },
+        { "logic",  "ขนส่ง" },
+        { "estate", "อสังหา" },
+        { "weapon", "การผลิตอาวุธ" },
+    };
+
+
+    public string GetSectorDisplayName(string sector)
+    {
+        var key = CNorm(sector);  
+        if (string.IsNullOrEmpty(key))
+            return "ทุกอุตสาหกรรม";
+
+        if (_sectorDisplayNames.TryGetValue(key, out var thName))
+            return thName;
+
+     
+        return sector;
+    }
+
+
 #if !UNITY_SERVER
     private readonly Dictionary<string, ClientSectorSurge> _clientSurges = new();
 #endif
@@ -1565,4 +1596,201 @@ public class EventManager : NetworkBehaviour
     {
         RpcSyncSectorSurge(sector, priceMult, payoutMult, expiresAtRound);
     }
+    
+    // วางโค้ดนี้ไว้ท้ายคลาส EventManager (ก่อนปีกกาปิดสุดท้ายของคลาส)
+
+    // ================= ACTIVE EFFECTS SUMMARY (for ActiveEffectsUI) =================
+
+    public List<string> BuildEffectsSummary(PlayerPawn viewer)
+    {
+        var lines = new List<string>();
+        int curRound = (TurnManager.Instance != null) ? TurnManager.Instance.roundCount.Value : 1;
+
+        // 1) Odd Roll Fine (ธนาคารเก็บค่าปรับตอนทอยเลขคี่)
+        if (_bankOddFineActive)
+        {
+            string until = (_bankOddFineExpiresAtRound > 0)
+                ? $"จนจบรอบที่ {_bankOddFineExpiresAtRound}"
+                : "จนกว่าจะถูกยกเลิก";
+            lines.Add(
+                $"Odd Roll Fine: หากทอยแต้มคี่ต้องจ่าย ${_bankOddFineAmount}M ให้เจ้าของ {_bankCompanyName} ({until})"
+            );
+        }
+
+        // 2) Proposal block (ห้ามส่งข้อเสนอซื้อหุ้นชั่วคราว)
+        if (IsProposalBlockedNow())
+        {
+            lines.Add("Proposal Phase ถูก “ปิดใช้งานชั่วคราว” — ตอนนี้ไม่สามารถส่งข้อเสนอซื้อหุ้นได้.");
+        }
+
+        // 3) Sector surge จาก EventManager (ราคาซื้อ & ปันผลทั้ง sector)
+        AppendSectorSurgeLines(lines, viewer);
+
+        // 4) Buff/Debuff เฉพาะบริษัทที่ผู้เล่นเป็นเจ้าของ
+        if (viewer != null)
+        {
+            AppendCompanyBuffLines(lines, viewer, curRound);
+        }
+
+        return lines;
+    }
+
+    // ---------- Sector surge (ราคา/ปันผลทั้ง sector) ----------
+    private void AppendSectorSurgeLines(List<string> lines, PlayerPawn viewer)
+    {
+    #if !UNITY_SERVER
+            if (TurnManager.Instance == null) return;
+            int cur = TurnManager.Instance.roundCount.Value;
+
+            if (_clientSurges == null || _clientSurges.Count == 0) return;
+
+            foreach (var kv in _clientSurges)
+            {
+                string sector = kv.Key;
+                var s = kv.Value;
+
+                bool notExpired = (s.expiresAtRound == 0) || (cur < s.expiresAtRound);
+                bool hasEffect =
+                    Mathf.Abs(s.priceMult - 1f) > 0.001f ||
+                    Mathf.Abs(s.payoutMult - 1f) > 0.001f;
+
+                if (!notExpired || !hasEffect)
+                    continue;
+
+                bool viewerHas = viewer != null && ViewerOwnsInSector(viewer, sector);
+
+                string label;
+                    if (string.IsNullOrEmpty(sector))
+                    {
+                        label = "ทุกอุตสาหกรรม";
+                    }
+                    else
+                    {
+                        string display = GetSectorDisplayName(sector);
+                        label = $"บริษัทประเภท {display}";
+                    }
+                string pricePart = Mathf.Abs(s.priceMult - 1f) > 0.001f
+                    ? $"ราคา x{s.priceMult:0.##}"
+                    : null;
+
+                string payoutPart = Mathf.Abs(s.payoutMult - 1f) > 0.001f
+                    ? $"ปันผล x{s.payoutMult:0.##}"
+                    : null;
+
+                string effects;
+                if (pricePart != null && payoutPart != null)
+                    effects = $"{pricePart} , {payoutPart}";
+                else
+                    effects = pricePart ?? payoutPart ?? "";
+
+                string until = (s.expiresAtRound > 0)
+                    ? $"ถึงรอบที่ {s.expiresAtRound}"
+                    : "จนกว่าจะถูกยกเลิก";
+
+                if (viewerHas)
+                    lines.Add($"{label}: {effects} (กระทบบริษัทที่คุณถือหุ้น) {until}");
+                else
+                    lines.Add($"{label}: {effects} {until}");
+            }
+    #endif
+    }
+
+    private bool ViewerOwnsInSector(PlayerPawn viewer, string sector)
+    {
+        if (viewer == null || MarketManager.Instance == null) return false;
+        sector = CNorm(sector);
+
+        foreach (var kv in MarketManager.Instance.companies)
+        {
+            var c = kv.Value;
+            if (c == null) continue;
+            if (CNorm(c.sector) != sector) continue;
+
+            if (c.ownershipPercents.TryGetValue(viewer, out int pct) && pct > 0)
+                return true;
+        }
+        return false;
+    }
+
+    // ---------- Buff/Debuff จาก ServerBoostAllCompaniesOwnedBy / ServerNerfAllCompaniesOwnedBy / ฯลฯ ----------
+    private struct BuffBucket
+    {
+        public float multiplier;
+        public int expiresAtRound;
+        public int count;
+    }
+
+    private void AddBuffBucket(Dictionary<string, BuffBucket> dict, float mult, int expires)
+    {
+        string key = $"{mult:0.###}|{expires}";
+        if (!dict.TryGetValue(key, out var b))
+        {
+            b = new BuffBucket
+            {
+                multiplier = mult,
+                expiresAtRound = expires,
+                count = 0
+            };
+        }
+        b.count++;
+        dict[key] = b;
+    }
+
+    private void AppendCompanyBuffLines(List<string> lines, PlayerPawn viewer, int curRound)
+    {
+        if (MarketManager.Instance == null || viewer == null) return;
+
+        int ownedCompanies = 0;
+        // key → bucket
+        var buckets = new Dictionary<string, BuffBucket>();
+
+        foreach (var kv in MarketManager.Instance.companies)
+        {
+            var comp = kv.Value;
+            if (comp == null) continue;
+
+            // ผู้เล่นเป็นเจ้าของบริษัทนี้รึเปล่า
+            if (!comp.ownershipPercents.TryGetValue(viewer, out int pct) || pct <= 0)
+                continue;
+
+            ownedCompanies++;
+
+            // 4.1 company-level aura จาก ServerBoostCompanyPayouts
+            if (comp.payoutMultExpiresAtRound > curRound &&
+                !Mathf.Approximately(comp.payoutMult, 1f))
+            {
+                AddBuffBucket(buckets, comp.payoutMult, comp.payoutMultExpiresAtRound);
+            }
+
+            // 4.2 share-record multiplier จาก ServerBoostAllPayouts หรือ effect แบบ global
+            if (viewer.factoryPortfolio != null &&
+                viewer.factoryPortfolio.TryGetValue(comp.companyName, out var rec))
+            {
+                if (rec.multiplierExpiresAt > curRound &&
+                    !Mathf.Approximately(rec.multiplier, 1f))
+                {
+                    AddBuffBucket(buckets, rec.multiplier, rec.multiplierExpiresAt);
+                }
+            }
+        }
+
+        foreach (var b in buckets.Values)
+        {
+            string kind = b.multiplier > 1f ? "โบนัสปันผล" : "ลดปันผล";
+            string multTxt = b.multiplier.ToString("0.##");
+
+            if (ownedCompanies > 0 && b.count >= ownedCompanies)
+            {
+                // มีผลครอบคลุม “ทุกบริษัทที่ผู้เล่นถืออยู่”
+                lines.Add($"ทุกบริษัทของคุณ: {kind} x{multTxt} จนจบ ‘รอบที่ {b.expiresAtRound}’");
+            }
+            else
+            {
+                // มีผลเฉพาะบางบริษัท (ตามจำนวนใน bucket)
+                lines.Add($"บริษัทของคุณ {b.count} แห่ง: {kind} x{multTxt} จนจบ ‘รอบที่ {b.expiresAtRound}’");
+            }
+        }
+    }
+
+
 }

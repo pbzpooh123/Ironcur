@@ -38,6 +38,10 @@ public class TurnUI : MonoBehaviour
     [Tooltip("Duration of slide animation in seconds.")]
     public float nextEventSlideDuration = 0.25f;
 
+    [Header("Help & Status")]
+    public Button activeEffectsButton;
+
+
     private Coroutine _nextEventSlideCo;
     private PlayerPawn myPawn;
     public static TurnUI Instance;
@@ -70,6 +74,8 @@ public class TurnUI : MonoBehaviour
         if (endTurnButton)       endTurnButton.onClick.AddListener(OnEndTurnClicked);
         if (portfolioButton)     portfolioButton.onClick.AddListener(OnPortfolioClicked);
         if (nextEventToggleButton) nextEventToggleButton.onClick.AddListener(ToggleNextEventPanel);
+        if (activeEffectsButton)
+        activeEffectsButton.onClick.AddListener(OnActiveEffectsClicked);
 
         SetRollInteractable(false);
         SetEndTurnInteractable(false);
@@ -109,6 +115,13 @@ public class TurnUI : MonoBehaviour
             if (p != null && p.IsOwner) { myPawn = p; break; }
         return myPawn;
     }
+
+    private void OnActiveEffectsClicked()
+    {
+        var pawn = GetOrFindLocalPawn();
+        ActiveEffectsUI.Instance?.ShowForPawn(pawn);
+    }
+
 
     private void OnRollDiceClicked()
     {
