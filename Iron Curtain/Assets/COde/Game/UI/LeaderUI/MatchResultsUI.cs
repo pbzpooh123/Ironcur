@@ -1,7 +1,9 @@
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class MatchResultsUI : MonoBehaviour
 {
@@ -15,6 +17,15 @@ public class MatchResultsUI : MonoBehaviour
     [Header("Controls")]
     public Button readyButton;
 
+    [Header("Awards (single text)")]
+    public TMP_Text awardsText;
+
+    [Tooltip("Characters per second for award text typing.")]
+    [SerializeField] private float awardCharsPerSecond = 30f;
+
+    [Tooltip("Pause (seconds) after each line is fully shown.")]
+    [SerializeField] private float awardLinePause = 0.4f;
+
     [Header("Scenes")]
     [SerializeField] private string leaderboardSceneName = "Leaderboard";
 
@@ -23,9 +34,16 @@ public class MatchResultsUI : MonoBehaviour
         Instance = this;
         if (root != null) root.SetActive(false);
         if (readyButton != null) readyButton.interactable = false;
+        if (awardsText != null) awardsText.text = "";
     }
 
-    public void Show(string[] names, int[] startMoney, int[] bailouts, int[] finalScores)
+    public void Show(
+        string[] names, int[] startMoney, int[] bailouts, int[] finalPoints,
+        string portfolioKingName, string incomeKingName, string spendingKingName,
+        string taxVictimName, string unluckyName, string takeoverKingName,
+        string proposalsSharkName, string proposalsAcceptedKingName,
+        string diceGodName
+    )
     {
         if (root != null && !root.activeSelf) root.SetActive(true);
         if (!gameObject.activeInHierarchy) gameObject.SetActive(true);
@@ -38,10 +56,22 @@ public class MatchResultsUI : MonoBehaviour
         }
 
         StopAllCoroutines();
-        StartCoroutine(CoBuildAndAnimate(names, startMoney, bailouts, finalScores));
+        StartCoroutine(CoBuildAndAnimate(
+            names, startMoney, bailouts, finalPoints,
+            portfolioKingName, incomeKingName, spendingKingName,
+            taxVictimName, unluckyName, takeoverKingName,
+            proposalsSharkName, proposalsAcceptedKingName,
+            diceGodName
+        ));
     }
 
-    private IEnumerator CoBuildAndAnimate(string[] names, int[] startMoney, int[] bailouts, int[] finalScores)
+    private IEnumerator CoBuildAndAnimate(
+        string[] names, int[] startMoney, int[] bailouts, int[] finalPoints,
+        string portfolioKingName, string incomeKingName, string spendingKingName,
+        string taxVictimName, string unluckyName, string takeoverKingName,
+        string proposalsSharkName, string proposalsAcceptedKingName,
+        string diceGodName
+    )
     {
         yield return null;
 
@@ -49,13 +79,7 @@ public class MatchResultsUI : MonoBehaviour
         for (int i = rowsParent.childCount - 1; i >= 0; i--)
             Destroy(rowsParent.GetChild(i).gameObject);
 
-        // compute a shared max (avoid 0)
-        int globalMax = 0;
-        for (int i = 0; i < finalScores.Length; i++)
-            if (finalScores[i] > globalMax) globalMax = finalScores[i];
-        if (globalMax <= 0) globalMax = 1;
-
-        // build rows
+        // build one row per player (each row will handle its own drop anim)
         for (int i = 0; i < names.Length; i++)
         {
             var go = Instantiate(rowPrefab, rowsParent);
@@ -63,15 +87,77 @@ public class MatchResultsUI : MonoBehaviour
 
             var row = go.GetComponent<ResultsEntryUI>();
             if (row != null)
-                row.Bind(names[i], startMoney[i], bailouts[i], finalScores[i], i, globalMax);
+                row.Bind(names[i], startMoney[i], bailouts[i], finalPoints[i]);
 
             yield return null;
         }
 
-        // let all tweens start
-        yield return new WaitForSeconds(0.25f);
+        // Build award lines into a list
+        var lines = new List<string>();
+        AddAwardLine(lines, "เจ้าพ่อพอร์ตหุ้น",       portfolioKingName);
+        AddAwardLine(lines, "ราชาเงินเข้า",            incomeKingName);
+        AddAwardLine(lines, "จอมสุรุ่ยสุร่าย",         spendingKingName);
+        AddAwardLine(lines, "เหยื่อภาษีแห่งชาติ",      taxVictimName);
+        AddAwardLine(lines, "ตัวซวยประจำเกม",          unluckyName);
+        AddAwardLine(lines, "นักยึดกิจการอันดับ 1",    takeoverKingName);
+        AddAwardLine(lines, "ฉลามการเงิน",             proposalsSharkName);
+        AddAwardLine(lines, "นักเจรจาโหด",             proposalsAcceptedKingName);
+        AddAwardLine(lines, "เทพลูกเต๋า",               diceGodName);
 
+        // Type out all award lines in a single TMP_Text
+        yield return StartCoroutine(CoTypeAwards(lines));
+
+        // allow Ready after awards are fully shown
         if (readyButton != null) readyButton.interactable = true;
+    }
+
+    private void AddAwardLine(List<string> list, string title, string winnerName)
+    {
+        if (string.IsNullOrWhiteSpace(winnerName) || winnerName == "—")
+            return;
+
+        // 25 points = AWARD_POINTS in TurnManager
+        list.Add($"{title}: {winnerName} (+25 แต้ม)");
+    }
+
+    private IEnumerator CoTypeAwards(List<string> lines)
+    {
+        if (awardsText == null) yield break;
+
+        awardsText.text = "";
+
+        if (lines == null || lines.Count == 0)
+        {
+            // no awards – you can set a default message if you want
+            yield break;
+        }
+
+        float charDelay = (awardCharsPerSecond > 0f)
+            ? 1f / awardCharsPerSecond
+            : 0.03f;
+
+        string builtSoFar = "";
+
+        foreach (var line in lines)
+        {
+            if (string.IsNullOrWhiteSpace(line))
+                continue;
+
+            if (!string.IsNullOrEmpty(builtSoFar))
+                builtSoFar += "\n";
+
+            string prefix = builtSoFar;
+
+            // type this line character by character
+            for (int i = 0; i <= line.Length; i++)
+            {
+                awardsText.text = prefix + line.Substring(0, i);
+                yield return new WaitForSeconds(charDelay);
+            }
+
+            builtSoFar = prefix + line;
+            yield return new WaitForSeconds(awardLinePause);
+        }
     }
 
     private bool _sentReady = false;

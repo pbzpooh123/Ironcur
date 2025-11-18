@@ -543,51 +543,280 @@ public class TurnManager : NetworkBehaviour
         if (roundtext != null) roundtext.text = "เกมจบแล้ว";
 
         var players = GameManager.Instance.Players;
+        int n = players.Count;
+        string[] names     = new string[n];
+        int[] moneyRaw     = new int[n];
+        int[] bailouts     = new int[n];
+        int[] finalPoints  = new int[n];
 
-        // ===== เจ้าพ่อพอร์ตหุ้น (Portfolio King) =====
-        PlayerPawn portfolioKing = null;
-        int bestPortfolioValue = -1;
+        const int AWARD_POINTS = 25;
 
+        // map: player -> bonus points from awards
+        var bonusMap = new Dictionary<PlayerPawn, int>();
+        foreach (var p in players)
+            if (p != null)
+                bonusMap[p] = 0;
+
+        // Track winners for text
+        PlayerPawn incomeKing          = null; // ราชาเงินเข้า
+        PlayerPawn spendingKing        = null; // จอมสุรุ่ยสุร่าย
+        PlayerPawn taxVictim           = null; // เหยื่อภาษีแห่งชาติ
+        PlayerPawn unluckyKing         = null; // ตัวซวยประจำเกม (event loss)
+        PlayerPawn portfolioKing       = null; // เจ้าพ่อพอร์ตหุ้น
+        PlayerPawn takeoverKing        = null; // นักยึดกิจการอันดับ 1
+        PlayerPawn proposalShark       = null; // ฉลามการเงิน (ส่งข้อเสนอ)
+        PlayerPawn proposalAcceptedKing= null; // นักเจรจาโหด (ข้อเสนอผ่าน)
+        PlayerPawn diceGod             = null; // เทพลูกเต๋า
+
+        // === A. เงินไหลเข้า / ไหลออก ===
+
+        // “ราชาเงินเข้า” – statTotalIncome สูงสุด
+        {
+            int bestVal = -1;
+            foreach (var p in players)
+            {
+                if (p == null) continue;
+                if (p.statTotalIncome > bestVal)
+                {
+                    bestVal = p.statTotalIncome;
+                    incomeKing = p;
+                }
+            }
+            if (incomeKing != null && incomeKing.statTotalIncome > 0)
+                bonusMap[incomeKing] += AWARD_POINTS;
+            else
+                incomeKing = null;
+        }
+
+        // “จอมสุรุ่ยสุร่าย” – statTotalSpending สูงสุด
+        {
+            int bestVal = -1;
+            foreach (var p in players)
+            {
+                if (p == null) continue;
+                if (p.statTotalSpending > bestVal)
+                {
+                    bestVal = p.statTotalSpending;
+                    spendingKing = p;
+                }
+            }
+            if (spendingKing != null && spendingKing.statTotalSpending > 0)
+                bonusMap[spendingKing] += AWARD_POINTS;
+            else
+                spendingKing = null;
+        }
+
+        // “เหยื่อภาษีแห่งชาติ” – statTaxPaid สูงสุด
+        {
+            int bestVal = -1;
+            foreach (var p in players)
+            {
+                if (p == null) continue;
+                if (p.statTaxPaid > bestVal)
+                {
+                    bestVal = p.statTaxPaid;
+                    taxVictim = p;
+                }
+            }
+            if (taxVictim != null && taxVictim.statTaxPaid > 0)
+                bonusMap[taxVictim] += AWARD_POINTS;
+            else
+                taxVictim = null;
+        }
+
+        // “ตัวซวยประจำเกม” – statEventLoss สูงสุด
+        {
+            int bestVal = -1;
+            foreach (var p in players)
+            {
+                if (p == null) continue;
+                if (p.statEventLoss > bestVal)
+                {
+                    bestVal = p.statEventLoss;
+                    unluckyKing = p;
+                }
+            }
+            if (unluckyKing != null && unluckyKing.statEventLoss > 0)
+                bonusMap[unluckyKing] += AWARD_POINTS;
+            else
+                unluckyKing = null;
+        }
+
+        // === B. สายลงทุน / ตลาดหุ้น ===
+
+        // “เจ้าพ่อพอร์ตหุ้น” – มูลค่าพอร์ต (ไม่รวมเงินสด) สูงสุด
         if (MarketManager.Instance != null)
         {
+            int bestVal = -1;
             foreach (var p in players)
             {
                 if (p == null) continue;
                 int v = MarketManager.Instance.ComputePortfolioValue(p);
-                if (v > bestPortfolioValue)
+                if (v > bestVal)
                 {
-                    bestPortfolioValue = v;
+                    bestVal = v;
                     portfolioKing = p;
                 }
             }
+            if (portfolioKing != null && MarketManager.Instance.ComputePortfolioValue(portfolioKing) > 0)
+                bonusMap[portfolioKing] += AWARD_POINTS;
+            else
+                portfolioKing = null;
         }
 
-        if (portfolioKing != null)
+        // “นักยึดกิจการอันดับ 1” – statTakeoversWon สูงสุด
         {
-            Debug.Log($"[Awards] เจ้าพ่อพอร์ตหุ้น = {portfolioKing.playerName.Value} (พอร์ต = {bestPortfolioValue})");
+            int bestVal = -1;
+            foreach (var p in players)
+            {
+                if (p == null) continue;
+                if (p.statTakeoversWon > bestVal)
+                {
+                    bestVal = p.statTakeoversWon;
+                    takeoverKing = p;
+                }
+            }
+            if (takeoverKing != null && takeoverKing.statTakeoversWon > 0)
+                bonusMap[takeoverKing] += AWARD_POINTS;
+            else
+                takeoverKing = null;
         }
 
-        int n = players.Count;
-        string[] names = new string[n];
-        int[] moneys = new int[n];
-        int[] bailouts = new int[n];
-        int[] finals = new int[n];
+        // “ฉลามการเงิน” – statProposalsSent สูงสุด
+        {
+            int bestVal = -1;
+            foreach (var p in players)
+            {
+                if (p == null) continue;
+                if (p.statProposalsSent > bestVal)
+                {
+                    bestVal = p.statProposalsSent;
+                    proposalShark = p;
+                }
+            }
+            if (proposalShark != null && proposalShark.statProposalsSent > 0)
+                bonusMap[proposalShark] += AWARD_POINTS;
+            else
+                proposalShark = null;
+        }
+
+        // “นักเจรจาโหด” – statProposalsAccepted สูงสุด
+        {
+            int bestVal = -1;
+            foreach (var p in players)
+            {
+                if (p == null) continue;
+                if (p.statProposalsAccepted > bestVal)
+                {
+                    bestVal = p.statProposalsAccepted;
+                    proposalAcceptedKing = p;
+                }
+            }
+            if (proposalAcceptedKing != null && proposalAcceptedKing.statProposalsAccepted > 0)
+                bonusMap[proposalAcceptedKing] += AWARD_POINTS;
+            else
+                proposalAcceptedKing = null;
+        }
+
+        // === C. Movement / Dice ===
+
+        // “เทพลูกเต๋า” – statTotalRollSum สูงสุด
+        {
+            int bestVal = -1;
+            foreach (var p in players)
+            {
+                if (p == null) continue;
+                if (p.statTotalRollSum > bestVal)
+                {
+                    bestVal = p.statTotalRollSum;
+                    diceGod = p;
+                }
+            }
+            if (diceGod != null && diceGod.statTotalRollSum > 0)
+                bonusMap[diceGod] += AWARD_POINTS;
+            else
+                diceGod = null;
+        }
+
+        // === D. คำนวณคะแนนสุดท้าย (เงิน → แต้ม + โบนัส) ===
 
         for (int i = 0; i < n; i++)
         {
             var p = players[i];
-            names[i]   = string.IsNullOrWhiteSpace(p.playerName.Value) ? $"Player {i + 1}" : p.playerName.Value;
-            moneys[i]  = p.money.Value;
-            bailouts[i]= p.bailoutMarks.Value;
-            finals[i]  = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
+            if (p == null) continue;
+
+            names[i]    = string.IsNullOrWhiteSpace(p.playerName.Value) ? $"Player {i + 1}" : p.playerName.Value;
+            moneyRaw[i] = p.money.Value;
+            bailouts[i] = p.bailoutMarks.Value;
+
+            int netMoney   = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
+            int basePoints = netMoney / 100;
+
+            int bonus = 0;
+            if (bonusMap.TryGetValue(p, out var b))
+                bonus = b;
+
+            finalPoints[i] = Mathf.Max(0, basePoints + bonus);
         }
 
-        RpcShowFinalResults(names, moneys, bailouts, finals);
+        // === E. เตรียมชื่อสำหรับ UI Badge Text ===
+        string portfolioKingName        = GetNameOrDash(portfolioKing);
+        string incomeKingName           = GetNameOrDash(incomeKing);
+        string spendingKingName         = GetNameOrDash(spendingKing);
+        string taxVictimName            = GetNameOrDash(taxVictim);
+        string unluckyName              = GetNameOrDash(unluckyKing);
+        string takeoverKingName         = GetNameOrDash(takeoverKing);
+        string proposalSharkName        = GetNameOrDash(proposalShark);
+        string proposalAcceptedKingName = GetNameOrDash(proposalAcceptedKing);
+        string diceGodName              = GetNameOrDash(diceGod);
 
-        _resultsReady = 0;
+        // ส่งไป UI – finals = “แต้มรวม”
+        RpcShowFinalResults(
+            names, moneyRaw, bailouts, finalPoints,
+            portfolioKingName, incomeKingName, spendingKingName,
+            taxVictimName, unluckyName, takeoverKingName,
+            proposalSharkName, proposalAcceptedKingName,
+            diceGodName
+        );
+
+        _resultsReady    = 0;
         _resultsRequired = Mathf.Max(1, n);
+        _readyClientIds  = null;
     }
 
+    private string GetNameOrDash(PlayerPawn p)
+    {
+        if (p == null)
+            return "—";
+
+        // playerName is a SyncVar, don't null-check the field itself
+        string nm = p.playerName.Value;
+
+        if (string.IsNullOrWhiteSpace(nm))
+            return "Player";
+
+        return nm;
+    }
+
+
+
+    [ObserversRpc(BufferLast = true)]
+    private void RpcShowFinalResults(
+        string[] names, int[] moneys, int[] bailouts, int[] finals,
+        string portfolioKingName, string incomeKingName, string spendingKingName,
+        string taxVictimName, string unluckyName, string takeoverKingName,
+        string proposalsSharkName, string proposalsAcceptedKingName,
+        string diceGodName
+    )
+    {
+        MatchResultsUI.Instance?.Show(
+            names, moneys, bailouts, finals,
+            portfolioKingName, incomeKingName, spendingKingName,
+            taxVictimName, unluckyName, takeoverKingName,
+            proposalsSharkName, proposalsAcceptedKingName,
+            diceGodName
+        );
+    }
 
     [ObserversRpc(BufferLast = true)]
     private void RpcOnGameEnded(string reason)
@@ -612,11 +841,6 @@ public class TurnManager : NetworkBehaviour
         }
     }
 
-    [ObserversRpc(BufferLast = true)]
-    private void RpcShowFinalResults(string[] names, int[] moneys, int[] bailouts, int[] finals)
-    {
-        MatchResultsUI.Instance?.Show(names, moneys, bailouts, finals);
-    }
 
     [ServerRpc(RequireOwnership = false)]
     public void CmdFinalResultsReady(FishNet.Connection.NetworkConnection conn = null)
@@ -812,4 +1036,25 @@ public class TurnManager : NetworkBehaviour
         EventManager.Instance?.OnServerPlayerRolled(pawn, total);
         pawn.TargetShowDiceAndMove(pawn.Owner, d1, d2, total);
     }
+
+    private int GetIndexOfMax(int[] arr)
+{
+    if (arr == null || arr.Length == 0) return -1;
+
+    int bestIdx = -1;
+    int bestVal = int.MinValue;
+
+    for (int i = 0; i < arr.Length; i++)
+    {
+        if (arr[i] > bestVal)
+        {
+            bestVal = arr[i];
+            bestIdx = i;
+        }
+    }
+
+    // ถ้าค่ามากสุด <= 0 แปลว่าไม่มีใครโดดเด่นจริง ๆ → ไม่ให้รางวัล
+    return (bestVal <= 0) ? -1 : bestIdx;
+}
+
 }

@@ -1,73 +1,196 @@
 using System.Collections;
 using UnityEngine;
-using TMPro;
 using UnityEngine.UI;
+using TMPro;
 
 public class ResultsEntryUI : MonoBehaviour
 {
+    [Header("Basic UI")]
     public TMP_Text nameText;
-    public TMP_Text scoreText;
-    public TMP_Text bailoutText;
-    public Slider scoreBar; // set Min=0, Max=1, WholeNumbers=false on prefab
+    public TMP_Text pointsText;          // single label: final total points
+
+    [Header("Player Portrait")]
+    public Image playerIcon;             // sprite from PlayerPawn
+
+    [Header("Drop Icon")]
+    public Image pointIcon;              // we move & recolor this
+    public RectTransform dropTarget;     // where it should land (over/near player)
+    public float dropOffsetY = 150f;     // how high the icon starts above target
+
+    [Header("Sprites + Colors")]
+    public Sprite pointSprite;           // gold coin for money
+    public Sprite badgeSprite;           // badge/trophy for awards
+    public Color basePointColor    = Color.white;
+    public Color bailoutPointColor = Color.red;
+    public Color awardPointColor   = Color.yellow;
 
     private Coroutine _co;
+    private int _scoreAnim;              // shared score during animation
 
-    /// <param name="globalMax">shared max across ALL players (>=1)</param>
-    public void Bind(string playerName, int startMoney, int bailoutCount, int finalScore, int rankIndex, int globalMax)
+    /// <summary>
+    /// moneyRaw: เงินสดสุดท้าย (จาก server)
+    /// bailoutCount: จำนวน bailout marks
+    /// finalPoints: แต้มสุดท้ายที่ server ส่งมา (เงิน→แต้ม + โบนัสจาก awards)
+    /// </summary>
+    public void Bind(string playerName, int moneyRaw, int bailoutCount, int finalPoints)
     {
         if (!gameObject.activeInHierarchy)
             gameObject.SetActive(true);
 
-        if (_co != null) StopCoroutine(_co);
-        _co = StartCoroutine(CoAnimate(playerName, bailoutCount, finalScore, globalMax));
+        SetupPlayerPortrait(playerName);
+
+        if (_co != null)
+            StopCoroutine(_co);
+
+        _co = StartCoroutine(CoAnimate(playerName, moneyRaw, bailoutCount, finalPoints));
     }
 
-    private IEnumerator CoAnimate(string playerName, int bailoutCount, int finalScore, int globalMax)
+    private void SetupPlayerPortrait(string playerName)
     {
-        // Labels
-        if (nameText) nameText.text = playerName;
+        if (playerIcon == null) return;
+        if (GameManager.Instance == null) return;
 
-        // Bailout label: show count (you can switch to penalty text if you prefer)
-        if (bailoutText) bailoutText.text = $"Bailout Penalty : -{bailoutCount * 100}";
+        PlayerPawn pawn = null;
 
-
-        // Bar baseline
-        if (scoreBar)
+        foreach (var p in GameManager.Instance.Players)
         {
-            scoreBar.minValue = 0f;
-            scoreBar.maxValue = 1f; // shared normalization
-            scoreBar.wholeNumbers = false;
-            scoreBar.value = 0f;
+            if (p == null) continue;
+            if (p.playerName.Value == playerName)
+            {
+                pawn = p;
+                break;
+            }
         }
 
-        // Start score label at 0 with prefix
-        if (scoreText) scoreText.text = "Score : 0";
+        if (pawn == null) return;
+
+        var lib = CharacterLibrary.Instance;
+        if (lib != null)
+        {
+            var sprite = lib.GetSprite(pawn.colorIndex.Value);
+            if (sprite != null)
+                playerIcon.sprite = sprite;
+        }
+
+        playerIcon.color = PlayerColors.GetOr(Color.white, pawn.colorIndex.Value);
+    }
+
+    private IEnumerator CoAnimate(string playerName, int moneyRaw, int bailoutCount, int finalPoints)
+    {
+        if (nameText)   nameText.text   = playerName;
+        if (pointsText) pointsText.text = "แต้มรวม: 0";
 
         yield return null;
 
-        float dur = 1.25f;
+        // 1) Decompose points
+        int rawMoneyPoints       = Mathf.Max(0, moneyRaw / 100);   // 100$ = 1 point
+        int bailoutPenaltyPoints = Mathf.Max(0, bailoutCount);     // each bailout = -1 point
+        int baseAfterPenalty     = Mathf.Max(0, rawMoneyPoints - bailoutPenaltyPoints);
+        int awardBonusPoints     = Mathf.Max(0, finalPoints - baseAfterPenalty);
+
+        int currentScore = 0;
+        _scoreAnim = currentScore;
+
+        // Stage 1: money points (gold)
+        if (rawMoneyPoints > 0)
+        {
+            _scoreAnim = currentScore;
+            yield return DropStage(
+                rawMoneyPoints,
+                pointSprite,
+                basePointColor,
+                0.6f
+            );
+            currentScore = _scoreAnim;
+        }
+
+        // Stage 2: bailout penalty (red, subtract)
+        if (bailoutPenaltyPoints > 0)
+        {
+            _scoreAnim = currentScore;
+            yield return DropStage(
+                -bailoutPenaltyPoints,
+                pointSprite,
+                bailoutPointColor,
+                0.6f
+            );
+            currentScore = _scoreAnim;
+        }
+
+        // Stage 3: award bonus (badge)
+        if (awardBonusPoints > 0)
+        {
+            Sprite s = (badgeSprite != null) ? badgeSprite : pointSprite;
+            _scoreAnim = currentScore;
+            yield return DropStage(
+                awardBonusPoints,
+                s,
+                awardPointColor,
+                0.6f
+            );
+            currentScore = _scoreAnim;
+        }
+
+        // Snap to authoritative value
+        currentScore = finalPoints;
+        _scoreAnim   = finalPoints;
+        if (pointsText) pointsText.text = $"แต้มรวม: {currentScore}";
+
+        _co = null;
+    }
+
+    private IEnumerator DropStage(
+        int delta,
+        Sprite sprite,
+        Color color,
+        float duration
+    )
+    {
+        if (delta == 0)
+            yield break;
+
+        if (pointIcon == null || dropTarget == null)
+        {
+            // no animation object, just snap score
+            _scoreAnim += delta;
+            if (pointsText) pointsText.text = $"แต้มรวม: {_scoreAnim}";
+            yield break;
+        }
+
+        RectTransform rt = pointIcon.rectTransform;
+        rt.gameObject.SetActive(true);
+
+        if (sprite != null)
+            pointIcon.sprite = sprite;
+        pointIcon.color = color;
+
+        Vector2 end   = dropTarget.anchoredPosition;
+        Vector2 start = end + new Vector2(0f, dropOffsetY);
+        rt.anchoredPosition = start;
+
+        int from = _scoreAnim;
+        int to   = _scoreAnim + delta;
+
         float t = 0f;
-
-        // target normalized fraction vs shared max
-        float targetNorm = Mathf.Clamp01(finalScore / (float)globalMax);
-
-        while (t < dur)
+        while (t < duration)
         {
             t += Time.unscaledDeltaTime;
-            float k = Mathf.Clamp01(t / dur);
+            float k     = Mathf.Clamp01(t / duration);
+            float eased = k * k * (3f - 2f * k); // SmoothStep
 
-            int shown = Mathf.RoundToInt(Mathf.Lerp(0, finalScore, k));
-            float norm = Mathf.Lerp(0f, targetNorm, k);
+            rt.anchoredPosition = Vector2.Lerp(start, end, eased);
 
-            if (scoreText) scoreText.text = $"Score : {shown}";
-            if (scoreBar) scoreBar.value = norm;
+            int shown   = Mathf.RoundToInt(Mathf.Lerp(from, to, eased));
+            _scoreAnim  = shown;
+            if (pointsText) pointsText.text = $"แต้มรวม: {shown}";
 
             yield return null;
         }
 
-        if (scoreText) scoreText.text = $"Score : {finalScore}";
-        if (scoreBar) scoreBar.value = targetNorm;
+        rt.anchoredPosition = end;
+        _scoreAnim = to;
+        if (pointsText) pointsText.text = $"แต้มรวม: {to}";
 
-        _co = null;
+        yield return new WaitForSeconds(0.1f);
     }
 }
