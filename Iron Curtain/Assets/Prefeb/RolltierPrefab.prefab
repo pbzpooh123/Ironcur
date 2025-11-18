@@ -367,12 +367,12 @@ MonoBehaviour:
   resultText: {fileID: 1581714867070287460}
   rollButton: {fileID: 2369218040304520952}
   diceFaces:
-  - {fileID: 21300000, guid: 62785aab5c6fc2040890cf13dbc52e0d, type: 3}
-  - {fileID: 21300000, guid: a6e621738f726cf4ebf5203635c0b293, type: 3}
-  - {fileID: 21300000, guid: 36ffde98266718b49a3b5cdc3c06cf2c, type: 3}
-  - {fileID: 21300000, guid: 5590cc251b9f085448d6de5d02c304df, type: 3}
-  - {fileID: 21300000, guid: aacbdc595eb5aa247ad49196d03be97c, type: 3}
-  - {fileID: 21300000, guid: c1b0e6938b38c344996f7be7f4ec647d, type: 3}
+  - {fileID: 21300000, guid: 13e5cf98e7fe116408120669a7b2dfe4, type: 3}
+  - {fileID: 21300000, guid: 12cde96d9c84d03469b2da7dae172d19, type: 3}
+  - {fileID: 21300000, guid: 28152f6a4ed1540458029fa1ea919f73, type: 3}
+  - {fileID: 21300000, guid: 2d44321cbcf6f5c429c538f19a1d86b6, type: 3}
+  - {fileID: 21300000, guid: 200336040ac7b0644b34e4a9f9bcb9ab, type: 3}
+  - {fileID: 21300000, guid: cf9da7bed00431d48a4d596bf2978876, type: 3}
 --- !u!1 &4728227521817632780
 GameObject:
   m_ObjectHideFlags: 0
@@ -431,14 +431,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 1}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 13e5cf98e7fe116408120669a7b2dfe4, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

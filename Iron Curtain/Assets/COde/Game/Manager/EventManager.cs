@@ -417,6 +417,17 @@ public class EventManager : NetworkBehaviour
             totalMoney += Random.Range(effect.randomMoneyMin, effect.randomMoneyMax + 1);
             pawn.AddMoney(totalMoney);
 
+            if (totalMoney != 0)
+            {
+                pawn.AddMoney(totalMoney);
+
+                if (totalMoney < 0)
+                {
+                    int lost = -totalMoney;
+                    pawn.statEventLoss += lost;
+                }
+            }
+
             if (effect.skipTurn)
                 TurnManager.Instance.MarkSkipTurn(pawn, Mathf.Max(1, effect.duration));
 

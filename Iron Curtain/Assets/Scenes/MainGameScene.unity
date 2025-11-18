@@ -1807,7 +1807,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1482956140}
-  companyIcon: {fileID: 0}
+  companyIcon: {fileID: 21300000, guid: 5f23038aea3475844bbbd42ceeafeae8, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -2146,7 +2146,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1084439456}
-  companyIcon: {fileID: 0}
+  companyIcon: {fileID: 21300000, guid: 2952e9318a9d5a044a69c1f658bae227, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -3312,7 +3312,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 417236645}
-  companyIcon: {fileID: 0}
+  companyIcon: {fileID: 21300000, guid: a046daeff479f174caeb5c1f8f24c904, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -5902,7 +5902,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 391063661}
-  companyIcon: {fileID: 0}
+  companyIcon: {fileID: 21300000, guid: 671a1b37295ea9b4b90befc13ba4658d, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -11109,7 +11109,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1665778506}
-  companyIcon: {fileID: 0}
+  companyIcon: {fileID: 21300000, guid: f37bfc28fba7771459d599b353fa4636, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -12266,7 +12266,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 62882547}
-  companyIcon: {fileID: 0}
+  companyIcon: {fileID: 21300000, guid: 493fdb97d523f67499352fb1c65e88f3, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -13890,7 +13890,6 @@ RectTransform:
   - {fileID: 348282390}
   - {fileID: 2025619131}
   - {fileID: 1198900923}
-  - {fileID: 1341864437}
   - {fileID: 306356295}
   - {fileID: 1223464909}
   - {fileID: 1070390113}
@@ -13904,6 +13903,7 @@ RectTransform:
   - {fileID: 69321818}
   - {fileID: 1037992360}
   - {fileID: 602629533}
+  - {fileID: 1341864437}
   - {fileID: 319205861}
   - {fileID: 2127695020}
   - {fileID: 1353033742}
@@ -14243,7 +14243,7 @@ MonoBehaviour:
   pinned: 0
   corner: 3
   margin: {x: 220.8, y: 146}
-  mouseOffset: {x: 200, y: -150}
+  mouseOffset: {x: 200, y: -150.4}
 --- !u!114 &1024428446
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17663,7 +17663,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 2068336577}
-  companyIcon: {fileID: 0}
+  companyIcon: {fileID: 21300000, guid: c87aece8e23781243afa37e1955b9018, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -20824,7 +20824,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 1553354581}
-  companyIcon: {fileID: 0}
+  companyIcon: {fileID: 21300000, guid: e0f7fa63cb1994e4e9a5abfe5bd2e1a7, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -26003,7 +26003,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 735281570}
-  companyIcon: {fileID: 0}
+  companyIcon: {fileID: 21300000, guid: 5f23038aea3475844bbbd42ceeafeae8, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0
@@ -26216,7 +26216,7 @@ MonoBehaviour:
   bonusAmount: 0
   jailSkipTurns: 0
   visuals: {fileID: 776032847}
-  companyIcon: {fileID: 0}
+  companyIcon: {fileID: 21300000, guid: adc30e7764765ee48b9cdaf6e6e6f7e3, type: 3}
   enableStealOnLanding: 1
   stealPercentOfOwnerMoney: 10
   stealFlatMin: 0

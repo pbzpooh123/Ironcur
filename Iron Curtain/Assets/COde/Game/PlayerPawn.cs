@@ -212,15 +212,33 @@ public class PlayerPawn : NetworkBehaviour
 
 
     /* ---------- Money ---------- */
-    [Server] public void AddMoney(int amount) => money.Value += amount;
+    [Server]
+    public void AddMoney(int amount)
+    {
+        money.Value += amount;
+
+        if (amount > 0)
+        {
+            statTotalIncome += amount;
+        }
+        else if (amount < 0)
+        {
+            int lost = -amount;
+            statTotalSpending += lost;
+        }
+    }
 
     [Server]
     public bool TrySpendMoney(int amount)
     {
+        if (amount <= 0) return true;
         if (money.Value < amount) return false;
+
         money.Value -= amount;
+        statTotalSpending += amount;
         return true;
     }
+
 
     [TargetRpc]
     private void TargetNotifyBailout(NetworkConnection conn, int marks, int currentMoney)
@@ -246,16 +264,18 @@ public class PlayerPawn : NetworkBehaviour
     {
         if (!TurnManager.Instance.CanRoll(this)) return;
 
-        int d1 = Random.Range(1, 7); // upper bound exclusive for int
+        int d1 = Random.Range(1, 7); 
         int d2 = Random.Range(1, 7);
         int total = d1 + d2;
         lastRoll.Value = total;
-        // Rule hooks (e.g., Odd Fine)
-        
+        statTotalRollSum += d1 + d2;
+        if (d1 == 6) statSixRolled++;
+        if (d2 == 6) statSixRolled++;
         EventManager.Instance?.OnServerPlayerRolled(this, total);
 
         TargetShowDiceAndMove(Owner, d1, d2, total);
     }
+
 
     [TargetRpc]
     public void TargetShowDiceAndMove(NetworkConnection conn, int d1, int d2, int totalSteps)
@@ -277,7 +297,6 @@ public class PlayerPawn : NetworkBehaviour
     private void CmdStartMovement(int steps)
     {
         if (!IsServerInitialized) return;
-        // Only the server moves the transform
         StopAllCoroutines();
         StartCoroutine(ServerMoveStepByStep(steps));
        
@@ -453,9 +472,11 @@ public class PlayerPawn : NetworkBehaviour
                     int totalOwed = Mathf.Max(0, data.taxFlat + percentPart);
 
                     int paid = PayWithOptionalBailouts(totalOwed, allowBailout: true, maxBailouts: 5);
+                    if (paid > 0)
+                    statTaxPaid += paid;
 
                     // Show panel and wait; Ready will call CmdTileActionComplete()
-                    TargetShowTilePopupAndWait(Owner, $"TAX: Owed ${totalOwed}M. Paid ${paid}M.");
+                    TargetShowTilePopupAndWait(Owner, $"ภาษี: จ่าย ${paid}M.");
                     return;
                 }
 
@@ -466,8 +487,9 @@ public class PlayerPawn : NetworkBehaviour
 
                     int bonus = Mathf.Max(0, data.bonusAmount);
                     if (bonus > 0) AddMoney(bonus);
+                    
 
-                    TargetShowTilePopupAndWait(Owner, $"BONUS: You received ${bonus}M.");
+                    TargetShowTilePopupAndWait(Owner, $"โบนัส: คุณได้รับ ${bonus}M.");
                     return;
                 }
 
@@ -478,7 +500,7 @@ public class PlayerPawn : NetworkBehaviour
 
                     ServerSetJail(2); // e.g., 2 jailed turns
 
-                    TargetShowTilePopupAndWait(Owner, $"You are jailed for {jailTurnsLeft.Value} turn(s).");
+                    TargetShowTilePopupAndWait(Owner, $"คุณถูกจองจำเป็นเวลา {jailTurnsLeft.Value} รอบ");
                     return;
                 }
         }
@@ -768,6 +790,20 @@ public class PlayerPawn : NetworkBehaviour
             });
         }
     }
+
+    // ================= END-GAME STATS =================
+    [Header("End Game Stats")]
+    public int statTotalIncome;       
+    public int statTotalSpending;     
+    public int statTaxPaid;          
+    public int statEventLoss;      
+
+    public int statProposalsSent;   
+    public int statProposalsAccepted;  
+    public int statTakeoversWon;     
+
+    public int statTotalRollSum;     
+    public int statSixRolled;        
 
 
 }

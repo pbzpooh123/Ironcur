@@ -247,7 +247,7 @@ public class ProposalUI : MonoBehaviour
 
     /* ================== Forced Buy bar ================== */
 
-    private void UpdateForcedBuyBarState()
+   private void UpdateForcedBuyBarState()
     {
         bool hasTarget = (_itemsCache.Count > 0);
         if (forcedBuyButton != null) forcedBuyButton.interactable = hasTarget;
@@ -256,13 +256,12 @@ public class ProposalUI : MonoBehaviour
         {
             if (string.IsNullOrWhiteSpace(forcedBuyPercentInput.text))
             {
-                int minPct = (MarketManager.Instance != null)
-                    ? MarketManager.Instance.forcedBuyMinPercent
-                    : 10;
-                forcedBuyPercentInput.text = Mathf.Clamp(minPct, 1, 100).ToString();
+                var (minPct, maxPct) = GetForcedBuyBounds();
+                forcedBuyPercentInput.text = minPct.ToString();
             }
         }
     }
+
 
     private CompanyRecord GetVisibleCompany()
     {
@@ -278,7 +277,7 @@ public class ProposalUI : MonoBehaviour
 
         if (comp == null)
         {
-            if (forcedBuyPriceText) forcedBuyPriceText.text = "Price: —";
+            if (forcedBuyPriceText) forcedBuyPriceText.text = "ราคา: —";
             return;
         }
 
@@ -286,9 +285,17 @@ public class ProposalUI : MonoBehaviour
         if (!forcedBuyPercentInput || !int.TryParse(forcedBuyPercentInput.text, out pct))
             pct = 10;
 
-        // Respect server’s min percent
-        int minPct = (MarketManager.Instance != null) ? MarketManager.Instance.forcedBuyMinPercent : 1;
-        pct = Mathf.Clamp(pct, Mathf.Max(1, minPct), 100);
+        // Clamp between min & max (e.g. 20–40)
+        var (minPct, maxPct) = GetForcedBuyBounds();
+        pct = Mathf.Clamp(pct, minPct, maxPct);
+
+        // Make sure the field shows the clamped value (avoid infinite loop)
+        if (forcedBuyPercentInput != null)
+        {
+            string newText = pct.ToString();
+            if (forcedBuyPercentInput.text != newText)
+                forcedBuyPercentInput.text = newText;
+        }
 
         // Exact preview (includes surcharge)
         int transferablePct, livePriceUsed;
@@ -298,12 +305,11 @@ public class ProposalUI : MonoBehaviour
 
         if (transferablePct <= 0)
         {
-            if (forcedBuyPriceText) forcedBuyPriceText.text = "Price: — (no transferable %)";
+            if (forcedBuyPriceText) forcedBuyPriceText.text = "ราคา: — (ไม่มี % ที่โอนย้ายได้)";
             if (forcedBuyButton) forcedBuyButton.interactable = false;
             return;
         }
 
-        // Build the breakdown (core + surcharge) to match server formula
         float prem = Mathf.Max(1f, MarketManager.Instance.forcedBuyPriceMult.Value);
         float coreF = livePriceUsed * (transferablePct / 100f) * prem;
         int core = Mathf.Max(1, Mathf.RoundToInt(coreF));
@@ -316,17 +322,13 @@ public class ProposalUI : MonoBehaviour
         bool enoughCash = allowsDebt || buyerCash >= finalPrice;
 
         if (forcedBuyPriceText)
-        {
-            // Example: "Price: $430M (core≈$300M + surcharge≈$130M)"
-            forcedBuyPriceText.text = enoughCash
-                ? $"ราคา: ${finalPrice}M  (core≈${core}M + surcharge≈${surcharge}M)"
-                : $"ราคา: ${finalPrice}M  (core≈${core}M + surcharge≈${surcharge}M) — เงินสดไม่เพียงพอ";
-        }
+            forcedBuyPriceText.text = $"ราคา: ${finalPrice}M";
 
         if (forcedBuyButton) forcedBuyButton.interactable = enoughCash;
     }
 
-    private void OnClickForcedBuy()
+
+   private void OnClickForcedBuy()
     {
         var comp = GetVisibleCompany();
         if (comp == null) return;
@@ -335,7 +337,9 @@ public class ProposalUI : MonoBehaviour
         if (forcedBuyPercentInput && !int.TryParse(forcedBuyPercentInput.text, out pct))
             pct = 10;
 
-        // Send the *transferable* pct so UI and server match 1:1
+        var (minPct, maxPct) = GetForcedBuyBounds();
+        pct = Mathf.Clamp(pct, minPct, maxPct);
+
         int transferablePct, _;
         MarketManager.Instance.ClientPreviewForcedBuyPrice(comp, currentPawn, pct, out transferablePct, out _);
         if (transferablePct <= 0) return;
@@ -348,6 +352,7 @@ public class ProposalUI : MonoBehaviour
             StartCoroutine(ReenableForcedBuySoon());
         }
     }
+
 
     private System.Collections.IEnumerator ReenableForcedBuySoon()
     {
@@ -362,4 +367,19 @@ public class ProposalUI : MonoBehaviour
         if (panel != null && panel.activeInHierarchy)
             UpdateForcedBuyUI();
     }
+
+    private (int minPct, int maxPct) GetForcedBuyBounds()
+    {
+        int minPct = 1;
+        int maxPct = 100;
+
+        if (MarketManager.Instance != null)
+        {
+            minPct = Mathf.Clamp(MarketManager.Instance.forcedBuyMinPercent, 1, 100);
+            maxPct = Mathf.Clamp(MarketManager.Instance.forcedBuyPercentCapPerTurn, minPct, 100);
+        }
+
+        return (minPct, maxPct);
+    }
+
 }

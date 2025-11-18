@@ -543,6 +543,30 @@ public class TurnManager : NetworkBehaviour
         if (roundtext != null) roundtext.text = "เกมจบแล้ว";
 
         var players = GameManager.Instance.Players;
+
+        // ===== เจ้าพ่อพอร์ตหุ้น (Portfolio King) =====
+        PlayerPawn portfolioKing = null;
+        int bestPortfolioValue = -1;
+
+        if (MarketManager.Instance != null)
+        {
+            foreach (var p in players)
+            {
+                if (p == null) continue;
+                int v = MarketManager.Instance.ComputePortfolioValue(p);
+                if (v > bestPortfolioValue)
+                {
+                    bestPortfolioValue = v;
+                    portfolioKing = p;
+                }
+            }
+        }
+
+        if (portfolioKing != null)
+        {
+            Debug.Log($"[Awards] เจ้าพ่อพอร์ตหุ้น = {portfolioKing.playerName.Value} (พอร์ต = {bestPortfolioValue})");
+        }
+
         int n = players.Count;
         string[] names = new string[n];
         int[] moneys = new int[n];
@@ -563,6 +587,7 @@ public class TurnManager : NetworkBehaviour
         _resultsReady = 0;
         _resultsRequired = Mathf.Max(1, n);
     }
+
 
     [ObserversRpc(BufferLast = true)]
     private void RpcOnGameEnded(string reason)

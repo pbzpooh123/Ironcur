@@ -470,7 +470,7 @@ public class MarketManager : NetworkBehaviour
         company.proposals.Add(new Proposal { proposer = proposer, percent = maxTransfer, price = price });
         set.Add(companyName);
         SyncProposalsToClients(companyName);
-        Debug.Log($"[Market] {proposer.playerName.Value} proposed {maxTransfer}% of {companyName} for ${price}");
+        proposer.statProposalsSent++;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -540,6 +540,9 @@ public class MarketManager : NetworkBehaviour
             return;
         }
 
+        if (proposal.proposer != null)
+        proposal.proposer.statProposalsAccepted++;
+
         prevOwner.AddMoney(proposal.price);
 
         company.SetOwnership(prevOwner, sellerAvail - transfer);
@@ -551,6 +554,8 @@ public class MarketManager : NetworkBehaviour
         {
             company.owner = majority;
             company.ownerName = majority.playerName.Value;
+            if (majority != null)
+            majority.statTakeoversWon++;
 
             RpcSyncMajorityOwner(companyName, company.ownerName);
             RpcUpdateTileOwner(companyName, company.ownerName, majority.colorIndex.Value);
@@ -713,7 +718,10 @@ public class MarketManager : NetworkBehaviour
         }
 
         foreach (var kv in totals)
+        {
             kv.Key.AddMoney(kv.Value);
+        }
+
     }
 
     private TileData FindTileByCompanyName(string companyName)
@@ -1240,13 +1248,12 @@ public class MarketManager : NetworkBehaviour
         float prem = Mathf.Max(1f, forcedBuyPriceMult.Value);
         float core = live * (xfer / 100f) * prem;
 
-        // NEW: “hurt tax” = % of buyer's current money (pre-payment)
         float surcharge = Mathf.Max(0f, buyer.money.Value) * Mathf.Max(0f, forcedBuySurchargeOfCash.Value);
-
-        float costF = core + surcharge;
+        float costF = (core + surcharge) * GetForcedBuyInflation();
 
         transferablePct = xfer;
         return Mathf.Max(1, Mathf.RoundToInt(costF));
+
 }
 
 
@@ -1281,9 +1288,13 @@ public class MarketManager : NetworkBehaviour
         int live = GetLivePriceOrBase(companyName, comp.baseCost);
         float prem = Mathf.Max(1f, forcedBuyPriceMult.Value);
         float core = live * (xfer / 100f) * prem;
+
         int buyerCashBefore = Mathf.Max(0, buyer.money.Value);
         float surchargeF = buyerCashBefore * Mathf.Max(0f, forcedBuySurchargeOfCash.Value);
-        int cost = Mathf.Max(1, Mathf.RoundToInt(core + surchargeF));
+
+        float totalF = (core + surchargeF) * GetForcedBuyInflation();
+        int cost = Mathf.Max(1, Mathf.RoundToInt(totalF));
+
 
         bool ok = forcedBuyAllowsDebt.Value
             ? TryPayWithBailouts(buyer, cost, forcedBuyMaxBailouts.Value)
@@ -1301,6 +1312,8 @@ public class MarketManager : NetworkBehaviour
         {
             comp.owner = majority;
             comp.ownerName = majority.playerName.Value;
+            if (majority != null)
+            majority.statTakeoversWon++;
             RpcSyncMajorityOwner(comp.companyName, comp.ownerName);
             RpcUpdateTileOwner(comp.companyName, comp.ownerName, majority.colorIndex.Value);
             Notifier.Instance?.ToastAll($"{majority.playerName.Value} ได้เข้าควบคุม {companyName} แล้ว!", ToastKind.Success);
@@ -1361,7 +1374,7 @@ public class MarketManager : NetworkBehaviour
         if (ServerExecuteForcedBuy(proposer, companyName, attemptPct, out int paid, out int xfer))
         {
             _forcedPctUsedThisTurn[proposer] = used + xfer;
-            TargetToast(caller, $"Forced Buy success: +{xfer}% {companyName} for ${paid}M. Used {_forcedPctUsedThisTurn[proposer]}%/{forcedBuyPercentCapPerTurn}% this turn.");
+            TargetToast(caller, $"การบังคับซื้อ: +{xfer}% {companyName} ในราคา ${paid}M.");
             if (_forcedPctUsedThisTurn[proposer] >= forcedBuyPercentCapPerTurn)
                 TargetHideProposal(caller);
         }
@@ -1373,6 +1386,24 @@ public class MarketManager : NetworkBehaviour
         var seller = comp?.owner;
         if (seller != null && seller.Owner != null)
             TargetRefreshReviewUI(seller.Owner);
+    }
+
+    private float GetForcedBuyInflation()
+    {
+        if (TurnManager.Instance == null)
+            return 1f;
+
+        int round = Mathf.Max(1, TurnManager.Instance.roundCount.Value);
+
+        if (round <= 5)
+            return 1f;
+
+        if (round >= 15)
+            return 2f;
+
+       
+        float t = (round - 5) / 10f;     
+        return 1f + t;                  
     }
 
     [TargetRpc]
@@ -1404,6 +1435,47 @@ public class MarketManager : NetworkBehaviour
 
         int finalCost = Mathf.RoundToInt(baseCost * mult);
         return Mathf.Max(1, finalCost);
+    }
+
+    [Server]
+    public int ComputePortfolioValue(PlayerPawn pawn)
+    {
+        if (pawn == null) return 0;
+        int total = 0;
+
+        foreach (var kv in companies)
+        {
+            var c = kv.Value;
+            if (c == null) continue;
+
+            if (!c.ownershipPercents.TryGetValue(pawn, out int pct) || pct <= 0)
+                continue;
+
+            int price = (c.currentPrice > 0) ? c.currentPrice : Mathf.Max(1, c.baseCost);
+            total += Mathf.RoundToInt(price * (pct / 100f));
+        }
+
+        return total;
+    }
+
+    [Server]
+    public PlayerPawn GetPortfolioKing(out int bestValue)
+    {
+        bestValue = -1;
+        PlayerPawn best = null;
+
+        foreach (var p in GameManager.Instance.Players)
+        {
+            if (p == null) continue;
+            int v = ComputePortfolioValue(p);
+            if (v > bestValue)
+            {
+                bestValue = v;
+                best = p;
+            }
+        }
+
+        return best;
     }
 
 }
