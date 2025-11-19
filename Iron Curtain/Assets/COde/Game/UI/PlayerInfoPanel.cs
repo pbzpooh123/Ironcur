@@ -109,7 +109,7 @@ public class PlayerInfoPanel : MonoBehaviour
 
     public void UpdateMoney(int money)
     {
-        if (profitText) profitText.text = $"Money: {money:0} M";
+        if (profitText) profitText.text = $"เงิน:{money:0} M";
     }
 
     public void SetTurnOrder(int orderIndex) // 1-based

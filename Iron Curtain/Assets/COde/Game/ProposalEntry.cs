@@ -13,6 +13,9 @@ public class ProposalEntry : MonoBehaviour
     [Header("Company Icon")]
     public Image companyIconImage;
 
+    [Header("Owner Display")]
+    public TMP_Text ownerNameText;     
+
     public string CompanyKey { get; private set; }
 
     private CompanyRecord _company;
@@ -25,15 +28,22 @@ public class ProposalEntry : MonoBehaviour
         _pawn = pawn;
         CompanyKey = company.companyName;
 
-        companyNameText.text = company.companyName;
+        if (companyNameText != null)
+            companyNameText.text = company.companyName;
 
+        // icon
         if (companyIconImage != null)
-            {
-                var icon = CompanyIconHelper.GetIconForCompany(company.companyName);
-                companyIconImage.sprite  = icon;
-                companyIconImage.enabled = (icon != null);
-            }
+        {
+            var icon = CompanyIconHelper.GetIconForCompany(company.companyName);
+            companyIconImage.sprite  = icon;
+            companyIconImage.enabled = (icon != null);
+        }
 
+        // owner text
+        UpdateOwnerDisplay();
+
+        percentInput.onValueChanged.RemoveAllListeners();
+        priceInput.onValueChanged.RemoveAllListeners();
         percentInput.onValueChanged.AddListener(_ => Validate());
         priceInput.onValueChanged.AddListener(_ => Validate());
 
@@ -46,6 +56,32 @@ public class ProposalEntry : MonoBehaviour
         Validate();
     }
 
+    private void UpdateOwnerDisplay()
+    {
+        if (_company == null)
+        {
+            if (ownerNameText != null) ownerNameText.text = "Owner: —";
+            return;
+        }
+
+        string ownerName = _company.ownerName;
+
+        // fallback: resolve owner from pawn if needed
+        if (string.IsNullOrEmpty(ownerName) && _company.owner != null)
+        {
+            // if CompanyRecord keeps a direct PlayerPawn or similar
+            if (!string.IsNullOrEmpty(_company.owner.playerName.Value))
+                ownerName = _company.owner.playerName.Value;
+        }
+
+        if (ownerNameText != null)
+        {
+            ownerNameText.text = string.IsNullOrEmpty(ownerName)
+                ? "Owner: —"
+                : $"Owner: {ownerName}";
+        }
+    }
+
     private int ComputeMaxPercent()
     {
         if (_company == null || _pawn == null) return 0;
@@ -53,7 +89,9 @@ public class ProposalEntry : MonoBehaviour
         // Seller available %
         int sellerAvail = 0;
         if (_company.owner != null)
+        {
             sellerAvail = _company.GetOwnership(_company.owner);
+        }
         else if (!string.IsNullOrEmpty(_company.ownerName))
         {
             var ownerPawn = GameManager.Instance?.Players.Find(p => p.playerName.Value == _company.ownerName);
@@ -76,7 +114,6 @@ public class ProposalEntry : MonoBehaviour
             return;
         }
 
-        // Basic parses
         if (!int.TryParse(percentInput.text, out int pct) ||
             !int.TryParse(priceInput.text, out int price))
         {
@@ -112,11 +149,11 @@ public class ProposalEntry : MonoBehaviour
             return;
         }
 
-        // Do NOT hard-block on buyer cash; server will enforce/bailout.
-        // Optional: soft warning
         if (warningText != null)
         {
-            warningText.text = (_pawn.money.Value < price) ? "You don't have enough cash now; owner can still accept." : "";
+            warningText.text = (_pawn.money.Value < price)
+                ? "You don't have enough cash now; owner can still accept."
+                : "";
         }
 
         submitButton.interactable = true;
