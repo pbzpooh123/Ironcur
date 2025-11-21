@@ -62,18 +62,42 @@ public class ResultsEntryUI : MonoBehaviour
             }
         }
 
-        if (pawn == null) return;
+        if (pawn == null)
+        {
+            Debug.LogWarning($"[ResultsEntryUI] No pawn found for playerName={playerName}");
+            return;
+        }
+
+        Sprite s = null;
 
         var lib = CharacterLibrary.Instance;
         if (lib != null)
         {
-            var sprite = lib.GetSprite(pawn.colorIndex.Value);
-            if (sprite != null)
-                playerIcon.sprite = sprite;
+            s = lib.GetSprite(pawn.colorIndex.Value);
         }
 
+        if (s == null)
+        {
+            var sr = pawn.GetComponentInChildren<SpriteRenderer>();
+            if (sr != null)
+                s = sr.sprite;
+        }
+
+        if (s == null)
+        {
+            Debug.LogWarning($"[ResultsEntryUI] No sprite found for pawn {pawn.playerName.Value}");
+            playerIcon.enabled = false;
+            return;
+        }
+
+        playerIcon.enabled = true;
+        playerIcon.sprite = s;
+        playerIcon.preserveAspect = true;
+
         playerIcon.color = PlayerColors.GetOr(Color.white, pawn.colorIndex.Value);
+
     }
+
 
     private IEnumerator CoAnimate(string playerName, int moneyRaw, int bailoutCount, int finalPoints)
     {
