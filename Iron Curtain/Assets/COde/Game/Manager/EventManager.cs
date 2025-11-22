@@ -1717,7 +1717,7 @@ public class EventManager : NetworkBehaviour
             if (c == null) continue;
             if (CNorm(c.sector) != sector) continue;
 
-            if (c.ownershipPercents.TryGetValue(viewer, out int pct) && pct > 0)
+            if (c.ownershipPercents.TryGetValue(viewer, out float pct) && pct > 0)
                 return true;
         }
         return false;
@@ -1761,7 +1761,7 @@ public class EventManager : NetworkBehaviour
             if (comp == null) continue;
 
             // ผู้เล่นเป็นเจ้าของบริษัทนี้รึเปล่า
-            if (!comp.ownershipPercents.TryGetValue(viewer, out int pct) || pct <= 0)
+            if (!comp.ownershipPercents.TryGetValue(viewer, out float pct) || pct <= 0)
                 continue;
 
             ownedCompanies++;

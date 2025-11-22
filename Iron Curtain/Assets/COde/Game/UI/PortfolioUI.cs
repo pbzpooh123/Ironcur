@@ -28,8 +28,8 @@ public class PortfolioUI : MonoBehaviour
     private PlayerPawn _current;
 
     // cache for paging
-    private List<(string company, int percent, float multiplier, int currentPrice)> _itemsCache
-        = new List<(string, int, float, int)>();
+    private List<(string company, float percent, float multiplier, int currentPrice)> _itemsCache
+        = new List<(string, float, float, int)>();
     private int _pageIndex = 0; // 0-based
 
     private void Awake()
@@ -158,20 +158,25 @@ public class PortfolioUI : MonoBehaviour
         if (MarketManager.Instance != null)
             yieldPct = Mathf.Clamp01(MarketManager.Instance.dividendYield);
 
-        int totalPercent = 0;
+        float totalPercent = 0f;
         int totalEstPayout = 0;
 
         foreach (var it in _itemsCache)
         {
             int baseIncome = Mathf.RoundToInt(it.currentPrice * yieldPct);
             float ownRatio = Mathf.Clamp01(it.percent / 100f);
-            int est = Mathf.RoundToInt(baseIncome * ownRatio * it.multiplier); // multiplier is EFFECTIVE now
-            totalPercent += it.percent;
+            int est = Mathf.RoundToInt(baseIncome * ownRatio * it.multiplier); 
+
+            totalPercent += it.percent; 
             totalEstPayout += est;
         }
 
-        if (summaryText) summaryText.text = $"{_itemsCache.Count} companies • Total % = {totalPercent} • Est. payout = ${totalEstPayout}";
-        if (cashText)    cashText.text = $"Cash: ${_current.money.Value}";
+        if (summaryText)
+            summaryText.text =
+                $"{_itemsCache.Count} บริษัท • จำนวนหุ้นทั้งหมด = {totalPercent:0.0}% • ประมาณการจ่าย = ${totalEstPayout}";
+
+        if (cashText)
+            cashText.text = $"เงิน: ${_current.money.Value}";
 
         _pageIndex = 0;
         RenderPageOnly();

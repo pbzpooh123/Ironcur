@@ -9,7 +9,7 @@ using FishNet.Object.Synchronizing;
 public class Proposal
 {
     public PlayerPawn proposer;   // who made the offer
-    public int percent;           // % of shares they want
+    public float percent;           // % of shares they want
     public int price;             // how much they offer 
 }
 
@@ -32,7 +32,8 @@ public class CompanyRecord
 
     public string sector;
 
-    public Dictionary<PlayerPawn, int> ownershipPercents = new();
+    // เปลี่ยนเป็น float
+    public Dictionary<PlayerPawn, float> ownershipPercents = new();
     public List<Proposal> proposals = new();
 
     private readonly HashSet<int> _proposalHintShown = new();
@@ -46,20 +47,41 @@ public class CompanyRecord
         owner        = creator;
         ownerName    = (creator != null) ? creator.playerName.Value : null;
         sector       = sectorTag;
-        if (creator != null) ownershipPercents[creator] = 100;
+        if (creator != null) ownershipPercents[creator] = 100f;   // full 100%
     }
 
-    public int GetOwnership(PlayerPawn pawn)
-        => ownershipPercents.TryGetValue(pawn, out int val) ? val : 0;
+    public float GetOwnership(PlayerPawn pawn)
+        => ownershipPercents.TryGetValue(pawn, out float val) ? val : 0f;
 
-    public void SetOwnership(PlayerPawn pawn, int newPercent)
-        => ownershipPercents[pawn] = Mathf.Clamp(newPercent, 0, 100);
+    public void SetOwnership(PlayerPawn pawn, float newPercent)
+    {
+        // 0–100 และล็อกเป็น step 0.5 (เช่น 12.5, 30.0, 47.5)
+        newPercent = Mathf.Clamp(newPercent, 0f, 100f);
+        newPercent = Mathf.Round(newPercent * 2f) / 2f;
+
+        if (newPercent <= 0f)
+            ownershipPercents.Remove(pawn);
+        else
+            ownershipPercents[pawn] = newPercent;
+    }
 
     public PlayerPawn GetMajorityOwner()
     {
+        PlayerPawn bestPawn = owner;
+        float bestPct = 0f;
+
         foreach (var kv in ownershipPercents)
-            if (kv.Value > 50) return kv.Key;
-        return owner;
+        {
+            if (kv.Key == null) continue;
+            if (kv.Value > bestPct)
+            {
+                bestPct = kv.Value;
+                bestPawn = kv.Key;
+            }
+        }
+
+        // ใช้ “ส่วนใหญ่จริง ๆ” > 60%
+        return (bestPct > 60f) ? bestPawn : owner;
     }
 }
 
@@ -435,7 +457,7 @@ public class MarketManager : NetworkBehaviour
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void CmdSubmitProposal(string companyName, int percent, int price, NetworkConnection caller = null)
+    public void CmdSubmitProposal(string companyName, float percent, int price, NetworkConnection caller = null)
     {
         if (caller == null) return;
 
@@ -450,7 +472,7 @@ public class MarketManager : NetworkBehaviour
             return;
 
         if (!companies.TryGetValue(companyName, out var company)) return;
-        if (company.GetOwnership(proposer) > 50) return;
+        if (company.GetOwnership(proposer) > 50f) return;
 
         price = Mathf.Max(1, price);
 
@@ -458,20 +480,32 @@ public class MarketManager : NetworkBehaviour
             _submittedThisTurn[proposer] = set = new HashSet<string>();
         if (set.Contains(companyName)) return;
 
-        int sellerAvail = company.GetOwnership(company.owner);
-        if (sellerAvail <= 0) return;
+        float sellerAvail = company.GetOwnership(company.owner);
+        if (sellerAvail <= 0f) return;
 
-        int buyerHas = company.GetOwnership(proposer);
-        int buyerRoom = Mathf.Max(0, 100 - buyerHas);
+        float buyerHas  = company.GetOwnership(proposer);
+        float buyerRoom = Mathf.Max(0f, 100f - buyerHas);
 
-        int maxTransfer = Mathf.Min(percent, sellerAvail, buyerRoom);
-        if (maxTransfer <= 0) return;
+        // clamp percent ที่ขอมา และ max ที่โอนได้
+        float requested = Mathf.Max(0.5f, percent); // ขั้นต่ำ 0.5%
+        float maxTransfer = Mathf.Min(requested, sellerAvail, buyerRoom);
+        if (maxTransfer <= 0f) return;
 
-        company.proposals.Add(new Proposal { proposer = proposer, percent = maxTransfer, price = price });
+        // ล็อกเลขให้เป็น step 0.5
+        maxTransfer = Mathf.Round(maxTransfer * 2f) / 2f;
+
+        company.proposals.Add(new Proposal
+        {
+            proposer = proposer,
+            percent  = maxTransfer,
+            price    = price
+        });
+
         set.Add(companyName);
         SyncProposalsToClients(companyName);
         proposer.statProposalsSent++;
     }
+
 
     [ServerRpc(RequireOwnership = false)]
     public void CmdResolveProposal(string companyName, int proposalIndex, bool accepted, NetworkConnection caller = null)
@@ -508,16 +542,19 @@ public class MarketManager : NetworkBehaviour
             return;
         }
 
-        int sellerAvail = company.GetOwnership(prevOwner);
-        int buyerHas = company.GetOwnership(proposal.proposer);
-        int buyerRoom = Mathf.Max(0, 100 - buyerHas);
+        float sellerAvail = company.GetOwnership(prevOwner);
+        float buyerHas    = company.GetOwnership(proposal.proposer);
+        float buyerRoom   = Mathf.Max(0f, 100f - buyerHas);
 
-        int transfer = Mathf.Min(proposal.percent, sellerAvail, buyerRoom);
-        if (transfer <= 0)
+        float transfer = Mathf.Min(proposal.percent, sellerAvail, buyerRoom);
+        if (transfer <= 0f)
         {
             Debug.LogWarning($"[Market] Accept aborted: no transferable % (sellerAvail={sellerAvail}, buyerRoom={buyerRoom}).");
             return;
         }
+
+        // ล็อก step 0.5 ให้แน่นอน
+        transfer = Mathf.Round(transfer * 2f) / 2f;
 
         bool paid;
         if (!AllowDebtOnAccept)
@@ -541,12 +578,12 @@ public class MarketManager : NetworkBehaviour
         }
 
         if (proposal.proposer != null)
-        proposal.proposer.statProposalsAccepted++;
+            proposal.proposer.statProposalsAccepted++;
 
         prevOwner.AddMoney(proposal.price);
 
         company.SetOwnership(prevOwner, sellerAvail - transfer);
-        int newBuyerShare = buyerHas + transfer;
+        float newBuyerShare = buyerHas + transfer;
         company.SetOwnership(proposal.proposer, newBuyerShare);
 
         var majority = company.GetMajorityOwner();
@@ -555,7 +592,7 @@ public class MarketManager : NetworkBehaviour
             company.owner = majority;
             company.ownerName = majority.playerName.Value;
             if (majority != null)
-            majority.statTakeoversWon++;
+                majority.statTakeoversWon++;
 
             RpcSyncMajorityOwner(companyName, company.ownerName);
             RpcUpdateTileOwner(companyName, company.ownerName, majority.colorIndex.Value);
@@ -595,10 +632,12 @@ public class MarketManager : NetworkBehaviour
     }
 
     [ObserversRpc]
-    private void RpcSyncOwnership(string companyName, string playerName, int newPercent)
+    private void RpcSyncOwnership(string companyName, string playerName, float newPercent)
     {
         var pawn = GameManager.Instance.Players.Find(p => p.playerName.Value == playerName);
         if (pawn == null) return;
+
+        // NOTE: ต้องไปแก้ ShareRecord.sharePercent เป็น float ด้วย
         if (!pawn.factoryPortfolio.ContainsKey(companyName))
         {
             pawn.factoryPortfolio[companyName] = new ShareRecord
@@ -619,13 +658,14 @@ public class MarketManager : NetworkBehaviour
 
         if (companies.TryGetValue(companyName, out var comp) && comp != null)
         {
-            if (newPercent > 0) comp.SetOwnership(pawn, newPercent);
+            if (newPercent > 0f) comp.SetOwnership(pawn, newPercent);
             else comp.ownershipPercents.Remove(pawn);
         }
 
         RpcRefreshLocalPortfolioUI();
         Debug.Log($"[ClientSync] {playerName} now has {newPercent}% of {companyName}");
     }
+
 
     [ObserversRpc(BufferLast = true)]
     private void RpcUpdateTileOwner(string companyName, string newOwnerName, int colorIndex)
@@ -690,8 +730,8 @@ public class MarketManager : NetworkBehaviour
             foreach (var kv in company.ownershipPercents)
             {
                 PlayerPawn pawn = kv.Key;
-                int percent = kv.Value;
-                if (pawn == null || percent <= 0) continue;
+                float percent = kv.Value;
+                if (pawn == null || percent <= 0f) continue;
 
                 float payoutF = baseIncome * (percent / 100f);
 
@@ -740,7 +780,7 @@ public class MarketManager : NetworkBehaviour
     }
 
     [ObserversRpc]
-    private void RpcSyncProposals(string companyName, string[] proposerNames, int[] percents, int[] prices)
+    private void RpcSyncProposals(string companyName, string[] proposerNames, float[] percents, int[] prices)
     {
         if (!companies.TryGetValue(companyName, out var company)) return;
 
@@ -752,8 +792,8 @@ public class MarketManager : NetworkBehaviour
             company.proposals.Add(new Proposal
             {
                 proposer = proposerPawn,
-                percent = percents[i],
-                price = prices[i]
+                percent  = percents[i],
+                price    = prices[i]
             });
 
             if (proposerPawn == null)
@@ -794,13 +834,13 @@ public class MarketManager : NetworkBehaviour
 
         int n = c.proposals.Count;
         var names = new string[n];
-        var perc = new int[n];
+        var perc  = new float[n];
         var price = new int[n];
 
         for (int i = 0; i < n; i++)
         {
             names[i] = c.proposals[i].proposer != null ? c.proposals[i].proposer.playerName.Value : "";
-            perc[i] = c.proposals[i].percent;
+            perc[i]  = c.proposals[i].percent;
             price[i] = c.proposals[i].price;
         }
 
@@ -862,7 +902,7 @@ public class MarketManager : NetworkBehaviour
         majorityOwner = null;
         if (!companies.TryGetValue(companyName, out var comp) || comp == null) return false;
 
-        int best = 0;
+        float best = 0f;
         PlayerPawn bestPawn = null;
         foreach (var kv in comp.ownershipPercents)
         {
@@ -874,7 +914,7 @@ public class MarketManager : NetworkBehaviour
             }
         }
 
-        if (bestPawn != null && best > 50)
+        if (bestPawn != null && best > 60f)
         {
             majorityOwner = bestPawn;
             return true;
@@ -1040,7 +1080,7 @@ public class MarketManager : NetworkBehaviour
             var c = kv.Value;
             if (c == null) continue;
 
-            if (c.ownershipPercents.TryGetValue(pawn, out int pct) && pct > 0)
+            if (c.ownershipPercents.TryGetValue(pawn, out float pct) && pct > 0)
             {
                 if (Mathf.Abs(priceDeltaPercent) > 0.001f)
                     ServerBumpCompanyPrice(c.companyName, priceDeltaPercent);
@@ -1061,7 +1101,7 @@ public class MarketManager : NetworkBehaviour
             var c = kv.Value;
             if (c == null) continue;
 
-            if (c.ownershipPercents.TryGetValue(pawn, out int pct) && pct > 0)
+            if (c.ownershipPercents.TryGetValue(pawn, out float pct) && pct > 0)
             {
                 if (Mathf.Abs(priceDeltaPercent) > 0.001f)
                     ServerBumpCompanyPrice(c.companyName, priceDeltaPercent);
@@ -1166,18 +1206,19 @@ public class MarketManager : NetworkBehaviour
 
             if (onlyMajority)
             {
-                if (c.ownershipPercents.TryGetValue(pawn, out int pct) && pct > 50)
+                if (c.ownershipPercents.TryGetValue(pawn, out float pct) && pct >= 60f)
                     count++;
             }
             else
             {
-                if (c.ownershipPercents.TryGetValue(pawn, out int pct) && pct > 0)
+                if (c.ownershipPercents.TryGetValue(pawn, out float pct) && pct > 0f)
                     count++;
             }
         }
 
         return count;
     }
+
 
     [ObserversRpc]
     private void RpcSyncMajorityOwner(string companyName, string newOwnerName)
@@ -1235,11 +1276,15 @@ public class MarketManager : NetworkBehaviour
         var seller = comp.owner;
         if (seller == null || seller == buyer) return 0;
 
-        int sellerAvail = comp.GetOwnership(seller);
-        int buyerHas = comp.GetOwnership(buyer);
-        int buyerRoom = Mathf.Max(0, 100 - buyerHas);
+        float sellerAvail = comp.GetOwnership(seller);   // float
+        float buyerHas    = comp.GetOwnership(buyer);    // float
+        float buyerRoom   = Mathf.Max(0f, 100f - buyerHas);
 
-        int xfer = Mathf.Min(Mathf.Clamp(requestedPct, 1, 100), sellerAvail, buyerRoom);
+        // หา % ที่โอนได้จริง แล้วปัดลงเป็น int
+        float rawXfer = Mathf.Min(Mathf.Clamp(requestedPct, forcedBuyMinPercent, 100),
+                                sellerAvail,
+                                buyerRoom);
+        int xfer = Mathf.FloorToInt(rawXfer);
         if (xfer <= 0) return 0;
 
         int live = (comp.currentPrice > 0) ? comp.currentPrice : Mathf.Max(1, comp.baseCost);
@@ -1251,10 +1296,10 @@ public class MarketManager : NetworkBehaviour
         float surcharge = Mathf.Max(0f, buyer.money.Value) * Mathf.Max(0f, forcedBuySurchargeOfCash.Value);
         float costF = (core + surcharge) * GetForcedBuyInflation();
 
-        transferablePct = xfer;
+        transferablePct = xfer;                       // xfer เป็น int แล้ว
         return Mathf.Max(1, Mathf.RoundToInt(costF));
+    }
 
-}
 
 
     [Server]
@@ -1268,10 +1313,12 @@ public class MarketManager : NetworkBehaviour
     /* Price model:
        cost = livePrice * (percent/100f) * forcedBuyPriceMult.Value
     */
-    [Server]
-    private bool ServerExecuteForcedBuy(PlayerPawn buyer, string companyName, int percent, out int paid, out int transferred)
+   [Server]
+    private bool ServerExecuteForcedBuy(PlayerPawn buyer, string companyName, int percent,
+                                    out int paid, out int transferred)
     {
-        paid = 0; transferred = 0;
+        paid = 0; 
+        transferred = 0;
 
         if (buyer == null || string.IsNullOrWhiteSpace(companyName)) return false;
         if (!companies.TryGetValue(companyName, out var comp) || comp == null) return false;
@@ -1279,10 +1326,15 @@ public class MarketManager : NetworkBehaviour
         var seller = comp.owner;
         if (seller == null || seller == buyer) return false;
 
-        int sellerAvail = comp.GetOwnership(seller);
-        int buyerHas = comp.GetOwnership(buyer);
-        int buyerRoom = Mathf.Max(0, 100 - buyerHas);
-        int xfer = Mathf.Min(Mathf.Max(percent, 0), sellerAvail, buyerRoom);
+        float sellerAvail = comp.GetOwnership(seller);
+        float buyerHas    = comp.GetOwnership(buyer);
+        float buyerRoom   = Mathf.Max(0f, 100f - buyerHas);
+
+        // ใช้ percent ที่ขอมา + ปัดลงให้ไม่เกินสิทธิ์จริง
+        float rawXfer = Mathf.Min(Mathf.Max(percent, 0),
+                                sellerAvail,
+                                buyerRoom);
+        int xfer = Mathf.FloorToInt(rawXfer);
         if (xfer <= 0) return false;
 
         int live = GetLivePriceOrBase(companyName, comp.baseCost);
@@ -1295,7 +1347,6 @@ public class MarketManager : NetworkBehaviour
         float totalF = (core + surchargeF) * GetForcedBuyInflation();
         int cost = Mathf.Max(1, Mathf.RoundToInt(totalF));
 
-
         bool ok = forcedBuyAllowsDebt.Value
             ? TryPayWithBailouts(buyer, cost, forcedBuyMaxBailouts.Value)
             : (buyer.money.Value >= cost && buyer.TrySpendMoney(cost));
@@ -1304,8 +1355,11 @@ public class MarketManager : NetworkBehaviour
 
         seller.AddMoney(cost);
 
-        comp.SetOwnership(seller, sellerAvail - xfer);
-        comp.SetOwnership(buyer, buyerHas + xfer);
+        // ownership เป็น float, ใช้ค่าเดิม (float) +/- xfer (int) ได้
+        float sellerAfter = sellerAvail - xfer;
+        float buyerAfter  = buyerHas  + xfer;
+        comp.SetOwnership(seller, sellerAfter);
+        comp.SetOwnership(buyer,  buyerAfter);
 
         var majority = comp.GetMajorityOwner();
         if (majority != comp.owner)
@@ -1313,7 +1367,7 @@ public class MarketManager : NetworkBehaviour
             comp.owner = majority;
             comp.ownerName = majority.playerName.Value;
             if (majority != null)
-            majority.statTakeoversWon++;
+                majority.statTakeoversWon++;
             RpcSyncMajorityOwner(comp.companyName, comp.ownerName);
             RpcUpdateTileOwner(comp.companyName, comp.ownerName, majority.colorIndex.Value);
             Notifier.Instance?.ToastAll($"{majority.playerName.Value} ได้เข้าควบคุม {companyName} แล้ว!", ToastKind.Success);
@@ -1448,7 +1502,7 @@ public class MarketManager : NetworkBehaviour
             var c = kv.Value;
             if (c == null) continue;
 
-            if (!c.ownershipPercents.TryGetValue(pawn, out int pct) || pct <= 0)
+            if (!c.ownershipPercents.TryGetValue(pawn, out float pct) || pct <= 0)
                 continue;
 
             int price = (c.currentPrice > 0) ? c.currentPrice : Mathf.Max(1, c.baseCost);

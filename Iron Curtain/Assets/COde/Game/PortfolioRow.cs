@@ -8,7 +8,7 @@ public class PortfolioRow : MonoBehaviour
     public TMP_Text multiplierText;
     public TMP_Text estPayoutText;  // add this in your prefab if you want to show it
 
-    public void Bind(string company, int percent, float multiplier, int currentPrice)
+    public void Bind(string company, float percent, float multiplier, int currentPrice)
     {
         companyText.text   = company;
         percentText.text   = percent + "%";

@@ -97,18 +97,34 @@ public class InvestmentUI : MonoBehaviour
                 if (go) tile = go.GetComponent<TileData>();
             }
 
-            int baseCost = (tile != null && tile.companyCost > 0)
-                ? tile.companyCost
-                : (costFallback > 0 ? costFallback : 0);
+            int baseCost = 0;
+
+            if (MarketManager.Instance != null &&
+                !string.IsNullOrEmpty(_currentCompanyName) &&
+                MarketManager.Instance.companies.TryGetValue(_currentCompanyName, out var comp) &&
+                comp != null && comp.currentPrice > 0)
+            {
+                baseCost = comp.currentPrice;
+            }
+
+            else if (tile != null && tile.companyCost > 0)
+            {
+                baseCost = tile.companyCost;
+            }
+
+            else if (costFallback > 0)
+            {
+                baseCost = costFallback;
+            }
 
             if (baseCost > 0)
             {
                 float mult = 1f;
                 if (EventManager.Instance != null && tile != null)
-                    mult = EventManager.Instance.GetActiveSectorPriceMult(tile.sector);
+                    mult *= EventManager.Instance.GetActiveSectorPriceMult(tile.sector);
 
                 _effectiveCost = Mathf.Max(1,
-                    Mathf.RoundToInt(Mathf.Max(1, baseCost) * Mathf.Max(0f, mult)));
+                    Mathf.RoundToInt(baseCost * Mathf.Max(0f, mult)));
                 _currentTile = tile;
                 break;
             }
@@ -172,16 +188,12 @@ public class InvestmentUI : MonoBehaviour
 
         // Fill help panel text
         if (helpTitleText != null)
-            helpTitleText.text = $"การลงทุนใน {name}";
+            helpTitleText.text = $"การลงทุนในบริษัท";
 
         if (helpBodyText != null)
         {
             helpBodyText.text =
-                $"• ราคาในตอนนี้: ${price}M " +
-                $"• ประเภทบริษัท: {sector}" +
-                $"• เมื่อซื้อ คุณจะเป็นเจ้าของ 100% ของบริษัทนี้ และช่องบนบอร์ดจะเปลี่ยนเป็นสีของคุณ" +
-                $"• ทุก ๆ รอบ บริษัทจะจ่ายเงินปันผลให้ตามมูลค่าบริษัทและสัดส่วนหุ้นที่คุณถืออยู่" +
-                $"ถ้าราคาขึ้นในอนาคต การถือบริษัทนี้อาจทำให้ได้เงินมากขึ้น ";
+                $"ประเภทบริษัท: {sector}";
         }
 
         // Show help panel (or fallback to sideevent if you forgot to wire it)

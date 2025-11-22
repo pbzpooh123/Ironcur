@@ -5,5 +5,5 @@ public struct ShareRecord
     public int roundBought;
     public float multiplier;           // stacking payout multiplier
     public int multiplierExpiresAt;    // round when multiplier resets
-    public int sharePercent;           // 0-100, for company ownership
+    public float sharePercent;           // 0-100, for company ownership
 }

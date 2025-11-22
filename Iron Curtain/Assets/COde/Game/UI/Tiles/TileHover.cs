@@ -37,7 +37,7 @@ public class TileHover : MonoBehaviour, IHoverProvider
                     c2 != null && c2.owner != null)
                 {
                     ownerName = c2.owner.playerName.Value;
-                    int pct = c2.GetOwnership(c2.owner);
+                    float pct = c2.GetOwnership(c2.owner);
                     ownerPct = pct > 0 ? $" ({pct}%)" : "";
                 }
                 else if (_td.owner != null)

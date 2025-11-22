@@ -23,8 +23,11 @@ public class MatchResultsUI : MonoBehaviour
     [Tooltip("Characters per second for award text typing.")]
     [SerializeField] private float awardCharsPerSecond = 30f;
 
-    [Tooltip("Pause (seconds) after each line is fully shown.")]
+    [Tooltip("Pause (seconds) after each line is fully shown before fading out.")]
     [SerializeField] private float awardLinePause = 0.4f;
+
+    [Tooltip("Duration of fade-out between award lines (seconds).")]
+    [SerializeField] private float awardFadeDuration = 0.35f;
 
     [Header("Scenes")]
     [SerializeField] private string leaderboardSceneName = "Leaderboard";
@@ -104,7 +107,7 @@ public class MatchResultsUI : MonoBehaviour
         AddAwardLine(lines, "นักเจรจาโหด",             proposalsAcceptedKingName);
         AddAwardLine(lines, "เทพลูกเต๋า",               diceGodName);
 
-        // Type out all award lines in a single TMP_Text
+        // Type awards one by one, with fade-out between lines
         yield return StartCoroutine(CoTypeAwards(lines));
 
         // allow Ready after awards are fully shown
@@ -127,37 +130,56 @@ public class MatchResultsUI : MonoBehaviour
         awardsText.text = "";
 
         if (lines == null || lines.Count == 0)
-        {
-            // no awards – you can set a default message if you want
             yield break;
-        }
 
         float charDelay = (awardCharsPerSecond > 0f)
             ? 1f / awardCharsPerSecond
             : 0.03f;
 
-        string builtSoFar = "";
+        Color baseColor = awardsText.color;
 
         foreach (var line in lines)
         {
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
-            if (!string.IsNullOrEmpty(builtSoFar))
-                builtSoFar += "\n";
-
-            string prefix = builtSoFar;
+            // reset alpha to 1, clear text
+            Color c = baseColor;
+            c.a = 1f;
+            awardsText.color = c;
+            awardsText.text = "";
 
             // type this line character by character
             for (int i = 0; i <= line.Length; i++)
             {
-                awardsText.text = prefix + line.Substring(0, i);
+                awardsText.text = line.Substring(0, i);
                 yield return new WaitForSeconds(charDelay);
             }
 
-            builtSoFar = prefix + line;
+            // wait a bit after fully shown
             yield return new WaitForSeconds(awardLinePause);
+
+            // fade out
+            float t = 0f;
+            float dur = Mathf.Max(0.01f, awardFadeDuration);
+
+            while (t < dur)
+            {
+                t += Time.deltaTime;
+                float k = Mathf.Clamp01(t / dur);
+                c.a = 1f - k;
+                awardsText.color = c;
+                yield return null;
+            }
+
+            // ensure fully transparent between lines
+            c.a = 0f;
+            awardsText.color = c;
         }
+
+        // หลังจบทุกบรรทัด ถ้าอยากล้าง text:
+        awardsText.text = "";
+        awardsText.color = baseColor; // คืนค่าสีเดิม (alpha = 1) เผื่อใช้ต่อ
     }
 
     private bool _sentReady = false;

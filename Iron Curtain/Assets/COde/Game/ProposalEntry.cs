@@ -66,10 +66,8 @@ public class ProposalEntry : MonoBehaviour
 
         string ownerName = _company.ownerName;
 
-        // fallback: resolve owner from pawn if needed
         if (string.IsNullOrEmpty(ownerName) && _company.owner != null)
         {
-            // if CompanyRecord keeps a direct PlayerPawn or similar
             if (!string.IsNullOrEmpty(_company.owner.playerName.Value))
                 ownerName = _company.owner.playerName.Value;
         }
@@ -82,12 +80,12 @@ public class ProposalEntry : MonoBehaviour
         }
     }
 
-    private int ComputeMaxPercent()
+    private float ComputeMaxPercent()
     {
-        if (_company == null || _pawn == null) return 0;
+        if (_company == null || _pawn == null) return 0f;
 
         // Seller available %
-        int sellerAvail = 0;
+        float sellerAvail = 0f;
         if (_company.owner != null)
         {
             sellerAvail = _company.GetOwnership(_company.owner);
@@ -100,10 +98,15 @@ public class ProposalEntry : MonoBehaviour
         }
 
         // Buyer room to 100%
-        int buyerHas  = _company.GetOwnership(_pawn);
-        int buyerRoom = Mathf.Max(0, 100 - buyerHas);
+        float buyerHas  = _company.GetOwnership(_pawn);
+        float buyerRoom = Mathf.Max(0f, 100f - buyerHas);
 
-        return Mathf.Max(0, Mathf.Min(sellerAvail, buyerRoom));
+        float max = Mathf.Max(0f, Mathf.Min(sellerAvail, buyerRoom));
+
+        // ถ้าอยากล็อกเป็น step 0.5 เช่น 37.5, 62.5 ให้เปิดใช้สองบรรทัดนี้
+        max = Mathf.Floor(max * 2f) / 2f;
+
+        return max;
     }
 
     private void Validate()
@@ -114,21 +117,24 @@ public class ProposalEntry : MonoBehaviour
             return;
         }
 
-        if (!int.TryParse(percentInput.text, out int pct) ||
+        // เปอร์เซ็นต์เป็น float (รองรับทศนิยม)
+        if (!float.TryParse(percentInput.text, out float pct) ||
             !int.TryParse(priceInput.text, out int price))
         {
             submitButton.interactable = false;
             return;
         }
 
-        int maxPct = ComputeMaxPercent();
-        if (pct < 1 || pct > maxPct || maxPct <= 0)
+        float maxPct = ComputeMaxPercent();
+
+        // ขั้นต่ำ 0.5% (จะไปปรับทีหลังก็ได้)
+        if (pct < 0.5f || pct > maxPct || maxPct <= 0f)
         {
             submitButton.interactable = false;
             if (warningText != null)
             {
-                if (maxPct <= 0) warningText.text = "No transferable shares available.";
-                else warningText.text = $"Max you can request now is {maxPct}%.";
+                if (maxPct <= 0f) warningText.text = "No transferable shares available.";
+                else warningText.text = $"Max you can request now is {maxPct:0.#}%.";
             }
             return;
         }
@@ -162,15 +168,16 @@ public class ProposalEntry : MonoBehaviour
     private void OnSubmitClicked()
     {
         if (_company == null || _pawn == null) return;
-        if (!int.TryParse(percentInput.text, out int pct)) return;
+        if (!float.TryParse(percentInput.text, out float pct)) return;
         if (!int.TryParse(priceInput.text, out int price)) return;
 
-        int maxPct = ComputeMaxPercent();
-        pct = Mathf.Clamp(pct, 1, Mathf.Max(1, maxPct));
+        float maxPct = ComputeMaxPercent();
+        pct = Mathf.Clamp(pct, 0.5f, Mathf.Max(0.5f, maxPct));
 
         submitButton.interactable = false;
         _submittedThisEntry = true;
 
+        // ตรงนี้คุณต้องเปลี่ยนลายเซ็น RPC ให้รับ float แทน int
         MarketManager.Instance.CmdSubmitProposal(_company.companyName, pct, price);
     }
     

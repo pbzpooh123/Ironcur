@@ -690,7 +690,7 @@ public class PlayerPawn : NetworkBehaviour
     public struct PortfolioItemDTO
     {
         public string company;
-        public int percent;
+        public float percent;
         public float multiplier;
     }
 
@@ -699,7 +699,7 @@ public class PlayerPawn : NetworkBehaviour
     public System.Action OnClientPortfolioChanged;
 
     [TargetRpc]
-    private void TargetReceivePortfolio(NetworkConnection conn, string[] names, int[] percents, float[] multipliers)
+    private void TargetReceivePortfolio(NetworkConnection conn, string[] names, float[] percents, float[] multipliers)
     {
         _clientPortfolio.Clear();
         for (int i = 0; i < names.Length && i < percents.Length && i < multipliers.Length; i++)
@@ -716,7 +716,7 @@ public class PlayerPawn : NetworkBehaviour
 
     // Server → ALL observers (use when portfolio changes on server)
     [ObserversRpc(BufferLast = true)]
-    private void RpcReceivePortfolioBroadcast(string[] names, int[] percents, float[] multipliers)
+    private void RpcReceivePortfolioBroadcast(string[] names, float[] percents, float[] multipliers)
     {
         _clientPortfolio.Clear();
         for (int i = 0; i < names.Length && i < percents.Length && i < multipliers.Length; i++)
@@ -738,7 +738,7 @@ public class PlayerPawn : NetworkBehaviour
         if (conn == null) return;
 
         var names = new List<string>();
-        var perc = new List<int>();
+        var perc = new List<float>();
         var mult = new List<float>();
 
         foreach (var kv in factoryPortfolio)
@@ -758,7 +758,7 @@ public class PlayerPawn : NetworkBehaviour
     public void ServerBroadcastPortfolio()
     {
         var names = new List<string>();
-        var perc = new List<int>();
+        var perc = new List<float>();
         var mult = new List<float>();
 
         foreach (var kv in factoryPortfolio)
