@@ -40,6 +40,8 @@ public class TurnUI : MonoBehaviour
 
     [Header("Help & Status")]
     public Button activeEffectsButton;
+    public Button statsButton;
+
 
 
     private Coroutine _nextEventSlideCo;
@@ -76,6 +78,11 @@ public class TurnUI : MonoBehaviour
         if (nextEventToggleButton) nextEventToggleButton.onClick.AddListener(ToggleNextEventPanel);
         if (activeEffectsButton)
         activeEffectsButton.onClick.AddListener(OnActiveEffectsClicked);
+         if (statsButton != null)
+        {
+            statsButton.onClick.RemoveAllListeners();
+            statsButton.onClick.AddListener(OnStatsClicked);
+        }
 
         SetRollInteractable(false);
         SetEndTurnInteractable(false);
@@ -106,6 +113,23 @@ public class TurnUI : MonoBehaviour
         myPawn = pawn;
         SetRollInteractable(false);
         SetEndTurnInteractable(false);
+    }
+
+    private void OnStatsClicked()
+    {
+        // หา pawn ที่เราเป็นเจ้าของ (เหมือนวิธีที่คุณใช้ใน MarketManager / PortfolioUI)
+        PlayerPawn local = null;
+        foreach (var p in GameObject.FindObjectsOfType<PlayerPawn>())
+        {
+            if (p != null && p.IsOwner)
+            {
+                local = p;
+                break;
+            }
+        }
+
+        if (local != null && StatsUI.Instance != null)
+            StatsUI.Instance.Show(local);
     }
 
     private PlayerPawn GetOrFindLocalPawn()
@@ -332,9 +356,6 @@ public class TurnUI : MonoBehaviour
                 // other phases keep buttons disabled
         }
 
-        // NEW: show “what to do now” text
-        SetPhaseHint(phase, isMyTurn);
-
         _applyCo = null;
     }
 
@@ -358,38 +379,5 @@ public class TurnUI : MonoBehaviour
         _                         => "—"
     };
 
-    // NEW: phase → Thai instruction text
-    public void SetPhaseHint(TurnPhase phase, bool isMyTurn)
-    {
-        if (!messageTMP) return;
-
-        if (!isMyTurn)
-        {
-            messageTMP.text = "รอให้ผู้เล่นคนอื่นจบเทิร์นของเขา...";
-            return;
-        }
-
-        switch (phase)
-        {
-            case TurnPhase.Review:
-                messageTMP.text = "ตรวจข้อเสนอซื้อหุ้นในบริษัทของคุณ แล้วเลือกว่าจะรับหรือไม่ จากนั้นกด 'ปิด'";
-                break;
-
-            case TurnPhase.Rolling:
-                messageTMP.text = "กดปุ่ม 'ทอยลูกเต๋า' เพื่อเดินตัวหมากของคุณ";
-                break;
-
-            case TurnPhase.TileEventPending:
-                messageTMP.text = "อ่านผลเหตุการณ์ให้จบ แล้วกดปุ่มตามที่เกมบอก 'ทอยเต๋า/พร้อม' จากนั้นกด 'ปิด'";
-                break;
-
-            case TurnPhase.Proposal:
-                messageTMP.text = "เปิดหน้าต่างตลาด ส่งข้อเสนอ/บังคับซื้อ จากนั้นกด 'ปิด'";
-                break;
-
-            default:
-                messageTMP.text = "";
-                break;
-        }
-    }
+    
 }

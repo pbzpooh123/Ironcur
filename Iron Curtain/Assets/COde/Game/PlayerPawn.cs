@@ -78,6 +78,7 @@ public class PlayerPawn : NetworkBehaviour
         ApplyColor(colorIndex.Value);
         colorIndex.OnChange += OnColorChanged;
         money.OnChange += OnMoneyChanged;
+        bailoutMarks.OnChange += OnBailoutMarksChanged;
 
         if (IsOwner && TurnUI.Instance != null)
             TurnUI.Instance.BindPawn(this);
@@ -120,7 +121,7 @@ public class PlayerPawn : NetworkBehaviour
                     string.IsNullOrWhiteSpace(playerName.Value) ? $"P{Owner?.ClientId ?? -1}" : playerName.Value,
                     money.Value);
 
-                // ★ Add this so HUD knows: cid -> panel
+                infoPanel.UpdateBailoutMarks(bailoutMarks.Value);
                 if (Owner != null) infoPanel.SetOwnerCid(Owner.ClientId);
 
                 yield break;
@@ -207,8 +208,25 @@ public class PlayerPawn : NetworkBehaviour
     public override void OnStopClient()
     {
         money.OnChange -= OnMoneyChanged;
+        bailoutMarks.OnChange -= OnBailoutMarksChanged;
         base.OnStopClient();
     }
+
+    private void OnBailoutMarksChanged(int oldValue, int newValue, bool asServer)
+    {
+        if (infoPanel == null)
+        {
+            TryEnsureInfoPanel();
+            if (infoPanel == null)
+            {
+                Debug.LogWarning("[PlayerPawn] BailoutMarks changed, but infoPanel is null.");
+                return;
+            }
+        }
+
+        infoPanel.UpdateBailoutMarks(newValue);
+    }
+
 
 
     /* ---------- Money ---------- */
@@ -475,43 +493,44 @@ public class PlayerPawn : NetworkBehaviour
                     if (paid > 0)
                     statTaxPaid += paid;
 
-                    // Show panel and wait; Ready will call CmdTileActionComplete()
+    
                     TargetShowTilePopupAndWait(Owner, $"ภาษี: จ่าย ${paid}M.");
                     return;
                 }
 
             case TileType.Bonus:
                 {
-                    // <<< CHANGED: BRACKET + WAIT FOR READY >>>
                     TurnManager.Instance.ServerBeginTileAction(this);
 
                     int bonus = Mathf.Max(0, data.bonusAmount);
-                    if (bonus > 0) AddMoney(bonus);
-                    
+                    if (bonus > 0)
+                    {
+                        AddMoney(bonus);
+                        statBonusReceived += bonus;  
+                    }
 
                     TargetShowTilePopupAndWait(Owner, $"โบนัส: คุณได้รับ ${bonus}M.");
                     return;
                 }
 
+
             case TileType.Jail:
                 {
-                    // <<< CHANGED: BRACKET + WAIT FOR READY >>>
+              
                     TurnManager.Instance.ServerBeginTileAction(this);
 
-                    ServerSetJail(2); // e.g., 2 jailed turns
+                    ServerSetJail(2);
 
                     TargetShowTilePopupAndWait(Owner, $"คุณถูกจองจำเป็นเวลา {jailTurnsLeft.Value} รอบ");
                     return;
                 }
         }
 
-        // Normal tile (no UI to wait on)
         TurnManager.Instance.ServerOnTileActionComplete(this);
     }
 
     /* ---------- Tile popups ---------- */
 
-    // Investment popup (already gated elsewhere)
     [TargetRpc]
     private void TargetShowInvestmentUI(NetworkConnection conn, int tileIndex, string companyName, int cost, bool isCompany)
     {
@@ -619,7 +638,7 @@ public class PlayerPawn : NetworkBehaviour
     public void ServerSetJail(int turns)
     {
         jailTurnsLeft.Value = Mathf.Max(1, turns);
-        // (Message shown by the wait-popup path above for Jail tiles)
+        statJailVisits += 1; 
     }
 
     [Server]
@@ -634,9 +653,12 @@ public class PlayerPawn : NetworkBehaviour
     public void ForceBailoutOnce()
     {
         bailoutMarks.Value += 1;
+        statBailouts += 1;          // ★ NEW
+
         money.Value += 100; // +$100 bailout
         TargetNotifyBailout(Owner, bailoutMarks.Value, money.Value);
     }
+
 
     [Server]
     private int PayWithOptionalBailouts(int amount, bool allowBailout = true, int maxBailouts = 10)
@@ -793,17 +815,23 @@ public class PlayerPawn : NetworkBehaviour
 
     // ================= END-GAME STATS =================
     [Header("End Game Stats")]
-    public int statTotalIncome;       
-    public int statTotalSpending;     
-    public int statTaxPaid;          
-    public int statEventLoss;      
+public int statTotalIncome;       
+public int statTotalSpending;     
+public int statTaxPaid;          
+public int statEventLoss;      
+public int statBonusReceived;  
+public int statBailouts;       
+public int statJailVisits;     
+    
+public int statProposalsSent;   
+public int statProposalsAccepted;  
+public int statTakeoversWon;     
 
-    public int statProposalsSent;   
-    public int statProposalsAccepted;  
-    public int statTakeoversWon;     
-
-    public int statTotalRollSum;     
-    public int statSixRolled;        
+public int statTotalRollSum;     
+public int statSixRolled;        
+    
+   
+       
 
 
 }

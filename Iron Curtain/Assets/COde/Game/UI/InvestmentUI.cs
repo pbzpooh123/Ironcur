@@ -99,6 +99,7 @@ public class InvestmentUI : MonoBehaviour
 
             int baseCost = 0;
 
+            // 1) ถ้ามี company record แล้ว ใช้ currentPrice เป็นฐาน (เหมือนฝั่ง server)
             if (MarketManager.Instance != null &&
                 !string.IsNullOrEmpty(_currentCompanyName) &&
                 MarketManager.Instance.companies.TryGetValue(_currentCompanyName, out var comp) &&
@@ -106,12 +107,12 @@ public class InvestmentUI : MonoBehaviour
             {
                 baseCost = comp.currentPrice;
             }
-
+            // 2) ถ้ายังไม่มี record ใช้ companyCost บน Tile
             else if (tile != null && tile.companyCost > 0)
             {
                 baseCost = tile.companyCost;
             }
-
+            // 3) fallback จาก parameter ที่ส่งมาจาก server
             else if (costFallback > 0)
             {
                 baseCost = costFallback;
@@ -132,6 +133,7 @@ public class InvestmentUI : MonoBehaviour
             timeout -= Time.unscaledDeltaTime;
             yield return null;
         }
+
 
         if (_effectiveCost < 1) _effectiveCost = 1;
 
