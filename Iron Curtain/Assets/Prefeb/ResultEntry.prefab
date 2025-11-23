@@ -328,7 +328,7 @@ MonoBehaviour:
   dropTarget: {fileID: 6263229939562913172}
   dropOffsetY: 400
   pointSprite: {fileID: 21300000, guid: a65c237cd6a8e7c4287f70a91955297d, type: 3}
-  badgeSprite: {fileID: 21300000, guid: 62785aab5c6fc2040890cf13dbc52e0d, type: 3}
+  badgeSprite: {fileID: 21300000, guid: c04406eef6f8cad429316abeaf4b79f9, type: 3}
   basePointColor: {r: 1, g: 1, b: 1, a: 1}
   bailoutPointColor: {r: 1, g: 0, b: 0, a: 1}
   awardPointColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
