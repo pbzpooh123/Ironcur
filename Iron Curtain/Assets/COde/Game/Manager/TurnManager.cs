@@ -1053,7 +1053,6 @@ public class TurnManager : NetworkBehaviour
         }
     }
 
-    // ถ้าค่ามากสุด <= 0 แปลว่าไม่มีใครโดดเด่นจริง ๆ → ไม่ให้รางวัล
     return (bestVal <= 0) ? -1 : bestIdx;
 }
 

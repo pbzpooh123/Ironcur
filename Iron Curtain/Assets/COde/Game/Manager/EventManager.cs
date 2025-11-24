@@ -413,14 +413,16 @@ public class EventManager : NetworkBehaviour
 
         foreach (var effect in e.effects)
         {
+            // 1) คำนวณเงินรวมจาก effect
             int totalMoney = effect.moneyDelta;
             totalMoney += Random.Range(effect.randomMoneyMin, effect.randomMoneyMax + 1);
-            pawn.AddMoney(totalMoney);
 
+            // 2) ใช้ AddMoney แค่ครั้งเดียว
             if (totalMoney != 0)
             {
                 pawn.AddMoney(totalMoney);
 
+                // 3) ถ้าเป็นเงินติดลบ → นับเป็น Event loss ด้วย
                 if (totalMoney < 0)
                 {
                     int lost = -totalMoney;
@@ -428,13 +430,14 @@ public class EventManager : NetworkBehaviour
                 }
             }
 
+            // 4) ส่วน effect อื่น ๆ เหมือนเดิม
             if (effect.skipTurn)
                 TurnManager.Instance.MarkSkipTurn(pawn, Mathf.Max(1, effect.duration));
 
             if (effect.grantExtraRoll)
                 extraRollGranted = true;
 
-            // Pay per company owned (with optional sector filter or majority only)
+            // Pay per company owned ...
             if (effect.payPerCompany > 0)
             {
                 int ownedCount = MarketManager.Instance.ServerCountCompaniesOwnedBy(
@@ -500,6 +503,7 @@ public class EventManager : NetworkBehaviour
         if (extraRollGranted)
             TurnManager.Instance.QueueExtraRoll(pawn, 1);
     }
+
 
     /* ================= SPECIAL MODES (subset kept) ================= */
 

@@ -15,7 +15,7 @@ public class TargetSelectUI : MonoBehaviour
     public void Show(string serializedNames)
     {
         panel.SetActive(true);
-        if (titleText) titleText.text = "การโจมตีทางไซเบอร์: กรุณาเลือกเป้าหมายของคุณห";
+        if (titleText) titleText.text = "การโจมตีทางไซเบอร์: กรุณาเลือกเป้าหมายของคุณ";
 
         dropdown.ClearOptions();
         var arr = serializedNames.Split('|');
