@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using FishNet.Object;
 
 public class ResultsEntryUI : MonoBehaviour
 {
@@ -45,36 +46,37 @@ public class ResultsEntryUI : MonoBehaviour
         _co = StartCoroutine(CoAnimate(playerName, moneyRaw, bailoutCount, finalPoints));
     }
 
-    private void SetupPlayerPortrait(string playerName)
+   private void SetupPlayerPortrait(string playerName)
+{
+    if (playerIcon == null) return;
+    if (GameManager.Instance == null) return;
+
+    PlayerPawn pawn = null;
+
+    foreach (var p in GameManager.Instance.Players)
     {
-        if (playerIcon == null) return;
-        if (GameManager.Instance == null) return;
-
-        PlayerPawn pawn = null;
-
-        foreach (var p in GameManager.Instance.Players)
+        Debug.Log("Setting up : " + playerName);
+        if (p == null) continue;
+        if (p.playerName.Value == playerName)
         {
-            if (p == null) continue;
-            if (p.playerName.Value == playerName)
-            {
-                pawn = p;
-                break;
-            }
+            pawn = p;
+            break;
         }
-
-        if (pawn == null) return;
-
-        var lib = CharacterLibrary.Instance;
-        if (lib != null)
-        {
-            var sprite = lib.GetSprite(pawn.colorIndex.Value);
-            if (sprite != null)
-                playerIcon.sprite = sprite;
-        }
-
-        playerIcon.color = PlayerColors.GetOr(Color.white, pawn.colorIndex.Value);
     }
 
+    if (pawn == null) return;
+
+    var lib = CharacterLibrary.Instance;
+    if (lib != null)
+    {
+        Debug.Log("Setting up portrait for player: " + playerName);
+        var sprite = lib.GetSprite(pawn.colorIndex.Value);
+        if (sprite != null)
+            playerIcon.sprite = sprite;
+    }
+
+    playerIcon.color = PlayerColors.GetOr(Color.white, pawn.colorIndex.Value);
+}
     private IEnumerator CoAnimate(string playerName, int moneyRaw, int bailoutCount, int finalPoints)
     {
         if (nameText)   nameText.text   = playerName;

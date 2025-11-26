@@ -568,14 +568,7 @@ public class PlayerPawn : NetworkBehaviour
     [TargetRpc]
     public void TargetSetTurnOrder(NetworkConnection conn, int turnIndex)
     {
-        if (infoPanel != null)
-        {
-            infoPanel.SetTurnOrder(turnIndex + 1);
-        }
-        else
-        {
-            StartCoroutine(WaitAndSetTurnOrder(turnIndex));
-        }
+         StartCoroutine(WaitAndSetTurnOrder(turnIndex));
     }
 
     private IEnumerator WaitAndSetTurnOrder(int turnIndex)

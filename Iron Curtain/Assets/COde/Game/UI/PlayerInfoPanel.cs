@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
@@ -27,6 +28,13 @@ public class PlayerInfoPanel : MonoBehaviour
     public Image highlightImage;
     public Color activeColor = new Color(1f, 0.9f, 0.3f, 0.75f);
     public Color idleColor   = new Color(1f, 1f, 1f, 0.15f);
+
+    public float pulseScale = 1.05f;      // how big the “bounce” is when active
+public float pulseSpeed = 2f;         // how fast it pulses
+
+    private Coroutine _pulseCo;
+    private string _baseName = "";
+
 
     public TMP_Text bailoutText;
 
@@ -68,34 +76,72 @@ public class PlayerInfoPanel : MonoBehaviour
     {
         if (!highlightImage) return;
 
-        // color swap
+        // background color
         var c = isActive ? activeColor : idleColor;
         c.a = Mathf.Clamp01(c.a);
         highlightImage.color = c;
         highlightImage.enabled = true;
 
-        var cg = highlightImage.GetComponent<CanvasGroup>();
-        if (cg == null) cg = highlightImage.gameObject.AddComponent<CanvasGroup>();
-        cg.alpha = 1f;
-        cg.blocksRaycasts = false;     
-        cg.interactable   = true;     
-        cg.ignoreParentGroups = true;  
-
-   
-        highlightImage.raycastTarget = false;
+        // make sure highlight is on top
         highlightImage.transform.SetAsFirstSibling();
+        highlightImage.raycastTarget = false;
 
+        // name text style + label
+        if (nameText != null)
+        {
+            if (string.IsNullOrEmpty(_baseName))
+                _baseName = nameText.text;
 
-        if (nameText != null) nameText.color = isActive ? Color.yellow : Color.white;
+            if (isActive)
+            {
+                // e.g. "▶ PlayerName (YOUR TURN)"
+                nameText.text = $"▶ {_baseName}";
+                nameText.color = Color.yellow;
+                nameText.fontStyle = FontStyles.Bold;
+            }
+            else
+            {
+                nameText.text = _baseName;
+                nameText.color = Color.white;
+                nameText.fontStyle = FontStyles.Normal;
+            }
+        }
 
-       
+        // pulse animation
+        if (isActive)
+        {
+            if (_pulseCo != null) StopCoroutine(_pulseCo);
+            _pulseCo = StartCoroutine(CoPulse());
+        }
+        else
+        {
+            if (_pulseCo != null) StopCoroutine(_pulseCo);
+            _pulseCo = null;
+            transform.localScale = Vector3.one;
+        }
+
+        // keep portfolio button usable
         if (portfolioButton) portfolioButton.interactable = true;
     }
+
+    private IEnumerator CoPulse()
+    {
+        var t = 0f;
+        while (true)
+        {
+            t += Time.unscaledDeltaTime * pulseSpeed;
+            float s = 0.45f + (Mathf.Sin(t) * 0.05f + 0.05f) * (pulseScale - 1f);
+            transform.localScale = new Vector3(s, s, 1f);
+            yield return null;
+        }
+    }
+
 
 
     public void SetInfo(string name, int money = 0)
     {
         _ownerName = name;
+        _baseName = name; 
         if (nameText) nameText.text = name;
         UpdateMoney(money);
         UpdateBailoutMarks(0);

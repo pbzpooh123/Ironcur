@@ -83,6 +83,7 @@ public class InvestmentUI : MonoBehaviour
         _effectiveCost = -1;
         _currentTile = null;
 
+        // Optional: still find the tile, but only for help text / sector info
         var timeout = 0.5f;
         TileData tile = null;
 
@@ -97,45 +98,16 @@ public class InvestmentUI : MonoBehaviour
                 if (go) tile = go.GetComponent<TileData>();
             }
 
-            int baseCost = 0;
-
-            // 1) ถ้ามี company record แล้ว ใช้ currentPrice เป็นฐาน (เหมือนฝั่ง server)
-            if (MarketManager.Instance != null &&
-                !string.IsNullOrEmpty(_currentCompanyName) &&
-                MarketManager.Instance.companies.TryGetValue(_currentCompanyName, out var comp) &&
-                comp != null && comp.currentPrice > 0)
-            {
-                baseCost = comp.currentPrice;
-            }
-            // 2) ถ้ายังไม่มี record ใช้ companyCost บน Tile
-            else if (tile != null && tile.companyCost > 0)
-            {
-                baseCost = tile.companyCost;
-            }
-            // 3) fallback จาก parameter ที่ส่งมาจาก server
-            else if (costFallback > 0)
-            {
-                baseCost = costFallback;
-            }
-
-            if (baseCost > 0)
-            {
-                float mult = 1f;
-                if (EventManager.Instance != null && tile != null)
-                    mult *= EventManager.Instance.GetActiveSectorPriceMult(tile.sector);
-
-                _effectiveCost = Mathf.Max(1,
-                    Mathf.RoundToInt(baseCost * Mathf.Max(0f, mult)));
-                _currentTile = tile;
+            if (tile != null)
                 break;
-            }
 
             timeout -= Time.unscaledDeltaTime;
             yield return null;
         }
 
-
-        if (_effectiveCost < 1) _effectiveCost = 1;
+        // >>> KEY CHANGE: trust the server-sent price <<<
+        _effectiveCost = Mathf.Max(1, costFallback);
+        _currentTile = tile;
 
         if (costText)
             costText.text = $"ราคา: ${_effectiveCost}M";
