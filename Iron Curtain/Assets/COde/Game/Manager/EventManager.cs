@@ -1052,6 +1052,7 @@ public class EventManager : NetworkBehaviour
     private IEnumerator CoBenefactorDonationTile(PlayerPawn receiver, int amountEach)
     {
         yield return null;
+
         foreach (var p in GameManager.Instance.Players)
         {
             if (p == null || p == receiver) continue;
@@ -1064,11 +1065,13 @@ public class EventManager : NetworkBehaviour
         }
 
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowSideEvent(c, $"มีผู้ใหญ่ใจดีมอบเงินทุนให้คุณ: ทุกคนจ่ายเงินให้ {receiver.playerName.Value} สูงสุด ${amountEach}M คนละ.", false);
-
-
-        ResumeAfterEvent();
+            TargetShowSideEvent(
+                c,
+                $"มีผู้ใหญ่ใจดีมอบเงินทุนให้คุณ: ทุกคนจ่ายเงินให้ {receiver.playerName.Value} สูงสุด ${amountEach}M คนละ.",
+                false
+            );
     }
+
 
     // ===================== MEDIA ATTENTION (grid UI) =====================
 
@@ -1363,38 +1366,42 @@ public class EventManager : NetworkBehaviour
     private void ApplyTargetSelectTo(PlayerPawn target)
     {
         if (_tsCyberAttackMode)
-        {
-            var chooser = _tsChooser;
-            int ransom = Mathf.FloorToInt(target.money.Value * _tsRansomRate);
-            ransom = Mathf.Max(0, ransom);
-
-            int before = target.money.Value;
-            if (ransom > 0)
             {
-                int taken = Mathf.Min(ransom, before);
-                if (taken > 0)
-                {
-                    target.TrySpendMoney(taken);
-                    chooser?.AddMoney(taken);
+                var chooser = _tsChooser;
+                int ransom = Mathf.FloorToInt(target.money.Value * _tsRansomRate);
+                ransom = Mathf.Max(0, ransom);
 
-                    MarketManager.Instance.ServerNerfAllCompaniesOwnedBy(
-                    target,
-                    priceDeltaPercent: -35f,
-                    payoutMultiplier: 0.55f,
-                    durationRounds: 2
-                    );
+                int before = target.money.Value;
+                if (ransom > 0)
+                {
+                    int taken = Mathf.Min(ransom, before);
+                    if (taken > 0)
+                    {
+                        target.TrySpendMoney(taken);
+                        chooser?.AddMoney(taken);
+
+                        MarketManager.Instance.ServerNerfAllCompaniesOwnedBy(
+                            target,
+                            priceDeltaPercent: -35f,
+                            payoutMultiplier: 0.55f,
+                            durationRounds: 2
+                        );
+                    }
                 }
+
+                foreach (var c in InstanceFinder.ServerManager.Clients.Values)
+                    TargetShowSideEvent(
+                        c,
+                        $"การโจมตีทางไซเบอร์! {target.playerName.Value} จ่าย ${ransom}M ให้ {chooser.playerName.Value}. (จ่ายจริง ${Mathf.Min(ransom, before)}M)",
+                        false
+                    );
+
+                _tsCyberAttackMode = false;
+                _tsRansomRate = 0f;
+
+                return;
             }
 
-            foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowSideEvent(c, $"การโจมตีทางไซเบอร์! {target.playerName.Value} จ่าย ${ransom}M ให้ {chooser.playerName.Value}. (จ่ายจริง ${Mathf.Min(ransom, before)}M)", false);
-
-            _tsCyberAttackMode = false;
-            _tsRansomRate = 0f;
-
-            ResumeAfterEvent();
-            return;
-        }
 
         ApplyEventToPawn(_tsEvent, target);
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)

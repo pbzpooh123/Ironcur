@@ -15,7 +15,8 @@ public class PlayerInfoPanel : MonoBehaviour
     private readonly Dictionary<string, TMP_Text> ownershipEntries = new();
 
     [Header("Actions")]
-    public Button portfolioButton;             // assign in prefab
+    public Button portfolioButton;
+    public Button statsButton;             
 
     // Identity for this panel’s player (serialized so you can see it in Inspector during play)
     [SerializeField, HideInInspector] private int _ownerCid = -1;
@@ -168,6 +169,8 @@ public float pulseSpeed = 2f;         // how fast it pulses
         if (bailoutText != null)
             bailoutText.text = $"ใบแจ้งหนี้: {marks}";
     }
+
+    
 
 }
 
