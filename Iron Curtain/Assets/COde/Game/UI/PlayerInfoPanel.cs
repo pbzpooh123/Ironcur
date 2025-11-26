@@ -118,7 +118,7 @@ public float pulseSpeed = 2f;         // how fast it pulses
         {
             if (_pulseCo != null) StopCoroutine(_pulseCo);
             _pulseCo = null;
-            transform.localScale = Vector3.one;
+            transform.localScale = new Vector3(0.452855f, 0.3031918f, 1f);
         }
 
         // keep portfolio button usable

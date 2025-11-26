@@ -121,7 +121,7 @@ public class TurnManager : NetworkBehaviour
     {
         if (!enableDevHotkeys) return;
 
-        if (Input.GetKeyDown(KeyCode.P))
+        if (Input.GetKeyDown(KeyCode.LeftControl) && Input.GetKeyDown(KeyCode.P))
         {
             if (IsServerStarted)
                 EndMatch("Ended by DEV hotkey (P).");

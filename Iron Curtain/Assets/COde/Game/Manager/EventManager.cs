@@ -1070,6 +1070,7 @@ public class EventManager : NetworkBehaviour
         foreach (var p in GameManager.Instance.Players)
         {
             if (p == null || p == receiver) continue;
+
             int pay = Mathf.Min(amountEach, p.money.Value);
             if (pay > 0)
             {
@@ -1078,17 +1079,18 @@ public class EventManager : NetworkBehaviour
             }
         }
 
-        // Just an info popup for everyone – does NOT affect tile phase
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
+        {
+            if (receiver.Owner != null && c.ClientId == receiver.Owner.ClientId)
+                continue;
+
             TargetShowSideEvent(
                 c,
-                $"มีผู้ใหญ่ใจดีมอบเงินทุนให้คุณ: ทุกคนจ่ายเงินให้ {receiver.playerName.Value} เป็นจำนวน ${amountEach}M.",
-                false
+                $"มีผู้ใหญ่ใจดีมอบเงินทุนให้ {receiver.playerName.Value}: ทุกคนจ่ายเงินให้สูงสุด ${amountEach}M.",
+                false   // non-blocking info
             );
+        }
     }
-
-
-
 
     // ===================== MEDIA ATTENTION (grid UI) =====================
 
