@@ -11,6 +11,8 @@ public enum TurnPhase
     None,
     Review,
     Rolling,
+    Moving,
+    Investment,
     TileEventPending,
     Proposal,
     MainEvent,
@@ -59,6 +61,8 @@ public class TurnManager : NetworkBehaviour
     [SerializeField] private int defaultPhaseSeconds = 5;
     [SerializeField] private int reviewSeconds       = 10;
     [SerializeField] private int rollingSeconds      = 10;
+    [SerializeField] private int moveingSeconds      = 10;
+    [SerializeField] private int investmentSeconds   = 15;
     [SerializeField] private int tileEventSeconds    = 15;
     [SerializeField] private int proposalSeconds = 25;
     [SerializeField] private int mainEventSeconds   = 20;
@@ -918,16 +922,29 @@ public class TurnManager : NetworkBehaviour
     {
         return phase switch
         {
-            TurnPhase.Review            => reviewSeconds      > 0 ? reviewSeconds      : defaultPhaseSeconds,
-            TurnPhase.Rolling           => rollingSeconds     > 0 ? rollingSeconds     : defaultPhaseSeconds,
-            TurnPhase.TileEventPending  => tileEventSeconds   > 0 ? tileEventSeconds   : defaultPhaseSeconds,
-            TurnPhase.Proposal          => proposalSeconds    > 0 ? proposalSeconds    : defaultPhaseSeconds,
-            TurnPhase.EndReady          => endReadySeconds    > 0 ? endReadySeconds    : defaultPhaseSeconds,
-            TurnPhase.MainEvent         => mainEventSeconds   > 0 ? mainEventSeconds   : defaultPhaseSeconds,   // ← NEW
-            _                           => defaultPhaseSeconds
+            TurnPhase.Review           => reviewSeconds      > 0 ? reviewSeconds      : defaultPhaseSeconds,
+            TurnPhase.Rolling          => rollingSeconds     > 0 ? rollingSeconds     : defaultPhaseSeconds,
+            TurnPhase.Moving           => moveingSeconds     > 0 ? moveingSeconds     : defaultPhaseSeconds,
+            TurnPhase.Investment       => investmentSeconds  > 0 ? investmentSeconds  : defaultPhaseSeconds,
+            TurnPhase.TileEventPending => tileEventSeconds   > 0 ? tileEventSeconds   : defaultPhaseSeconds,
+            TurnPhase.Proposal         => proposalSeconds    > 0 ? proposalSeconds    : defaultPhaseSeconds,
+            TurnPhase.MainEvent        => mainEventSeconds   > 0 ? mainEventSeconds   : defaultPhaseSeconds,
+            TurnPhase.EndReady         => endReadySeconds    > 0 ? endReadySeconds    : defaultPhaseSeconds,
+            _                          => defaultPhaseSeconds
         };
     }
 
+    [Server]
+    public void ServerEnterMovingPhase()
+    {
+        SetPhase(TurnPhase.Moving);
+    }
+
+    [Server]
+    public void ServerEnterInvestmentPhase()
+    {
+        SetPhase(TurnPhase.Investment);
+    }
 
     [Server]
     private void StartPhaseTimer(TurnPhase phase)

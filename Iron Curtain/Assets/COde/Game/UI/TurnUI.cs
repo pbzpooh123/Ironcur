@@ -371,11 +371,13 @@ public class TurnUI : MonoBehaviour
 
     private string PhaseToShortText(TurnPhase p) => p switch
     {
-        TurnPhase.Review          => "Review",
-        TurnPhase.Rolling         => "Rolling",
-        TurnPhase.TileEventPending=> "Event",
-        TurnPhase.Proposal        => "Proposal",
-        TurnPhase.EndReady        => "Ending",
+        TurnPhase.Review          => "ตรวจข้อเสนอ",
+        TurnPhase.Rolling         => "ทอยเต๋า",
+        TurnPhase.Moving          => "กำลังเดิน",
+        TurnPhase.Investment      => "เลือกซื้อบริษัท",    
+        TurnPhase.TileEventPending=> "เหตุการณ์",
+        TurnPhase.Proposal        => "ส่งข้อเสนอ",
+        TurnPhase.EndReady        => "จบเทิร์น",
         _                         => "—"
     };
 

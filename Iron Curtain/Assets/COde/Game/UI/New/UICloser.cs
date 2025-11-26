@@ -16,12 +16,12 @@ public static class UICloser
                 break;
 
             case TurnPhase.TileEventPending:
-                if (EventUI.Instance != null) EventUI.Instance.OnSideOk();
+                if (EventUI.Instance != null) EventUI.Instance.OnSideEventReadyClicked();
                 InvestmentUI.Instance?.CloseAndContinue(); // optional, if you have it
                 break;
                 
             case TurnPhase.MainEvent:
-                EventUI.Instance?.OnOk(); // or your OK handler
+                EventUI.Instance?.OnOkMain(); // or your OK handler
                 break;
 
             case TurnPhase.Rolling:

@@ -186,6 +186,7 @@ public class EventManager : NetworkBehaviour
             _resumeTilePawn = pawn;
 
             TargetShowSideEvent(pawn.Owner, $"{e.eventName}\n\n{e.description}", true);
+
             StartCoroutine(CoBenefactorDonationTile(pawn, 100));
             return;
         }
@@ -312,22 +313,35 @@ public class EventManager : NetworkBehaviour
     }
 
 
-    [TargetRpc]
+   [TargetRpc]
     private void TargetShowSideEvent(FishNet.Connection.NetworkConnection conn, string message, bool pauseAll)
     {
         if (EventUI.Instance != null)
         {
             EventUI.Instance.SideeventShow(message, pauseAll);
-            EventUI.Instance.SetSideeventReadyCallback(() =>
+
+            if (pauseAll)
             {
-                TurnManager.Instance.CmdTileActionReady();
-            });
+                // Blocking side event → when local player presses OK, mark tile as ready
+                EventUI.Instance.SetSideeventReadyCallback(() =>
+                {
+                    TurnManager.Instance.CmdTileActionReady();
+                });
+            }
+            else
+            {
+                // Just information – no tile-bracket callback
+                EventUI.Instance.SetSideeventReadyCallback(null);
+            }
         }
-        else
+        else if (pauseAll)
         {
+            // no UI, but we must still advance the tile
             TurnManager.Instance.CmdTileActionReady();
         }
     }
+
+
 
 
     [ServerRpc(RequireOwnership = false)]
@@ -1064,13 +1078,16 @@ public class EventManager : NetworkBehaviour
             }
         }
 
+        // Just an info popup for everyone – does NOT affect tile phase
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
             TargetShowSideEvent(
                 c,
-                $"มีผู้ใหญ่ใจดีมอบเงินทุนให้คุณ: ทุกคนจ่ายเงินให้ {receiver.playerName.Value} สูงสุด ${amountEach}M คนละ.",
+                $"มีผู้ใหญ่ใจดีมอบเงินทุนให้คุณ: ทุกคนจ่ายเงินให้ {receiver.playerName.Value} เป็นจำนวน ${amountEach}M.",
                 false
             );
     }
+
+
 
 
     // ===================== MEDIA ATTENTION (grid UI) =====================

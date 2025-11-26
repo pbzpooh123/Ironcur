@@ -16,9 +16,11 @@ public class EventUI : MonoBehaviour
     public GameObject Sidepanel;
     public TMP_Text SideeventText;
     public Button SideokButton;
-    
-    private bool waitingForAll = false;
-    private int readyCount = 0;
+
+    private bool waitingForAllMain = false;
+
+    // callback for blocking side events
+    public System.Action onSideeventReady;
 
     private void Awake()
     {
@@ -27,16 +29,17 @@ public class EventUI : MonoBehaviour
         Sidepanel.SetActive(false);
     }
 
+    /* ========== MAIN EVENT ========== */
+
     public void MaineventShow(string title, string body, bool pauseAll)
     {
         Mainpanel.SetActive(true);
-        eventText.text = title;   // title line
-        HistoryText.text = body;  // description / body
-        waitingForAll = pauseAll;
-        readyCount = 0;
+        eventText.text = title;
+        HistoryText.text = body;
+        waitingForAllMain = pauseAll;
 
         okButton.onClick.RemoveAllListeners();
-        okButton.onClick.AddListener(OnOk);
+        okButton.onClick.AddListener(OnOkMain);
 
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null)
@@ -44,17 +47,36 @@ public class EventUI : MonoBehaviour
             ui.SetRollInteractable(false);
             ui.ForceDisableEndTurn();
         }
+    }
+
+    public void OnOkMain()
+    {
+        Mainpanel.SetActive(false);
+
+        if (waitingForAllMain && EventManager.Instance != null)
+            EventManager.Instance.CmdPlayerReady();
     }
 
     public void SideeventShow(string msg, bool pauseAll)
     {
         Sidepanel.SetActive(true);
         SideeventText.text = msg;
-        waitingForAll = pauseAll;
-        readyCount = 0;
 
         SideokButton.onClick.RemoveAllListeners();
-        SideokButton.onClick.AddListener(OnSideOk);
+
+        if (pauseAll)
+        {
+            // Blocking side event – use callback
+            SideokButton.onClick.AddListener(OnSideEventReadyClicked);
+        }
+        else
+        {
+            // Non-blocking – only close
+            SideokButton.onClick.AddListener(() =>
+            {
+                Sidepanel.SetActive(false);
+            });
+        }
 
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null)
@@ -64,39 +86,17 @@ public class EventUI : MonoBehaviour
         }
     }
 
-    public void OnOk()
-    {
-        Mainpanel.SetActive(false);
-
-        if (waitingForAll)
-        {
-            // Send "ready" to server
-            EventManager.Instance.CmdPlayerReady();
-        }
-    }
-    
-    public void OnSideOk()
-    {
-        Sidepanel.SetActive(false);
-        if (waitingForAll)
-        {
-            // Send "ready" to server
-            TurnManager.Instance.CmdTileActionReady();
-        }
-    }
-    
-    public System.Action onSideeventReady;
-
     public void SetSideeventReadyCallback(System.Action cb)
     {
         onSideeventReady = cb;
     }
-    
+
     public void OnSideEventReadyClicked()
     {
+        Sidepanel.SetActive(false);
+
         var cb = onSideeventReady;
         onSideeventReady = null;
-        cb?.Invoke();   // This will call pawn.CmdTileActionComplete()
-        OnSideOk();
+        cb?.Invoke();   // e.g. TurnManager.Instance.CmdTileActionReady()
     }
 }

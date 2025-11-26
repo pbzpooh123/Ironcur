@@ -83,6 +83,9 @@ public class PlayerPawn : NetworkBehaviour
         if (IsOwner && TurnUI.Instance != null)
             TurnUI.Instance.BindPawn(this);
         StartCoroutine(AutoBindInfoPanel());
+        Debug.Log($"create name tag for pawn {this}");
+         if (PawnNameTagManager.Instance != null)
+            PawnNameTagManager.Instance.CreateForPawn(this);
     }
 
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
@@ -209,6 +212,8 @@ public class PlayerPawn : NetworkBehaviour
     {
         money.OnChange -= OnMoneyChanged;
         bailoutMarks.OnChange -= OnBailoutMarksChanged;
+        if (PawnNameTagManager.Instance != null)
+            PawnNameTagManager.Instance.RemoveForPawn(this);
         base.OnStopClient();
     }
 
@@ -315,6 +320,7 @@ public class PlayerPawn : NetworkBehaviour
     private void CmdStartMovement(int steps)
     {
         if (!IsServerInitialized) return;
+        TurnManager.Instance?.ServerEnterMovingPhase();
         StopAllCoroutines();
         StartCoroutine(ServerMoveStepByStep(steps));
        
@@ -443,7 +449,9 @@ public class PlayerPawn : NetworkBehaviour
 
         if (data.tileType == TileType.Investment && data.owner == null)
         {
-             int price = MarketManager.Instance.ComputeEffectivePrice(data);
+            TurnManager.Instance.ServerBeginTileAction(this);
+            TurnManager.Instance.ServerEnterInvestmentPhase();
+            int price = MarketManager.Instance.ComputeEffectivePrice(data);
             TargetShowInvestmentUI(Owner, currentTile, data.companyName, price, true);
             return;
         }

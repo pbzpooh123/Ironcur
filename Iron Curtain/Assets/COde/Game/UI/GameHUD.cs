@@ -16,10 +16,6 @@ public class GameHUD : MonoBehaviour
 
     private Transform[] anchors;
 
-    [Header("Name Tags")]
-    public RectTransform nameTagRoot;  
-    public PawnNameTag nameTagPrefab; 
-
     private PlayerInfoPanel _currentTurnPanel;
 
     // name → panel (case-insensitive)
@@ -161,20 +157,6 @@ public class GameHUD : MonoBehaviour
         panel.SetTurnActive(true);
         _currentTurnPanel = panel;
         Debug.Log($"[GameHUD] SetCurrentTurnByCid({ownerCid}) -> '{panel.OwnerName}', spriteNull={(panel.highlightImage==null||panel.highlightImage.sprite==null)}");
-    }
-
-    public void RegisterPawnUI(PlayerPawn pawn)
-    {
-        if (pawn == null) return;
-
-        int cid = (pawn.Owner != null) ? pawn.Owner.ClientId : -1;
-
-        // Spawn floating name tag
-        if (nameTagPrefab != null && nameTagRoot != null)
-        {
-            var tag = Instantiate(nameTagPrefab, nameTagRoot);
-            tag.Bind(pawn);
-        }
     }
 
 
