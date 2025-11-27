@@ -167,6 +167,7 @@ public class EventManager : NetworkBehaviour
             return;
         }
 
+        TurnManager.Instance.MarkSkipProposalThisTurn();
         GameEventSO e = null;
         if (tileEvents != null && tileEvents.Count > 0)
             e = tileEvents[Random.Range(0, tileEvents.Count)];
@@ -468,7 +469,7 @@ public class EventManager : NetworkBehaviour
 
                     foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
                         TargetShowSideEvent(c,
-                            $"{pawn.playerName.Value} pays ${pay}M ({effect.payPerCompany}×{ownedCount} company/companies).",
+                            $"{pawn.playerName.Value} จ่ายเงินค่าเสียหาย <color=red>${pay}</color>M ({effect.payPerCompany}×{ownedCount} บริษัท).",
                             false);
                 }
             }
@@ -1086,7 +1087,7 @@ public class EventManager : NetworkBehaviour
 
             TargetShowSideEvent(
                 c,
-                $"มีผู้ใหญ่ใจดีมอบเงินทุนให้ {receiver.playerName.Value}: ทุกคนจ่ายเงินให้สูงสุด ${amountEach}M.",
+                $"มีผู้ใหญ่ใจดีมอบเงินทุนให้ {receiver.playerName.Value}: ทุกคนจ่ายเงินให้สูงสุด <color=green>${amountEach}</color>M.",
                 false   // non-blocking info
             );
         }
@@ -1177,7 +1178,7 @@ public class EventManager : NetworkBehaviour
 
         RpcSetRollMode(ForcedRollTierUI.RollMode.Media);
 
-        string header = $"ทอยลูกเต๋า d6. ผู้ที่ได้สูงสุดจะได้รับ ${_mediaWinnerPayout}M; คนอื่นๆ จะได้รับ ${_mediaOtherPayout}M.";
+        string header = $"ทอยลูกเต๋า d6. ผู้ที่ได้สูงสุดจะได้รับ <color=green>${_mediaWinnerPayout}</color>M; คนอื่นๆ จะได้รับ <color=green>${_mediaOtherPayout}</color>M.";
         foreach (var kv in FishNet.InstanceFinder.ServerManager.Clients)
             TargetShowForcedRollTier(kv.Value, header, ids.ToArray(), ToNames(ids, names), kv.Key);
 
@@ -1274,7 +1275,7 @@ public class EventManager : NetworkBehaviour
         }
 
 
-        string footer = $"สูงสุด {maxRoll}. ผู้ชนะ: {winners.Count}. ผู้ชนะ +${_mediaWinnerPayout}M, คนอื่นๆ +${_mediaOtherPayout}M.";
+        string footer = $"สูงสุด {maxRoll}. ผู้ชนะ: {winners.Count}. ผู้ชนะ +<color=green>${_mediaWinnerPayout}</color>M, คนอื่นๆ +<color=green>${_mediaOtherPayout}</color>M.";
         foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
             TargetSetFooterAndEnableClose(c, footer);
 
@@ -1411,7 +1412,7 @@ public class EventManager : NetworkBehaviour
                 foreach (var c in InstanceFinder.ServerManager.Clients.Values)
                     TargetShowSideEvent(
                         c,
-                        $"การโจมตีทางไซเบอร์! {target.playerName.Value} จ่าย ${ransom}M ให้ {chooser.playerName.Value}. (จ่ายจริง ${Mathf.Min(ransom, before)}M)",
+                        $"การโจมตีทางไซเบอร์! {target.playerName.Value} จ่าย <color=red>${ransom}</color>M ให้ {chooser.playerName.Value}.)",
                         false
                     );
 

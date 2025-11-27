@@ -5,6 +5,8 @@ using System.Collections;
 using System.Collections.Generic;
 using FishNet.Object.Synchronizing;
 using System.Threading.Tasks;
+using DG.Tweening;
+
 
 public class PlayerPawn : NetworkBehaviour
 {
@@ -400,33 +402,37 @@ public class PlayerPawn : NetworkBehaviour
     }
 
     /* ---------- Movement ---------- */
-    [Server] // ← IMPORTANT
+   [Server] 
     private IEnumerator ServerMoveStepByStep(int steps)
     {
         int tileCount = GameManager.Instance.TileCount;
 
+        float stepDuration = 0.5f;  
+        float jumpPower   = 50f;   
+
         for (int i = 1; i <= steps; i++)
         {
-            
             int nextTile = (currentTile + 1) % tileCount;
             Vector3 targetPos = GameManager.Instance.GetTilePosition(nextTile);
+
             TileHighlighter.Instance?.FlashPassAt(targetPos, 1f);
 
-            // move the authoritative transform (server only)
-            while (Vector3.Distance(transform.position, targetPos) > 0.05f)
-            {
-                transform.position = Vector3.MoveTowards(transform.position, targetPos, moveSpeed * Time.deltaTime);
-                yield return null; // server ticks; NetworkTransform replicates to clients
-            }
-
+            transform.DOKill();
+            Tween jumpTween = transform.DOJump(
+                targetPos,   
+                jumpPower,   // jump height
+                1,           // number of jumps
+                stepDuration // duration
+            ).SetEase(Ease.OutQuad);
+            yield return jumpTween.WaitForCompletion();
             transform.position = targetPos;
             currentTile = nextTile;
 
-            yield return new WaitForSeconds(0.1f);
+            yield return new WaitForSeconds(0.05f);
         }
+
         TileHighlighter.Instance?.FlashLandAt(GameManager.Instance.GetTilePosition(currentTile), 1f);
 
-        // now that server is at the final tile, process tile logic
         HandleTileLogic();
     }
 
@@ -476,12 +482,12 @@ public class PlayerPawn : NetworkBehaviour
                     ownerPawn.money.Value -= stealAmt;
                     this.money.Value += stealAmt;
                     Notifier.Instance?.ToastAll(
-                        $"{playerName.Value} stole ${stealAmt}M from {ownerPawn.playerName.Value} at {data.companyName}!",
+                        $"{playerName.Value} ขโมยเงินจำนวน <color=green>${stealAmt}</color>M จาก {ownerPawn.playerName.Value} ที่ {data.companyName}!",
                         ToastKind.Warning);
                 }
 
                 TargetShowTilePopupAndWait(Owner,
-                    $"You raided {data.companyName} and took ${stealAmt}M from {ownerPawn.playerName.Value}.");
+                    $"คุณบุกปล้น {data.companyName} และขโมยเงินจำนวน <color=red>${stealAmt}</color>M จาก {ownerPawn.playerName.Value}.");
                 return;
             }
         }
@@ -500,9 +506,10 @@ public class PlayerPawn : NetworkBehaviour
                     int paid = PayWithOptionalBailouts(totalOwed, allowBailout: true, maxBailouts: 5);
                     if (paid > 0)
                     statTaxPaid += paid;
+                    ServerSetJail(1);
 
     
-                    TargetShowTilePopupAndWait(Owner, $"ภาษี: จ่าย ${paid}M.");
+                    TargetShowTilePopupAndWait(Owner, $"ภาษี: จ่าย <color=red>${paid}</color>M");
                     return;
                 }
 
@@ -514,10 +521,11 @@ public class PlayerPawn : NetworkBehaviour
                     if (bonus > 0)
                     {
                         AddMoney(bonus);
-                        statBonusReceived += bonus;  
+                        statBonusReceived += bonus;
+                        ServerSetJail(1);  
                     }
 
-                    TargetShowTilePopupAndWait(Owner, $"โบนัส: คุณได้รับ ${bonus}M.");
+                    TargetShowTilePopupAndWait(Owner, $"โบนัส: คุณได้รับ <color=green>${bonus}</color>M.");
                     return;
                 }
 
@@ -529,7 +537,7 @@ public class PlayerPawn : NetworkBehaviour
 
                     ServerSetJail(2);
 
-                    TargetShowTilePopupAndWait(Owner, $"คุณถูกจองจำเป็นเวลา {jailTurnsLeft.Value} รอบ");
+                    TargetShowTilePopupAndWait(Owner, $"คุณถูกจองจำเป็นเวลา <color=red>{jailTurnsLeft.Value}</color> รอบ");
                     return;
                 }
         }

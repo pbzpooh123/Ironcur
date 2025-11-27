@@ -10,7 +10,7 @@ public class ColorLockManager : NetworkBehaviour
     public static ColorLockManager Instance;
 
     [Header("Must match lobby color button count")]
-    public int slotCount = 6;
+    public int slotCount = 4;
 
     private int[] _ownerCid;
     private string[] _ownerName;
@@ -55,7 +55,7 @@ public class ColorLockManager : NetworkBehaviour
             RpcSync(_ownerName, _ownerCid);
 
             var conn = connOf(cid);
-            if (conn != null) // may already be null at Stopped
+            if (conn != null)
             {
                 var lp = conn.FirstObject?.GetComponent<NetworkLobbyPlayer>();
                 if (lp != null) lp.colorIndex.Value = -1;
@@ -81,7 +81,6 @@ public class ColorLockManager : NetworkBehaviour
     {
         if (conn == null) return;
 
-        // auto-pick next free if requested one is taken
         if (slotIndex < 0 || slotIndex >= _ownerCid.Length)
             slotIndex = 0;
 
@@ -90,14 +89,11 @@ public class ColorLockManager : NetworkBehaviour
             int alt = FindNextFreeSlot(slotIndex);
             if (alt == -1)
             {
-                // no colors left – bail
                 TargetColorAssigned(conn, -1);
                 return;
             }
             slotIndex = alt;
         }
-
-        // free previous if moving
         if (_cidToSlot.TryGetValue(conn.ClientId, out int prev) && prev >= 0)
         {
             _ownerCid[prev] = -1;
@@ -108,15 +104,13 @@ public class ColorLockManager : NetworkBehaviour
         _ownerName[slotIndex] = string.IsNullOrWhiteSpace(playerName) ? $"P{conn.ClientId}" : playerName.Trim();
         _cidToSlot[conn.ClientId] = slotIndex;
 
-        // Set the lobby SyncVar
         var lp = conn.FirstObject?.GetComponent<NetworkLobbyPlayer>();
         if (lp != null) lp.colorIndex.Value = slotIndex;
 
-        // NEW: If a pawn already exists, push now (so you don’t rely on later pulls)
         ApplyColorToExistingPawn(conn.ClientId, slotIndex);
 
         RpcSync(_ownerName, _ownerCid);
-        TargetColorAssigned(conn, slotIndex); // persist to PlayerPrefs
+        TargetColorAssigned(conn, slotIndex);
     }
 
     [TargetRpc]
@@ -160,7 +154,6 @@ public class ColorLockManager : NetworkBehaviour
     [Server]
     private void ApplyColorToExistingPawn(int cid, int slotIndex)
     {
-        // If a PlayerPawn for this owner already exists (e.g., in game scene), set its SyncVar now.
         foreach (var netObj in InstanceFinder.ServerManager.Objects.Spawned.Values)
         {
             if (netObj.Owner != null && netObj.Owner.ClientId == cid &&

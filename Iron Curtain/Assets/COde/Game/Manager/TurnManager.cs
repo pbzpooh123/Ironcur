@@ -231,6 +231,7 @@ public class TurnManager : NetworkBehaviour
         if (!_extraRolls.ContainsKey(pawn))
             _extraRolls[pawn] = 0;
         _extraRolls[pawn] += Mathf.Max(1, count);
+        DontSkipProposalThisTurn();
     }
 
     [Server] private int GetExtraRolls(PlayerPawn pawn) => (pawn != null && _extraRolls.TryGetValue(pawn, out int v)) ? v : 0;
@@ -253,6 +254,8 @@ public class TurnManager : NetworkBehaviour
         if (turnOrder.Count == 0) return;
         if (currentPlayerIndex.Value >= turnOrder.Count)
             currentPlayerIndex.Value = 0;
+
+         _skipProposalThisTurn = false;
 
         PlayerPawn currentPlayer = turnOrder[currentPlayerIndex.Value];
 
@@ -286,7 +289,6 @@ public class TurnManager : NetworkBehaviour
             _extraRolls[currentPlayer] = 0;
 
         currentPlayer.TargetStartTurn(currentPlayer.Owner);
-        Debug.Log($"[TurnManager] Turn started for {currentPlayer.playerName.Value} (jailed={jailedThisTurn})");
 
         // Start whole-turn timer
         StartTurnTimer(currentPlayer);
@@ -344,22 +346,36 @@ public class TurnManager : NetworkBehaviour
         ServerOnTileActionComplete(pawn);
     }
 
+    private bool _skipProposalThisTurn = false;
+
+    [Server]
+    public void MarkSkipProposalThisTurn()
+    {
+        _skipProposalThisTurn = true;
+    }
+
+    [Server]
+    public void DontSkipProposalThisTurn()
+    {
+        _skipProposalThisTurn = false;
+    }
+
     [Server]
     public void ServerOnTileActionComplete(PlayerPawn pawn)
     {
-        if (!IsCurrentPawn(pawn))
-        {
-            Debug.LogWarning("[TurnManager] ServerOnTileActionComplete called for non-current pawn.");
-            return;
-        }
 
         int extra = GetExtraRolls(pawn);
-        Debug.Log($"[TurnManager] Tile action complete for {pawn.playerName.Value}. ExtraRolls={extra}");
 
         if (extra > 0)
         {
             ConsumeOneExtraRoll(pawn);
             ProceedToRoll();
+        }
+        if (_skipProposalThisTurn)
+        {
+            Debug.Log("[TurnManager] Skipping proposal phase for this turn (event tile).");
+            _skipProposalThisTurn = false;
+            ServerEnterEndReadyAndAutoEnd();
         }
         else
         {

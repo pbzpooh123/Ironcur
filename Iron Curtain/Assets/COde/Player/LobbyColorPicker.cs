@@ -18,7 +18,10 @@ public class LobbyColorBinder : MonoBehaviour
 
     private static LobbyColorBinder[] _all;
     private static readonly Dictionary<int, int> _cidToSlot = new();
-    
+
+    public LobbyCharacterAnim characterAnim;
+    private static LobbyCharacterAnim _currentSelected;
+
 
 
     private void Awake()
@@ -27,13 +30,11 @@ public class LobbyColorBinder : MonoBehaviour
         {
             if (characterSprite != null)
             {
-                // Show per-character icon
                 swatch.sprite = characterSprite;
-                swatch.color = Color.white; // make sure it’s not tinted weirdly
+                swatch.color = Color.white; 
             }
             else if (slotIndex >= 0 && slotIndex < PlayerColors.Palette.Length)
             {
-                // Fallback: old color-square behavior
                 swatch.color = PlayerColors.Palette[slotIndex];
             }
         }
@@ -50,11 +51,9 @@ public class LobbyColorBinder : MonoBehaviour
 
     private IEnumerator WaitAndRequest()
     {
-        // Wait for client to start.
         while (InstanceFinder.ClientManager == null || !InstanceFinder.ClientManager.Started)
             yield return null;
 
-        // Wait for ColorLockManager to exist and be spawned before using its ServerRpc.
         while (ColorLockManager.Instance == null || !ColorLockManager.Instance.IsSpawned)
             yield return null;
 
@@ -63,10 +62,25 @@ public class LobbyColorBinder : MonoBehaviour
 
     private void OnPick()
     {
-        if (ColorLockManager.Instance == null || !ColorLockManager.Instance.IsSpawned) return;
-        string name = PlayerPrefs.GetString("PlayerName", $"P{InstanceFinder.ClientManager.Connection.ClientId}");
+        if (ColorLockManager.Instance == null || !ColorLockManager.Instance.IsSpawned)
+            return;
+
+        string name = PlayerPrefs.GetString(
+            "PlayerName",
+            $"P{FishNet.InstanceFinder.ClientManager.Connection.ClientId}"
+        );
         ColorLockManager.Instance.CmdPick(slotIndex, name);
+
+        if (characterAnim != null)
+        {
+            if (_currentSelected != null && _currentSelected != characterAnim)
+                _currentSelected.PlayDeselectAnim();
+
+            characterAnim.PlaySelectAnim();
+            _currentSelected = characterAnim;
+        }
     }
+
 
     public static bool TryGetSlotForCid(int cid, out int slot) => _cidToSlot.TryGetValue(cid, out slot);
 
