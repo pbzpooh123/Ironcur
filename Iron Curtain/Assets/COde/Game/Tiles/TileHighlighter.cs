@@ -74,9 +74,6 @@ public class TileHighlighter : MonoBehaviour
         p.transform.position = pos;
         p.color = c;
 
-        // keep your original scaling logic
-        p.startScale = size * 85f;
-        p.endScale   = size * 115f;
 
         p.gameObject.SetActive(true);
     }

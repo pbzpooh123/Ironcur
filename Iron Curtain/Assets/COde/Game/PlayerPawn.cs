@@ -431,7 +431,7 @@ public class PlayerPawn : NetworkBehaviour
             yield return new WaitForSeconds(0.05f);
         }
 
-        TileHighlighter.Instance?.FlashLandAt(GameManager.Instance.GetTilePosition(currentTile), 1f);
+        // TileHighlighter.Instance?.FlashLandAt(GameManager.Instance.GetTilePosition(currentTile), 1f);
 
         HandleTileLogic();
     }

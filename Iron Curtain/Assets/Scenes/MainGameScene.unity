@@ -18654,6 +18654,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1190801693}
   - component: {fileID: 1190801692}
+  - component: {fileID: 1190801694}
   m_Layer: 0
   m_Name: imagdwadwasdwasde
   m_TagString: Untagged
@@ -18728,6 +18729,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 1.377, y: 0, z: 0}
+--- !u!114 &1190801694
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1190801691}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1dc8d5b242c2c5944b7eb3d2cbc08844, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  pulsePrefab: {fileID: 1217707858609484182, guid: 914875b3642ce764f9631a8b12041c08, type: 3}
+  poolSize: 40
+  localXOffset: 0.05
+  localYOffset: 0.02
+  zOffset: -0.1
+  passColor: {r: 0.2, g: 0.6, b: 1, a: 1}
+  landColor: {r: 1, g: 0.85, b: 0.2, a: 1}
 --- !u!1 &1198900922
 GameObject:
   m_ObjectHideFlags: 0
@@ -32805,9 +32825,6 @@ PrefabInstance:
       addedObject: {fileID: 4936575218940012830}
     - targetCorrespondingSourceObject: {fileID: 8924475397208095649, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 4936575218940012831}
-    - targetCorrespondingSourceObject: {fileID: 8924475397208095649, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 4936575218940012832}
     - targetCorrespondingSourceObject: {fileID: 8924475397208095649, guid: e433b59ca54764e4bb2f752128808a89, type: 3}
       insertIndex: -1
@@ -32885,25 +32902,6 @@ MonoBehaviour:
   _componentIndexCache: 255
   _addedNetworkObject: {fileID: 4936575218940012829}
   _networkObjectCache: {fileID: 0}
---- !u!114 &4936575218940012831
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4936575218940012828}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1dc8d5b242c2c5944b7eb3d2cbc08844, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  pulsePrefab: {fileID: 5592249215486078974, guid: 914875b3642ce764f9631a8b12041c08, type: 3}
-  poolSize: 40
-  localXOffset: 0
-  localYOffset: 0
-  zOffset: -0.1
-  passColor: {r: 0.2, g: 0.6, b: 1, a: 1}
-  landColor: {r: 1, g: 0.85, b: 0.2, a: 1}
 --- !u!114 &4936575218940012832
 MonoBehaviour:
   m_ObjectHideFlags: 0
