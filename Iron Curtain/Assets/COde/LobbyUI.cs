@@ -124,17 +124,27 @@ public class LobbyUI : MonoBehaviour
         Debug.LogError("ReadyClicked: Local player not found!");
     }
 
-    private void OnStartClicked()
+     private void OnStartClicked()
     {
-        if (InstanceFinder.IsServerStarted && NetworkManagerLobby.Instance.AllPlayersReady())
+        if (!(InstanceFinder.IsServerStarted && NetworkManagerLobby.Instance.AllPlayersReady()))
+            return;
+
+        Debug.Log("All players ready. Switching to game scene...");
+        var loadData = new FishNet.Managing.Scened.SceneLoadData("MainGameScene")
         {
-            Debug.Log("All players ready. Switching to game scene...");
+            ReplaceScenes = FishNet.Managing.Scened.ReplaceOption.All
+        };
 
-            var loadData = new FishNet.Managing.Scened.SceneLoadData("MainGameScene")
+        if (SceneTransition.Instance != null)
+        {
+            SceneTransition.Instance.FadeOut(() =>
             {
-                ReplaceScenes = FishNet.Managing.Scened.ReplaceOption.All
-            };
-
+                InstanceFinder.SceneManager.LoadGlobalScenes(loadData);
+                CloseAllPanels();
+            });
+        }
+        else
+        {
             InstanceFinder.SceneManager.LoadGlobalScenes(loadData);
             CloseAllPanels();
         }

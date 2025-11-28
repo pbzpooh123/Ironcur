@@ -78,11 +78,9 @@ public class MatchResultsUI : MonoBehaviour
     {
         yield return null;
 
-        // clear old rows
         for (int i = rowsParent.childCount - 1; i >= 0; i--)
             Destroy(rowsParent.GetChild(i).gameObject);
 
-        // build one row per player (each row will handle its own drop anim)
         for (int i = 0; i < names.Length; i++)
         {
             var go = Instantiate(rowPrefab, rowsParent);
@@ -107,10 +105,8 @@ public class MatchResultsUI : MonoBehaviour
         AddAwardLine(lines, "นักเจรจาโหด",             proposalsAcceptedKingName);
         AddAwardLine(lines, "เทพลูกเต๋า",               diceGodName);
 
-        // Type awards one by one, with fade-out between lines
         yield return StartCoroutine(CoTypeAwards(lines));
 
-        // allow Ready after awards are fully shown
         if (readyButton != null) readyButton.interactable = true;
     }
 
@@ -119,7 +115,6 @@ public class MatchResultsUI : MonoBehaviour
         if (string.IsNullOrWhiteSpace(winnerName) || winnerName == "—")
             return;
 
-        // 25 points = AWARD_POINTS in TurnManager
         list.Add($"{title}: {winnerName} (+25 แต้ม)");
     }
 
@@ -143,23 +138,19 @@ public class MatchResultsUI : MonoBehaviour
             if (string.IsNullOrWhiteSpace(line))
                 continue;
 
-            // reset alpha to 1, clear text
             Color c = baseColor;
             c.a = 1f;
             awardsText.color = c;
             awardsText.text = "";
 
-            // type this line character by character
             for (int i = 0; i <= line.Length; i++)
             {
                 awardsText.text = line.Substring(0, i);
                 yield return new WaitForSeconds(charDelay);
             }
 
-            // wait a bit after fully shown
             yield return new WaitForSeconds(awardLinePause);
 
-            // fade out
             float t = 0f;
             float dur = Mathf.Max(0.01f, awardFadeDuration);
 
@@ -172,14 +163,12 @@ public class MatchResultsUI : MonoBehaviour
                 yield return null;
             }
 
-            // ensure fully transparent between lines
             c.a = 0f;
             awardsText.color = c;
         }
 
-        // หลังจบทุกบรรทัด ถ้าอยากล้าง text:
         awardsText.text = "";
-        awardsText.color = baseColor; // คืนค่าสีเดิม (alpha = 1) เผื่อใช้ต่อ
+        awardsText.color = baseColor; 
     }
 
     private bool _sentReady = false;
@@ -207,6 +196,20 @@ public class MatchResultsUI : MonoBehaviour
             Debug.LogError("[MatchResultsUI] Leaderboard scene name is empty.");
             return;
         }
-        SceneManager.LoadScene(leaderboardSceneName);
+
+        if (readyButton != null)
+            readyButton.interactable = false;
+
+        if (SceneTransition.Instance != null)
+        {
+            SceneTransition.Instance.FadeOut(() =>
+            {
+                SceneManager.LoadScene(leaderboardSceneName);
+            });
+        }
+        else
+        {
+            SceneManager.LoadScene(leaderboardSceneName);
+        }
     }
 }

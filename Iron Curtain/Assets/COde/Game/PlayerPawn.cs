@@ -415,7 +415,7 @@ public class PlayerPawn : NetworkBehaviour
             int nextTile = (currentTile + 1) % tileCount;
             Vector3 targetPos = GameManager.Instance.GetTilePosition(nextTile);
 
-            TileHighlighter.Instance?.FlashPassAt(targetPos, 1f);
+            // TileHighlighter.Instance?.FlashPassAt(targetPos, 1f);
 
             transform.DOKill();
             Tween jumpTween = transform.DOJump(

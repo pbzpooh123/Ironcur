@@ -134,6 +134,12 @@ public class LeaderboardSceneController : MonoBehaviour
 
     public void OnBackToMainMenu()
     {
-        SceneManager.LoadScene("Lobby");
+        if (SceneTransition.Instance != null)
+        {
+            SceneTransition.Instance.FadeOut(() =>
+            {
+                SceneManager.LoadScene("Lobby");
+            });
+        }
     }
 }
