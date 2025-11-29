@@ -305,17 +305,24 @@ public class PlayerPawn : NetworkBehaviour
     [TargetRpc]
     public void TargetShowDiceAndMove(NetworkConnection conn, int d1, int d2, int totalSteps)
     {
-        if (DiceUI.Instance != null)
-        {
-            DiceUI.Instance.ShowDiceRollingWithCallback(d1, d2, () =>
+         if (Dice3DUI.Instance != null)
             {
-                CmdStartMovement(totalSteps); 
-            });
-        }
-        else
-        {
-            CmdStartMovement(totalSteps);
-        }
+                Dice3DUI.Instance.ShowDiceRollingWithCallback(d1, d2, () =>
+                {
+                    CmdStartMovement(totalSteps);
+                });
+            }
+            else if (DiceUI.Instance != null)
+            {
+                DiceUI.Instance.ShowDiceRollingWithCallback(d1, d2, () =>
+                {
+                    CmdStartMovement(totalSteps);
+                });
+            }
+            else
+            {
+                CmdStartMovement(totalSteps);
+            }
     }
 
     [ServerRpc]
