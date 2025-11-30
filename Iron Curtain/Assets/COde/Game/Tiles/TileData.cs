@@ -35,6 +35,10 @@ public class TileData : MonoBehaviour
     public int stealFlatMin = 0; 
     public int stealFlatMax = 0; 
 
+    [Header("Investment preview text")]
+    [TextArea(3, 6)]
+    public string investmentEffectPreview;
+
     private void Awake()
     {
         if (visuals == null) visuals = GetComponent<TileVisuals>();

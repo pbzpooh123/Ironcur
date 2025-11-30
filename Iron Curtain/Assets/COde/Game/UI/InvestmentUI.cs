@@ -8,74 +8,79 @@ public class InvestmentUI : MonoBehaviour
 {
     public static InvestmentUI Instance;
 
-    [Header("UI References")]
+    [Header("Left panel")]
     public GameObject panel;
-    public TMP_Text titleText;
-    public TMP_Text costText;
-    public Button buyButton;
-    public Button skipButton;
+    public TMP_Text companyNameText;       // ชื่อบริษัท (ใหญ่ ๆ ด้านซ้าย)
+    public TMP_Text priceText;             // "ราคา: $400M"
+    public TMP_Text playerMoneyText;       // "จำนวนเงินที่คุณมี 1506 M"
+    public Image companyIcon;              // ไอคอนบริษัท (ถ้ามี; ไม่บังคับ)
 
-    [Header("Help / Info")]
-    public Button helpButton;         // ? button
-    public GameObject helpPanel;      // panel to open
-    public TMP_Text helpTitleText;    // title inside help panel
-    public TMP_Text helpBodyText;     // body text inside help panel
-    public Button helpCloseButton;    // close button on help panel
+    [Header("Buttons")]
+    public Button buyButton;               // ปุ่ม "ซื้อ"
+    public Button closeButton;             // ปุ่ม X มุมขวาบน
+
+    [Header("Right panel")]
+    public TMP_Text effectHeaderText;      // ใส่เป็น "ผลกระทบที่อาจเกิดขึ้น" ใน Inspector ก็ได้
+    public TMP_Text effectBodyText;        // บรรทัดผลกระทบ
 
     private PlayerPawn currentPawn;
     private int currentTileIndex;
     private string _currentCompanyName;
     private TileData _currentTile;
 
-    private int _effectiveCost = -1;      // -1 = not ready yet
+    private int _effectiveCost = -1;       // -1 = ยังไม่คำนวณเสร็จ
     private Coroutine _priceCo;
 
     private void Awake()
     {
         Instance = this;
-
-        // make sure help panel starts hidden
-        if (helpPanel != null)
-            helpPanel.SetActive(false);
-
-        if (helpCloseButton != null)
-            helpCloseButton.onClick.AddListener(CloseHelpPanel);
+        if (panel != null) panel.SetActive(false);
     }
 
     public void ShowOptions(PlayerPawn pawn, int tileIndex, string companyName, int costMaybeBase, bool isCompany)
     {
-        currentPawn = pawn;
-        currentTileIndex = tileIndex;
+        currentPawn       = pawn;
+        currentTileIndex  = tileIndex;
         _currentCompanyName = companyName;
-        _currentTile = null;
+        _currentTile      = null;
+        _effectiveCost    = -1;
 
-        if (titleText) titleText.text = $"ซื้อ {companyName} นี้ไหม?";
-        if (costText)  costText.text  = "ราคา: —";
-        if (buyButton) buyButton.interactable = false;
+        if (panel != null && !panel.activeSelf)
+            panel.SetActive(true);
 
-        panel.SetActive(true);
+        // ----- Left panel text -----
+        if (companyNameText != null)
+            companyNameText.text = companyName;
 
-        buyButton.onClick.RemoveAllListeners();
-        skipButton.onClick.RemoveAllListeners();
-        buyButton.onClick.AddListener(OnBuyCompanyClicked);
-        skipButton.onClick.AddListener(OnSkipClicked);
+        if (priceText != null)
+            priceText.text = "ราคา: —";
 
-        // hook help / ? button
-        if (helpButton)
+        if (playerMoneyText != null)
+            playerMoneyText.text = $"จำนวนเงินที่คุณมี  {pawn.money.Value} M";
+
+        if (buyButton != null)
         {
-            helpButton.onClick.RemoveAllListeners();
-            helpButton.onClick.AddListener(OnHelpClicked);
+            buyButton.interactable = false;
+            buyButton.onClick.RemoveAllListeners();
+            buyButton.onClick.AddListener(OnBuyCompanyClicked);
         }
 
-        // live money gate once price is ready
-        pawn.money.OnChange -= OnMoneyChanged;
-        pawn.money.OnChange += OnMoneyChanged;
+        if (closeButton != null)
+        {
+            closeButton.onClick.RemoveAllListeners();
+            closeButton.onClick.AddListener(OnCloseClicked);
+        }
 
         var ui = FindObjectOfType<TurnUI>();
         if (ui != null) ui.ForceDisableEndTurn();
 
+        pawn.money.OnChange -= OnMoneyChanged;
+        pawn.money.OnChange += OnMoneyChanged;
+
         if (_priceCo != null) StopCoroutine(_priceCo);
         _priceCo = StartCoroutine(CoComputePrice(costMaybeBase));
+
+        FillEffectPreview();
     }
 
     private IEnumerator CoComputePrice(int costFallback)
@@ -83,8 +88,7 @@ public class InvestmentUI : MonoBehaviour
         _effectiveCost = -1;
         _currentTile = null;
 
-        // Optional: still find the tile, but only for help text / sector info
-        var timeout = 0.5f;
+        float timeout = 0.5f;
         TileData tile = null;
 
         while (timeout > 0f)
@@ -95,7 +99,7 @@ public class InvestmentUI : MonoBehaviour
                 currentTileIndex < GameManager.Instance.boardTiles.Length)
             {
                 var go = GameManager.Instance.boardTiles[currentTileIndex];
-                if (go) tile = go.GetComponent<TileData>();
+                if (go != null) tile = go.GetComponent<TileData>();
             }
 
             if (tile != null)
@@ -105,14 +109,13 @@ public class InvestmentUI : MonoBehaviour
             yield return null;
         }
 
-        // >>> KEY CHANGE: trust the server-sent price <<<
-        _effectiveCost = Mathf.Max(1, costFallback);
         _currentTile = tile;
+        _effectiveCost = Mathf.Max(1, costFallback); // ใช้ราคาที่ server ส่งมาเป็นหลัก
 
-        if (costText)
-            costText.text = $"ราคา: ${_effectiveCost}M";
+        if (priceText != null)
+            priceText.text = $"ราคา: ${_effectiveCost}M";
 
-        if (buyButton && currentPawn != null)
+        if (buyButton != null && currentPawn != null)
             buyButton.interactable = (currentPawn.money.Value >= _effectiveCost);
 
         _priceCo = null;
@@ -120,82 +123,61 @@ public class InvestmentUI : MonoBehaviour
 
     private void OnMoneyChanged(int oldVal, int newVal, bool asServer)
     {
-        if (!panel || !panel.activeInHierarchy || buyButton == null) return;
-        if (_effectiveCost < 1) { buyButton.interactable = false; return; }
-        buyButton.interactable = newVal >= _effectiveCost;
+        if (panel == null || !panel.activeInHierarchy) return;
+
+        if (playerMoneyText != null)
+            playerMoneyText.text = $"จำนวนเงินที่คุณมี  {newVal} M";
+
+        if (buyButton != null)
+        {
+            if (_effectiveCost < 1)
+                buyButton.interactable = false;
+            else
+                buyButton.interactable = (newVal >= _effectiveCost);
+        }
     }
 
     private void OnBuyCompanyClicked()
     {
         if (currentPawn == null) return;
-        buyButton.interactable = false;
+        if (buyButton != null) buyButton.interactable = false;
+
+        // server-side buy
         MarketManager.Instance.CmdBuyCompany(currentTileIndex);
+
         CloseAndContinue();
     }
 
-    private void OnSkipClicked() => CloseAndContinue();
-
-    // --- ? button: open help panel ---
-    private void OnHelpClicked()
+    private void OnCloseClicked()
     {
-        // Try to get the latest tile + price info
-        TileData tile = _currentTile;
-
-        if (tile == null &&
-            GameManager.Instance != null &&
-            GameManager.Instance.boardTiles != null &&
-            currentTileIndex >= 0 &&
-            currentTileIndex < GameManager.Instance.boardTiles.Length)
-        {
-            var go = GameManager.Instance.boardTiles[currentTileIndex];
-            if (go) tile = go.GetComponent<TileData>();
-        }
-
-        int price = _effectiveCost;
-        if (price < 1 && tile != null && MarketManager.Instance != null)
-        {
-            price = MarketManager.Instance.ComputeEffectivePrice(tile);
-        }
-
-        string name = string.IsNullOrEmpty(_currentCompanyName) ? "บริษัท" : _currentCompanyName;
-        string sector = (tile != null && !string.IsNullOrEmpty(tile.sector)) ? tile.sector : "—";
-
-        // Fill help panel text
-        if (helpTitleText != null)
-            helpTitleText.text = $"การลงทุนในบริษัท";
-
-        if (helpBodyText != null)
-        {
-            helpBodyText.text =
-                $"ประเภทบริษัท: {sector}";
-        }
-
-        // Show help panel (or fallback to sideevent if you forgot to wire it)
-        if (helpPanel != null)
-        {
-            helpPanel.SetActive(true);
-        }
-        else
-        {
-            // fallback so it still works even if panel not assigned
-            EventUI.Instance?.SideeventShow(helpBodyText != null ? helpBodyText.text : "ข้อมูลการลงทุน", true);
-        }
+        CloseAndContinue();
     }
 
-    private void CloseHelpPanel()
+    private void FillEffectPreview()
     {
-        if (helpPanel != null)
-            helpPanel.SetActive(false);
+        if (effectBodyText != null)
+        {
+            effectBodyText.text =
+                "ปี 19XX รายได้ +100% ในรอบนั้น\n\n" +
+                "ปี 19XX รายได้ลดลง -200% ในรอบนั้น";
+        }
     }
 
     public void CloseAndContinue()
     {
-        if (_priceCo != null) { StopCoroutine(_priceCo); _priceCo = null; }
-        if (currentPawn != null) currentPawn.money.OnChange -= OnMoneyChanged;
+        if (_priceCo != null)
+        {
+            StopCoroutine(_priceCo);
+            _priceCo = null;
+        }
 
-        if (panel) panel.SetActive(false);
-        CloseHelpPanel(); // just in case help is open
+        if (currentPawn != null)
+            currentPawn.money.OnChange -= OnMoneyChanged;
 
+        if (panel != null)
+            panel.SetActive(false);
+
+        // แจ้ง server ว่าจบ tile action แล้ว และขอเปิด proposal UI ต่อ
         if (currentPawn != null)
         {
             currentPawn.CmdTileActionComplete();

@@ -473,30 +473,34 @@ public class PlayerPawn : NetworkBehaviour
         {
             // A) STEAL ON LANDING
             if (data.enableStealOnLanding)
-            {
-                TurnManager.Instance.ServerBeginTileAction(this);
-
-                var ownerPawn = data.owner;
-                int ownerMoney = Mathf.Max(0, ownerPawn.money.Value);
-                int pct = Mathf.Clamp(data.stealPercentOfOwnerMoney, 0, 100);
-                int stealAmt = Mathf.RoundToInt(ownerMoney * (pct / 100f));
-                if (data.stealFlatMin > 0) stealAmt = Mathf.Max(stealAmt, data.stealFlatMin);
-                if (data.stealFlatMax > 0) stealAmt = Mathf.Min(stealAmt, data.stealFlatMax);
-                stealAmt = Mathf.Max(0, stealAmt);
-
-                if (stealAmt > 0)
                 {
-                    ownerPawn.money.Value -= stealAmt;
-                    this.money.Value += stealAmt;
-                    Notifier.Instance?.ToastAll(
-                        $"{playerName.Value} ขโมยเงินจำนวน <color=green>${stealAmt}</color>M จาก {ownerPawn.playerName.Value} ที่ {data.companyName}!",
-                        ToastKind.Warning);
+                    TurnManager.Instance.ServerBeginTileAction(this);
+
+                    var ownerPawn = data.owner;
+                    int ownerMoney = Mathf.Max(0, ownerPawn.money.Value);
+                    int pct = Mathf.Clamp(data.stealPercentOfOwnerMoney, 0, 100);
+                    int stealAmt = Mathf.RoundToInt(ownerMoney * (pct / 100f));
+                    if (data.stealFlatMin > 0) stealAmt = Mathf.Max(stealAmt, data.stealFlatMin);
+                    if (data.stealFlatMax > 0) stealAmt = Mathf.Min(stealAmt, data.stealFlatMax);
+                    stealAmt = Mathf.Max(0, stealAmt);
+
+                    if (stealAmt > 0)
+                    {
+                        ownerPawn.money.Value -= stealAmt;
+                        this.money.Value += stealAmt;
+                        Notifier.Instance?.ToastAll(
+                            $"{playerName.Value} ขโมยเงินจำนวน <color=green>${stealAmt}</color>M จาก {ownerPawn.playerName.Value} ที่ {data.companyName}!",
+                            ToastKind.Warning);
+                    }
+
+                    TargetShowTilePopupAndWait(
+                        Owner,
+                        "ปล้น!",
+                        $"คุณบุกปล้น {data.companyName} และขโมยเงินจำนวน <color=red>${stealAmt}</color>M จาก {ownerPawn.playerName.Value}."
+                    );
+                    return;
                 }
 
-                TargetShowTilePopupAndWait(Owner,
-                    $"คุณบุกปล้น {data.companyName} และขโมยเงินจำนวน <color=red>${stealAmt}</color>M จาก {ownerPawn.playerName.Value}.");
-                return;
-            }
         }
 
         switch (data.tileType)
@@ -516,7 +520,7 @@ public class PlayerPawn : NetworkBehaviour
                     ServerSetJail(1);
 
     
-                    TargetShowTilePopupAndWait(Owner, $"ภาษี: จ่าย <color=red>${paid}</color>M");
+                    TargetShowTilePopupAndWait(Owner,"ช่องภาษี", $"จ่าย <color=red>${paid}</color>M");
                     return;
                 }
 
@@ -532,7 +536,7 @@ public class PlayerPawn : NetworkBehaviour
                         ServerSetJail(1);  
                     }
 
-                    TargetShowTilePopupAndWait(Owner, $"โบนัส: คุณได้รับ <color=green>${bonus}</color>M.");
+                    TargetShowTilePopupAndWait(Owner,"ช่องโบนัส", $"คุณได้รับ <color=green>${bonus}</color>M.");
                     return;
                 }
 
@@ -544,7 +548,7 @@ public class PlayerPawn : NetworkBehaviour
 
                     ServerSetJail(2);
 
-                    TargetShowTilePopupAndWait(Owner, $"คุณถูกจองจำเป็นเวลา <color=red>{jailTurnsLeft.Value}</color> รอบ");
+                    TargetShowTilePopupAndWait(Owner,"ช่องคุก", $"คุณถูกขังเป็นเวลา <color=red>{jailTurnsLeft.Value}</color> รอบ");
                     return;
                 }
         }
@@ -562,11 +566,11 @@ public class PlayerPawn : NetworkBehaviour
 
     // <<< NEW: show side popup that MUST be acknowledged; Ready -> CmdTileActionComplete() >>>
     [TargetRpc]
-    private void TargetShowTilePopupAndWait(NetworkConnection conn, string msg)
+    private void TargetShowTilePopupAndWait(NetworkConnection conn,string title, string msg)
     {
         if (EventUI.Instance != null)
         {
-            EventUI.Instance.SideeventShow(msg, true);
+            EventUI.Instance.SideeventShow(title,msg, true);
             EventUI.Instance.SetSideeventReadyCallback(() =>
             {
                 CmdTileActionComplete();
@@ -578,10 +582,10 @@ public class PlayerPawn : NetworkBehaviour
         }
     }
     [TargetRpc]
-    private void TargetShowToast(NetworkConnection conn, string msg)
+    private void TargetShowToast(NetworkConnection conn,string title, string msg)
     {
         if (EventUI.Instance != null)
-            EventUI.Instance.SideeventShow(msg, true);
+            EventUI.Instance.SideeventShow(title,msg, true);
         else
             Debug.Log($"[Toast] {msg}");
     }
@@ -655,13 +659,6 @@ public class PlayerPawn : NetworkBehaviour
     {
         jailTurnsLeft.Value = Mathf.Max(1, turns);
         statJailVisits += 1; 
-    }
-
-    [Server]
-    public void ServerReleaseFromJail()
-    {
-        jailTurnsLeft.Value = 0;
-        TargetShowToast(Owner, "You are released from jail.");
     }
 
     /* ---------- Bailout helper ---------- */
@@ -844,10 +841,5 @@ public int statProposalsAccepted;
 public int statTakeoversWon;     
 
 public int statTotalRollSum;     
-public int statSixRolled;        
-    
-   
-       
-
-
+public int statSixRolled;
 }

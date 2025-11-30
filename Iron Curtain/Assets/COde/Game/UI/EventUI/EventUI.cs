@@ -14,6 +14,7 @@ public class EventUI : MonoBehaviour
 
     [Header("Side Event")]
     public GameObject Sidepanel;
+    public TMP_Text SideeventTitleText;
     public TMP_Text SideeventText;
     public Button SideokButton;
 
@@ -57,9 +58,10 @@ public class EventUI : MonoBehaviour
             EventManager.Instance.CmdPlayerReady();
     }
 
-    public void SideeventShow(string msg, bool pauseAll)
+    public void SideeventShow(string title,string msg, bool pauseAll)
     {
         Sidepanel.SetActive(true);
+        SideeventTitleText.text = title;
         SideeventText.text = msg;
 
         SideokButton.onClick.RemoveAllListeners();

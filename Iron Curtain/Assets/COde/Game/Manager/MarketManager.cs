@@ -1169,10 +1169,6 @@ public class MarketManager : NetworkBehaviour
             ProposalUI.Instance.ShowFirstTimeHint();
             return;
         }
-        EventUI.Instance?.SideeventShow(
-            "Proposal tip:\n• Choose a company you don’t own.\n• Enter % you want and the price you’ll pay.\n• You can’t exceed 100% total and owner can’t sell more than they have.",
-            true
-        );
     }
 
     [TargetRpc]
@@ -1183,10 +1179,6 @@ public class MarketManager : NetworkBehaviour
             ReviewUI.Instance.ShowFirstTimeHint();
             return;
         }
-        EventUI.Instance?.SideeventShow(
-            "Review tip:\n• Review offers made to your companies.\n• Accept to transfer shares for cash; Reject to keep them.\n• Majority (>50%) can change tile owner color.",
-            true
-        );
     }
 
     [Server]

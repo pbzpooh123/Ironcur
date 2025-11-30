@@ -186,7 +186,7 @@ public class EventManager : NetworkBehaviour
             _resume = ResumeContext.Tile;
             _resumeTilePawn = pawn;
 
-            TargetShowSideEvent(pawn.Owner, $"{e.eventName}\n\n{e.description}", true);
+            TargetShowSideEvent(pawn.Owner,e.eventName,e.description,true);
 
             StartCoroutine(CoBenefactorDonationTile(pawn, 100));
             return;
@@ -213,7 +213,7 @@ public class EventManager : NetworkBehaviour
         _resume = ResumeContext.Tile;
         _resumeTilePawn = pawn;
 
-        TargetShowSideEvent(pawn.Owner, $"{e.eventName}\n\n{e.description}", true);
+        TargetShowSideEvent(pawn.Owner,e.eventName,e.description,true);
         ApplyEventToPawn(e, pawn);
     }
 
@@ -315,34 +315,33 @@ public class EventManager : NetworkBehaviour
 
 
    [TargetRpc]
-    private void TargetShowSideEvent(FishNet.Connection.NetworkConnection conn, string message, bool pauseAll)
-    {
-        if (EventUI.Instance != null)
+        private void TargetShowSideEvent(
+            FishNet.Connection.NetworkConnection conn,
+            string title,
+            string message,
+            bool pauseAll)
         {
-            EventUI.Instance.SideeventShow(message, pauseAll);
-
-            if (pauseAll)
+            if (EventUI.Instance != null)
             {
-                // Blocking side event → when local player presses OK, mark tile as ready
-                EventUI.Instance.SetSideeventReadyCallback(() =>
+                EventUI.Instance.SideeventShow(title, message, pauseAll);
+
+                if (pauseAll)
                 {
-                    TurnManager.Instance.CmdTileActionReady();
-                });
+                    EventUI.Instance.SetSideeventReadyCallback(() =>
+                    {
+                        TurnManager.Instance.CmdTileActionReady();
+                    });
+                }
+                else
+                {
+                    EventUI.Instance.SetSideeventReadyCallback(null);
+                }
             }
-            else
+            else if (pauseAll)
             {
-                // Just information – no tile-bracket callback
-                EventUI.Instance.SetSideeventReadyCallback(null);
+                TurnManager.Instance.CmdTileActionReady();
             }
         }
-        else if (pauseAll)
-        {
-            // no UI, but we must still advance the tile
-            TurnManager.Instance.CmdTileActionReady();
-        }
-    }
-
-
 
 
     [ServerRpc(RequireOwnership = false)]
@@ -468,8 +467,8 @@ public class EventManager : NetworkBehaviour
                     if (pay > 0) pawn.TrySpendMoney(pay);
 
                     foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
-                        TargetShowSideEvent(c,
-                            $"{pawn.playerName.Value} จ่ายเงินค่าเสียหาย <color=red>${pay}</color>M ({effect.payPerCompany}×{ownedCount} บริษัท).",
+                        TargetShowSideEvent(c,"น้ำท่วม,แผ่นดินไหว หลายๆอย่างรวมกัน!!!!! ทำให้คุณต้องจ่ายค่าบำรุงรักษาบริษัท",
+                            $"{pawn.playerName.Value} จ่ายเงินบำรุงรักษาบริษัท <color=red>${pay}</color>M ({effect.payPerCompany}×{ownedCount} บริษัท).",
                             false);
                 }
             }
@@ -1087,7 +1086,8 @@ public class EventManager : NetworkBehaviour
 
             TargetShowSideEvent(
                 c,
-                $"มีผู้ใหญ่ใจดีมอบเงินทุนให้ {receiver.playerName.Value}: ทุกคนจ่ายเงินให้สูงสุด <color=green>${amountEach}</color>M.",
+                $"มีผู้ใหญ่ใจดีมอบเงินทุนให้ {receiver.playerName.Value}:",
+                $"ทุกคนจ่ายเงิน<color=red>{amountEach}</color>M.",
                 false   // non-blocking info
             );
         }
@@ -1411,8 +1411,8 @@ public class EventManager : NetworkBehaviour
 
                 foreach (var c in InstanceFinder.ServerManager.Clients.Values)
                     TargetShowSideEvent(
-                        c,
-                        $"การโจมตีทางไซเบอร์! {target.playerName.Value} จ่าย <color=red>${ransom}</color>M ให้ {chooser.playerName.Value}.)",
+                        c,"การโจมตีทางไซเบอร์!",
+                        $" {target.playerName.Value} จ่าย <color=red>${ransom}</color>M ให้ {chooser.playerName.Value}.)",
                         false
                     );
 
@@ -1425,7 +1425,7 @@ public class EventManager : NetworkBehaviour
 
         ApplyEventToPawn(_tsEvent, target);
         foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-            TargetShowSideEvent(c, $"{_tsEvent.eventName}: Target → {target.playerName.Value}", false);
+            TargetShowSideEvent(c,"", $"{_tsEvent.eventName}: Target → {target.playerName.Value}", false);
 
         _tsEvent = null;
         ResumeAfterEvent();
@@ -1497,7 +1497,7 @@ public class EventManager : NetworkBehaviour
         if (targets.Count == 0)
         {
             foreach (var c in InstanceFinder.ServerManager.Clients.Values)
-                TargetShowSideEvent(c, "การโจมตีทางไซเบอร์: ไม่มีเป้าหมายที่ถูกต้อง.", false);
+                TargetShowSideEvent(c,"", "การโจมตีทางไซเบอร์: ไม่มีเป้าหมายที่ถูกต้อง.", false);
             _tsCyberAttackMode = false;
             _tsRansomRate = 0f;
             ResumeAfterEvent();
