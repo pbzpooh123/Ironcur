@@ -155,12 +155,24 @@ public class InvestmentUI : MonoBehaviour
 
     private void FillEffectPreview()
     {
-        if (effectBodyText != null)
+        if (effectBodyText == null) return;
+
+        string body = null;
+
+        if (_currentTile != null && 
+            !string.IsNullOrWhiteSpace(_currentTile.investmentEffectPreview))
         {
-            effectBodyText.text =
-                "ปี 19XX รายได้ +100% ในรอบนั้น\n\n" +
-                "ปี 19XX รายได้ลดลง -200% ในรอบนั้น";
+            body = _currentTile.investmentEffectPreview;
         }
+        else
+        {
+            // fallback ถ้า tile ยังไม่เซ็ต หรือยังไม่ได้พิมพ์
+            body =
+                "ปี 19XX รายได้ +100% ในรอบนั้น\n\n" +
+                "ปี 19YY รายได้ลดลง -200% ในรอบนั้น";
+        }
+
+        effectBodyText.text = body;
     }
 
     public void CloseAndContinue()

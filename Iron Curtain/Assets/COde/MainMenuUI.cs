@@ -231,7 +231,7 @@ public class MainMenuUI : MonoBehaviour
             if (obj.IsOwner && obj.TryGetComponent(out NetworkLobbyPlayer player))
             {
                 player.JoinRoom(roomCodeInput.text.ToUpper());
-                player.CmdSetProfile(nameInput.text,0);
+                player.CmdSetProfile(nameInput.text);
                 return;
             }
         }

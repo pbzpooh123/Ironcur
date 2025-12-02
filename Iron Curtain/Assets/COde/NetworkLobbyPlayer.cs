@@ -33,8 +33,7 @@ public class NetworkLobbyPlayer : NetworkBehaviour
         if (IsOwner)
         {
             string n  = PlayerPrefs.GetString("PlayerName", "Player");
-            int ci    = PlayerPrefs.GetInt("ColorIndex", 0);
-            CmdSetProfile(n, ci);       
+            CmdSetProfile(n);       
             RequestRoomCode();           
         }
     }
@@ -70,14 +69,10 @@ public class NetworkLobbyPlayer : NetworkBehaviour
     /* ---------------- Profile + color (unique) ---------------- */
 
     [ServerRpc]
-    public void CmdSetProfile(string newName, int desiredColorIndex)
+    public void CmdSetProfile(string newName)
     {
         playerName.Value = string.IsNullOrWhiteSpace(newName) ? "Player" : newName;
         NetworkManagerLobby.Instance.UpdateLobbyUI();
-        if (ColorLockManager.Instance != null)
-        {
-            ColorLockManager.Instance.CmdPick(desiredColorIndex, playerName.Value, Owner);
-        }
     }
 
     /* ---------------- Room code + lobby list ---------------- */

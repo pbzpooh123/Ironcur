@@ -942,6 +942,7 @@ GameObject:
   - component: {fileID: 101673774}
   - component: {fileID: 101673776}
   - component: {fileID: 101673777}
+  - component: {fileID: 101673778}
   m_Layer: 5
   m_Name: Color (3)
   m_TagString: Untagged
@@ -1068,6 +1069,20 @@ MonoBehaviour:
   pickButton: {fileID: 101673776}
   characterSprite: {fileID: 21300000, guid: d9409a43d74af9a4ead13df1bcac05f6, type: 3}
   characterAnim: {fileID: 1891182254}
+--- !u!114 &101673778
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 101673772}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0dcfcb26b1e83204ba0dbb76d0ee0244, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  audioSource: {fileID: 1338201353}
+  clickSound: {fileID: 8300000, guid: 135d5270d794c6e439044872cea349e5, type: 3}
 --- !u!1 &132405159
 GameObject:
   m_ObjectHideFlags: 0
@@ -7092,6 +7107,7 @@ GameObject:
   - component: {fileID: 1233895492}
   - component: {fileID: 1233895494}
   - component: {fileID: 1233895495}
+  - component: {fileID: 1233895496}
   m_Layer: 5
   m_Name: Color (1)
   m_TagString: Untagged
@@ -7218,6 +7234,20 @@ MonoBehaviour:
   pickButton: {fileID: 1233895494}
   characterSprite: {fileID: 21300000, guid: 7d5b7ca1011ed5d458c06cb1bfe727ae, type: 3}
   characterAnim: {fileID: 1536417513}
+--- !u!114 &1233895496
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1233895490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0dcfcb26b1e83204ba0dbb76d0ee0244, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  audioSource: {fileID: 1338201353}
+  clickSound: {fileID: 8300000, guid: 135d5270d794c6e439044872cea349e5, type: 3}
 --- !u!1 &1236663099
 GameObject:
   m_ObjectHideFlags: 0
@@ -9175,6 +9205,7 @@ GameObject:
   - component: {fileID: 1515447701}
   - component: {fileID: 1515447703}
   - component: {fileID: 1515447704}
+  - component: {fileID: 1515447705}
   m_Layer: 5
   m_Name: Color
   m_TagString: Untagged
@@ -9301,6 +9332,20 @@ MonoBehaviour:
   pickButton: {fileID: 1515447703}
   characterSprite: {fileID: 21300000, guid: 7cb830af21088ab4695baabad2826775, type: 3}
   characterAnim: {fileID: 1866338374}
+--- !u!114 &1515447705
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1515447699}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0dcfcb26b1e83204ba0dbb76d0ee0244, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  audioSource: {fileID: 1338201353}
+  clickSound: {fileID: 8300000, guid: 135d5270d794c6e439044872cea349e5, type: 3}
 --- !u!1 &1536417511
 GameObject:
   m_ObjectHideFlags: 0
@@ -13300,6 +13345,7 @@ GameObject:
   - component: {fileID: 2093345306}
   - component: {fileID: 2093345308}
   - component: {fileID: 2093345309}
+  - component: {fileID: 2093345310}
   m_Layer: 5
   m_Name: Color (2)
   m_TagString: Untagged
@@ -13426,6 +13472,20 @@ MonoBehaviour:
   pickButton: {fileID: 2093345308}
   characterSprite: {fileID: 21300000, guid: 4e742a7ac6ebf2741be1d60bf4b985b7, type: 3}
   characterAnim: {fileID: 576945290}
+--- !u!114 &2093345310
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2093345304}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0dcfcb26b1e83204ba0dbb76d0ee0244, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  audioSource: {fileID: 1338201353}
+  clickSound: {fileID: 8300000, guid: 135d5270d794c6e439044872cea349e5, type: 3}
 --- !u!1 &2098312464
 GameObject:
   m_ObjectHideFlags: 0
