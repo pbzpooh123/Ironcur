@@ -8,7 +8,8 @@ using FishNet.Object.Synchronizing;
 [System.Serializable]
 public class Proposal
 {
-    public PlayerPawn proposer;   // who made the offer
+    public PlayerPawn proposer;
+    public string proposerName;   // who made the offer
     public float percent;           // % of shares they want
     public int price;             // how much they offer 
 }
@@ -497,6 +498,7 @@ public class MarketManager : NetworkBehaviour
         company.proposals.Add(new Proposal
         {
             proposer = proposer,
+            proposerName = proposer.playerName.Value,
             percent  = maxTransfer,
             price    = price
         });
@@ -787,13 +789,15 @@ public class MarketManager : NetworkBehaviour
         company.proposals.Clear();
         for (int i = 0; i < proposerNames.Length; i++)
         {
-            var proposerPawn = GameManager.Instance.Players.Find(p => p.playerName.Value == proposerNames[i]);
+            var proposerPawn = GameManager.Instance.Players
+                .Find(p => p.playerName.Value == proposerNames[i]);
 
             company.proposals.Add(new Proposal
             {
-                proposer = proposerPawn,
-                percent  = percents[i],
-                price    = prices[i]
+                proposer     = proposerPawn,
+                proposerName = proposerNames[i],
+                percent      = percents[i],
+                price        = prices[i]
             });
 
             if (proposerPawn == null)
@@ -821,7 +825,10 @@ public class MarketManager : NetworkBehaviour
         if (companies.TryGetValue(companyName, out var comp))
         {
             if (index >= 0 && index < comp.proposals.Count)
-                comp.proposals[index].proposer = found;
+            {
+                comp.proposals[index].proposer     = found;
+                comp.proposals[index].proposerName = proposerName;
+            }
 
             ReviewUI.Instance?.Refresh();
         }
@@ -839,9 +846,13 @@ public class MarketManager : NetworkBehaviour
 
         for (int i = 0; i < n; i++)
         {
-            names[i] = c.proposals[i].proposer != null ? c.proposals[i].proposer.playerName.Value : "";
-            perc[i]  = c.proposals[i].percent;
-            price[i] = c.proposals[i].price;
+            var pr = c.proposals[i];
+            names[i] = !string.IsNullOrWhiteSpace(pr.proposerName)
+                ? pr.proposerName
+                : (pr.proposer != null ? pr.proposer.playerName.Value : "");
+
+            perc[i]  = pr.percent;
+            price[i] = pr.price;
         }
 
         RpcSyncProposals(companyName, names, perc, price);

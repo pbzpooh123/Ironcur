@@ -76,10 +76,18 @@ public class ReviewEntry : MonoBehaviour
         }
 
         bool allowDebt        = (MarketManager.Instance != null) && MarketManager.Instance.AllowDebtOnAccept;
-        bool proposerKnown    = (_proposal.proposer != null);
-        string proposerName   = proposerKnown ? _proposal.proposer.playerName.Value : "Unknown";
-        bool proposerCanAfford= proposerKnown && (_proposal.proposer.money.Value >= _proposal.price);
-        bool canAccept        = allowDebt || proposerCanAfford;
+       bool proposerKnown = (_proposal.proposer != null);
+
+    string proposerName =
+        !string.IsNullOrWhiteSpace(_proposal.proposerName)
+            ? _proposal.proposerName
+            : (proposerKnown ? _proposal.proposer.playerName.Value : "Unknown");
+
+    bool proposerCanAfford =
+        proposerKnown && (_proposal.proposer.money.Value >= _proposal.price);
+
+    bool canAccept = allowDebt || proposerCanAfford;
+
 
         // ใช้ 3 ช่องหลัก ถ้ามี
         if (proposerText != null && percentText != null && priceText != null)
