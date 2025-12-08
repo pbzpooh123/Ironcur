@@ -11,22 +11,40 @@ public class SceneTransition : MonoBehaviour
 
     void Awake()
     {
-       
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
         Instance = this;
+        DontDestroyOnLoad(gameObject);
 
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
 
-        // Start fully black, fade in on first scene
         canvasGroup.alpha = 1f;
         canvasGroup.blocksRaycasts = true;
         canvasGroup.interactable = true;
 
+        SceneManager.sceneLoaded += OnSceneLoaded;
+
+        FadeIn();
+    }
+
+    void OnDestroy()
+    {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
         FadeIn();
     }
 
     public void FadeIn(System.Action onComplete = null)
     {
+        if (canvasGroup == null) return;
+
         canvasGroup.DOKill();
         canvasGroup.blocksRaycasts = true;
         canvasGroup.interactable = true;
@@ -41,6 +59,8 @@ public class SceneTransition : MonoBehaviour
 
     public void FadeOut(System.Action onComplete = null)
     {
+        if (canvasGroup == null) return;
+
         canvasGroup.DOKill();
         canvasGroup.blocksRaycasts = true;
         canvasGroup.interactable = true;

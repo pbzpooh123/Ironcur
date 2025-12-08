@@ -30,7 +30,7 @@ public class MainMenuUI : MonoBehaviour
     public LobbyUI lobbyUI;
     
     private bool isHosting = false;
-    public UnityEngine.UI.Button hostButton;
+    public Button hostButton;
 
    void Awake()
     {
@@ -210,8 +210,8 @@ public class MainMenuUI : MonoBehaviour
 
             InstanceFinder.ClientManager.StartConnection();
 
+            mainMenuPanel.SetActive(false);
             lobbyPanel.SetActive(true);
-            hostClientPanel.SetActive(false);
 
             Invoke(nameof(RequestJoinRoom), 2f);
 

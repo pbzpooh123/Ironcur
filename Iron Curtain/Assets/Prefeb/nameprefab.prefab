@@ -90,8 +90,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   nameText: {fileID: 7563593933196728481}
-  worldOffset: {x: 7.5, y: 2, z: 0}
-  screenOffset: {x: 0, y: 45}
+  worldOffset: {x: 7.5, y: 2.19, z: 0}
+  screenOffset: {x: 0, y: 70}
 --- !u!1 &3724225655051922376
 GameObject:
   m_ObjectHideFlags: 0

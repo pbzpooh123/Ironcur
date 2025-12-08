@@ -76,7 +76,7 @@ public class ProposalEntry : MonoBehaviour
         {
             ownerNameText.text = string.IsNullOrEmpty(ownerName)
                 ? "Owner: —"
-                : $"Owner: {ownerName}";
+                : $"{ownerName}";
         }
     }
 
@@ -179,6 +179,7 @@ public class ProposalEntry : MonoBehaviour
 
         // ตรงนี้คุณต้องเปลี่ยนลายเซ็น RPC ให้รับ float แทน int
         MarketManager.Instance.CmdSubmitProposal(_company.companyName, pct, price);
+        ProposalUI.Instance.CloseAndNotifyServer();
     }
     
     public void OnServerRejected(string reason)

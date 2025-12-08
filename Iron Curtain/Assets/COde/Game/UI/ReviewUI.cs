@@ -187,7 +187,7 @@ public class ReviewUI : MonoBehaviour
         if (pageText != null) pageText.gameObject.SetActive(on);
     }
 
-    private void CloseAndNotifyServer()
+    public void CloseAndNotifyServer()
     {
         panel.SetActive(false);
         MarketManager.Instance?.CmdNotifyReviewClosed();

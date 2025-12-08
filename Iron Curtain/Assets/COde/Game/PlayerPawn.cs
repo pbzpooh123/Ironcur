@@ -517,7 +517,7 @@ public class PlayerPawn : NetworkBehaviour
                     int paid = PayWithOptionalBailouts(totalOwed, allowBailout: true, maxBailouts: 5);
                     if (paid > 0)
                     statTaxPaid += paid;
-                    ServerSetJail(1);
+                    TurnManager.Instance.MarkSkipProposalThisTurn();
 
     
                     TargetShowTilePopupAndWait(Owner,"ช่องภาษี", $"จ่าย <color=red>${paid}</color>M");
@@ -533,7 +533,7 @@ public class PlayerPawn : NetworkBehaviour
                     {
                         AddMoney(bonus);
                         statBonusReceived += bonus;
-                        ServerSetJail(1);  
+                        TurnManager.Instance.MarkSkipProposalThisTurn();
                     }
 
                     TargetShowTilePopupAndWait(Owner,"ช่องโบนัส", $"คุณได้รับ <color=green>${bonus}</color>M.");

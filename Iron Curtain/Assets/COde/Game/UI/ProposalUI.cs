@@ -187,7 +187,7 @@ public class ProposalUI : MonoBehaviour
         if (pageText != null) pageText.gameObject.SetActive(on);
     }
 
-    private void CloseAndNotifyServer()
+    public void CloseAndNotifyServer()
     {
         Hide(); // also unhooks money change
         if (MarketManager.Instance != null)
@@ -236,10 +236,8 @@ public class ProposalUI : MonoBehaviour
         hintBody.text =
             "• เลือกบริษัทที่คุณยังไม่ได้เป็นเจ้าของหุ้น.\n" +
             "• กรอก % และราคาที่คุณจะจ่าย.\n" +
-            "• เจ้าของไม่สามารถขายเกินกว่าจำนวนที่พวกเขามีอยู่ได้.\n" +
-            "• หากได้รับการยอมรับ หุ้นจะถูกโอนเข้ามาและเงินจะถูกหักออกไป.\n" +
             "• หากคุณถือหุ้นมากกว่า 60% คุณจะกลายเป็น เจ้าของโรงงานแทน" +
-            "• การบังคับซื้อหุ้นคือการซื้อ % โดยทันทีที่ในราคาที่สูงกว่า.";
+            "• กาให้ข้อเสนอที่ปฎิเสธไม่ได้คือการซื้อ % โดยทันทีที่ในราคาที่สูงกว่า.";
         hintPanel.SetActive(true);
     }
 
@@ -351,6 +349,8 @@ public class ProposalUI : MonoBehaviour
             forcedBuyButton.interactable = false;
             StartCoroutine(ReenableForcedBuySoon());
         }
+
+        CloseAndNotifyServer();
     }
 
 

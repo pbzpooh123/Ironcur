@@ -114,6 +114,7 @@ public class ReviewEntry : MonoBehaviour
                 acceptButton.interactable = false;
                 if (rejectButton != null) rejectButton.interactable = false;
                 MarketManager.Instance.CmdResolveProposal(_companyName, _index, true);
+                ReviewUI.Instance.CloseAndNotifyServer();
             });
         }
 
@@ -126,6 +127,7 @@ public class ReviewEntry : MonoBehaviour
                 rejectButton.interactable = false;
                 if (acceptButton != null) acceptButton.interactable = false;
                 MarketManager.Instance.CmdResolveProposal(_companyName, _index, false);
+                ReviewUI.Instance.CloseAndNotifyServer();
             });
         }
     }

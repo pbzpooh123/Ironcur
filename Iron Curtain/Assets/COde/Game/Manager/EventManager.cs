@@ -1638,8 +1638,6 @@ public class EventManager : NetworkBehaviour
     {
         RpcSyncSectorSurge(sector, priceMult, payoutMult, expiresAtRound);
     }
-    
-    // วางโค้ดนี้ไว้ท้ายคลาส EventManager (ก่อนปีกกาปิดสุดท้ายของคลาส)
 
     // ================= ACTIVE EFFECTS SUMMARY (for ActiveEffectsUI) =================
 
@@ -1712,11 +1710,11 @@ public class EventManager : NetworkBehaviour
                         label = $"บริษัทประเภท {display}";
                     }
                 string pricePart = Mathf.Abs(s.priceMult - 1f) > 0.001f
-                    ? $"ราคา x{s.priceMult:0.##}"
+                    ? $"ราคาเพิ่มขึ้น {s.priceMult:0.##} เท่า"
                     : null;
 
                 string payoutPart = Mathf.Abs(s.payoutMult - 1f) > 0.001f
-                    ? $"ปันผล x{s.payoutMult:0.##}"
+                    ? $"เงินปันผลเพิ่มขึ้น {s.payoutMult:0.##} เท่า"
                     : null;
 
                 string effects;
@@ -1725,9 +1723,16 @@ public class EventManager : NetworkBehaviour
                 else
                     effects = pricePart ?? payoutPart ?? "";
 
-                string until = (s.expiresAtRound > 0)
-                    ? $"ถึงรอบที่ {s.expiresAtRound}"
-                    : "จนกว่าจะถูกยกเลิก";
+                string until;
+                if (s.expiresAtRound > 0)
+                {
+                    int remaining = Mathf.Max(1, s.expiresAtRound - cur);
+                    until = $"เหลืออีก {remaining} รอบ";
+                }
+                else
+                {
+                    until = "จนกว่าจะถูกยกเลิก";
+                }
 
                 if (viewerHas)
                     lines.Add($"{label}: {effects} (กระทบบริษัทที่คุณถือหุ้น) {until}");
