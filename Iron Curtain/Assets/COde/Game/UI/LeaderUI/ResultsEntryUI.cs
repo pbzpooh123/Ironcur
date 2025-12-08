@@ -47,36 +47,70 @@ public class ResultsEntryUI : MonoBehaviour
     }
 
    private void SetupPlayerPortrait(string playerName)
-{
-    if (playerIcon == null) return;
-    if (GameManager.Instance == null) return;
-
-    PlayerPawn pawn = null;
-
-    foreach (var p in GameManager.Instance.Players)
     {
-        Debug.Log("Setting up : " + playerName);
-        if (p == null) continue;
-        if (p.playerName.Value == playerName)
+        if (playerIcon == null) return;
+        StartCoroutine(CoSetupPortrait(playerName));
+    }
+
+    private IEnumerator CoSetupPortrait(string playerName)
+    {
+        float timeout = 3f;
+        string targetName = playerName?.Trim() ?? "";
+
+        while (timeout > 0f)
         {
-            pawn = p;
-            break;
+            var lib = CharacterLibrary.Instance;
+            if (lib != null)
+            {
+                PlayerPawn found = null;
+
+                if (GameManager.Instance != null && GameManager.Instance.Players != null &&
+                    GameManager.Instance.Players.Count > 0)
+                {
+                    foreach (var p in GameManager.Instance.Players)
+                    {
+                        if (p == null) continue;
+                        if (string.Equals(p.playerName.Value?.Trim(), targetName,
+                                        System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            found = p;
+                            break;
+                        }
+                    }
+                }
+                if (found == null)
+                {
+                    foreach (var p in FindObjectsOfType<PlayerPawn>())
+                    {
+                        if (p == null) continue;
+                        if (string.Equals(p.playerName.Value?.Trim(), targetName,
+                                        System.StringComparison.OrdinalIgnoreCase))
+                        {
+                            found = p;
+                            break;
+                        }
+                    }
+                }
+
+                if (found != null)
+                {
+                    Debug.Log($"[ResultsEntryUI] Setting up portrait for {targetName} (colorIndex={found.colorIndex.Value})");
+
+                    var sprite = lib.GetSprite(found.colorIndex.Value);
+                    if (sprite != null)
+                        playerIcon.sprite = sprite;
+
+                    playerIcon.color = PlayerColors.GetOr(Color.white, found.colorIndex.Value);
+                    yield break; // done
+                }
+            }
+
+            timeout -= Time.unscaledDeltaTime;
+            yield return null;
         }
+
+        Debug.LogWarning($"[ResultsEntryUI] Failed to find pawn for '{playerName}' on this client.");
     }
-
-    if (pawn == null) return;
-
-    var lib = CharacterLibrary.Instance;
-    if (lib != null)
-    {
-        Debug.Log("Setting up portrait for player: " + playerName);
-        var sprite = lib.GetSprite(pawn.colorIndex.Value);
-        if (sprite != null)
-            playerIcon.sprite = sprite;
-    }
-
-    playerIcon.color = PlayerColors.GetOr(Color.white, pawn.colorIndex.Value);
-}
     private IEnumerator CoAnimate(string playerName, int moneyRaw, int bailoutCount, int finalPoints)
     {
         if (nameText)   nameText.text   = playerName;

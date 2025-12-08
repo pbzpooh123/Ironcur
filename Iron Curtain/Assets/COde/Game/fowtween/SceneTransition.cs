@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using DG.Tweening;
 
 public class SceneTransition : MonoBehaviour
@@ -9,35 +8,31 @@ public class SceneTransition : MonoBehaviour
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private float fadeDuration = 0.5f;
 
-    void Awake()
+    private void Awake()
     {
+
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
             return;
         }
+
         Instance = this;
         DontDestroyOnLoad(gameObject);
 
         if (canvasGroup == null)
             canvasGroup = GetComponent<CanvasGroup>();
 
-        canvasGroup.alpha = 1f;
-        canvasGroup.blocksRaycasts = true;
-        canvasGroup.interactable = true;
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
 
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        if (canvasGroup != null)
+        {
+            canvasGroup.alpha = 1f;
+            canvasGroup.blocksRaycasts = true;
+            canvasGroup.interactable = true;
+        }
 
-        FadeIn();
-    }
-
-    void OnDestroy()
-    {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
         FadeIn();
     }
 
@@ -61,6 +56,9 @@ public class SceneTransition : MonoBehaviour
     {
         if (canvasGroup == null) return;
 
+        if (!gameObject.activeSelf)
+            gameObject.SetActive(true);
+
         canvasGroup.DOKill();
         canvasGroup.blocksRaycasts = true;
         canvasGroup.interactable = true;
@@ -69,5 +67,10 @@ public class SceneTransition : MonoBehaviour
         {
             onComplete?.Invoke();
         });
+    }
+
+    private void OnDisable()
+    {
+        Debug.LogWarning("[SceneTransition] DISABLED (ดูว่าใครไปปิด)", this);
     }
 }

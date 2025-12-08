@@ -15,14 +15,16 @@ public class LobbyColorBinder : MonoBehaviour
     [Header("Character preview")]
     public Sprite characterSprite;
 
+    public LobbyCharacterAnim characterAnim;
 
     private static LobbyColorBinder[] _all;
     private static readonly Dictionary<int, int> _cidToSlot = new();
 
-    public LobbyCharacterAnim characterAnim;
+    // Which character UI anim is currently "ours" (optional)
     private static LobbyCharacterAnim _currentSelected;
 
-
+    // Per-instance: last owner cid of this slot (for change detection)
+    private int _lastOwnerCid = -1;
 
     private void Awake()
     {
@@ -31,7 +33,7 @@ public class LobbyColorBinder : MonoBehaviour
             if (characterSprite != null)
             {
                 swatch.sprite = characterSprite;
-                swatch.color = Color.white; 
+                swatch.color = Color.white;
             }
             else if (slotIndex >= 0 && slotIndex < PlayerColors.Palette.Length)
             {
@@ -45,7 +47,6 @@ public class LobbyColorBinder : MonoBehaviour
             pickButton.onClick.AddListener(OnPick);
         }
     }
-
 
     private void OnEnable() => StartCoroutine(WaitAndRequest());
 
@@ -67,20 +68,14 @@ public class LobbyColorBinder : MonoBehaviour
 
         string name = PlayerPrefs.GetString(
             "PlayerName",
-            $"P{FishNet.InstanceFinder.ClientManager.Connection.ClientId}"
+            $"P{InstanceFinder.ClientManager.Connection.ClientId}"
         );
+
+        // Only send request to server; DO NOT play anim here
         ColorLockManager.Instance.CmdPick(slotIndex, name);
-
-        if (characterAnim != null)
-        {
-            if (_currentSelected != null && _currentSelected != characterAnim)
-                _currentSelected.PlayDeselectAnim();
-
-            characterAnim.PlaySelectAnim();
-            _currentSelected = characterAnim;
-        }
     }
 
+    /* ---------------- Static helpers used by ColorLockManager ---------------- */
 
     public static bool TryGetSlotForCid(int cid, out int slot) => _cidToSlot.TryGetValue(cid, out slot);
 
@@ -91,10 +86,48 @@ public class LobbyColorBinder : MonoBehaviour
             if (ownerCids[i] >= 0) _cidToSlot[ownerCids[i]] = i;
 
         if (_all == null) _all = FindObjectsOfType<LobbyColorBinder>(true);
+
         foreach (var b in _all)
         {
-            bool taken = b.slotIndex >= 0 && b.slotIndex < ownerCids.Length && ownerCids[b.slotIndex] >= 0;
-            if (b.pickButton) b.pickButton.interactable = !taken;
+            if (b == null) continue;
+
+            int newCid = -1;
+            if (b.slotIndex >= 0 && b.slotIndex < ownerCids.Length)
+                newCid = ownerCids[b.slotIndex];
+
+            bool wasTaken = b._lastOwnerCid >= 0;
+            bool isTaken  = newCid >= 0;
+
+            // Button interactability
+            if (b.pickButton != null)
+                b.pickButton.interactable = !isTaken;
+
+            // --- NEW: drive animations from network state ---
+            if (!wasTaken && isTaken)
+            {
+                // Slot became taken -> select animation
+                b.characterAnim?.PlaySelectAnim();
+
+                // If this slot belongs to THIS client, track as current selected
+                if (InstanceFinder.ClientManager != null &&
+                    InstanceFinder.ClientManager.Connection != null &&
+                    newCid == InstanceFinder.ClientManager.Connection.ClientId &&
+                    b.characterAnim != null)
+                {
+                    _currentSelected = b.characterAnim;
+                }
+            }
+            else if (wasTaken && !isTaken)
+            {
+                // Slot became free -> deselect animation
+                b.characterAnim?.PlayDeselectAnim();
+
+                if (_currentSelected == b.characterAnim)
+                    _currentSelected = null;
+            }
+
+            // Store for next diff
+            b._lastOwnerCid = newCid;
         }
 
         FindObjectOfType<LobbyUI>()?.RefreshNameColors();

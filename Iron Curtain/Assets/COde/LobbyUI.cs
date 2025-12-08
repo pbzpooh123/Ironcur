@@ -129,13 +129,29 @@ public class LobbyUI : MonoBehaviour
        if (!(InstanceFinder.IsServerStarted && NetworkManagerLobby.Instance.AllPlayersReady()))
         return;
 
-        if (LobbySceneController.Instance != null && LobbySceneController.Instance.IsServerInitialized)
+        Debug.Log("All players ready. Switching to game scene...");
+        var loadData = new FishNet.Managing.Scened.SceneLoadData("MainGameScene")
         {
-            LobbySceneController.Instance.ServerStartGameWithFade();
+            ReplaceScenes = FishNet.Managing.Scened.ReplaceOption.All
+        };
+
+        if (SceneTransition.Instance != null)
+        {
+            var tr = SceneTransition.Instance;
+            if (!tr.gameObject.activeSelf)
+                tr.gameObject.SetActive(true);
+
+            tr.FadeOut(() =>
+            {
+                InstanceFinder.SceneManager.LoadGlobalScenes(loadData);
+                CloseAllPanels();
+            });
         }
         else
         {
-            Debug.LogWarning("LobbySceneController.Instance missing or not server.");
+            // เผื่อกรณีไม่มีจริง ๆ
+            InstanceFinder.SceneManager.LoadGlobalScenes(loadData);
+            CloseAllPanels();
         }
     }
 
