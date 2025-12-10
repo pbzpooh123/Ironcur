@@ -19,6 +19,16 @@ public enum TurnPhase
     EndReady
 }
 
+public enum InvestorProfileType
+{
+    Minimal,
+    Conservative,
+    Balanced,
+    Aggressive,
+    Adventurer,
+    StrategicAggro
+}
+
 public class TurnManager : NetworkBehaviour
 {
     public static TurnManager Instance;
@@ -568,6 +578,8 @@ public class TurnManager : NetworkBehaviour
         int[] moneyRaw     = new int[n];
         int[] bailouts     = new int[n];
         int[] finalPoints  = new int[n];
+        string[] investorTitles    = new string[n];
+        string[] investorSummaries = new string[n];
 
         const int AWARD_POINTS = 25;
 
@@ -768,6 +780,8 @@ public class TurnManager : NetworkBehaviour
             names[i]    = string.IsNullOrWhiteSpace(p.playerName.Value) ? $"Player {i + 1}" : p.playerName.Value;
             moneyRaw[i] = p.money.Value;
             bailouts[i] = p.bailoutMarks.Value;
+            var type = ClassifyInvestor(p);
+            GetInvestorTexts(type, out investorTitles[i], out investorSummaries[i]);
 
             int netMoney   = Mathf.Max(0, p.money.Value - 100 * p.bailoutMarks.Value);
             int basePoints = netMoney / 100;
@@ -792,12 +806,13 @@ public class TurnManager : NetworkBehaviour
 
         // ส่งไป UI – finals = “แต้มรวม”
         RpcShowFinalResults(
-            names, moneyRaw, bailouts, finalPoints,
-            portfolioKingName, incomeKingName, spendingKingName,
-            taxVictimName, unluckyName, takeoverKingName,
-            proposalSharkName, proposalAcceptedKingName,
-            diceGodName
-        );
+        names, moneyRaw, bailouts, finalPoints,
+        investorTitles, investorSummaries,                  // ← เพิ่ม
+        portfolioKingName, incomeKingName, spendingKingName,
+        taxVictimName, unluckyName, takeoverKingName,
+        proposalSharkName, proposalAcceptedKingName,
+        diceGodName
+    );
 
         _resultsReady    = 0;
         _resultsRequired = Mathf.Max(1, n);
@@ -823,6 +838,7 @@ public class TurnManager : NetworkBehaviour
     [ObserversRpc(BufferLast = true)]
     private void RpcShowFinalResults(
         string[] names, int[] moneys, int[] bailouts, int[] finals,
+        string[] investorTitles, string[] investorSummaries,      // ← เพิ่ม
         string portfolioKingName, string incomeKingName, string spendingKingName,
         string taxVictimName, string unluckyName, string takeoverKingName,
         string proposalsSharkName, string proposalsAcceptedKingName,
@@ -831,6 +847,7 @@ public class TurnManager : NetworkBehaviour
     {
         MatchResultsUI.Instance?.Show(
             names, moneys, bailouts, finals,
+            investorTitles, investorSummaries,                     // ← ส่งต่อ
             portfolioKingName, incomeKingName, spendingKingName,
             taxVictimName, unluckyName, takeoverKingName,
             proposalsSharkName, proposalsAcceptedKingName,
@@ -1088,5 +1105,97 @@ public class TurnManager : NetworkBehaviour
 
     return (bestVal <= 0) ? -1 : bestIdx;
 }
+
+
+ private InvestorProfileType ClassifyInvestor(PlayerPawn p)
+    {
+        if (p == null) return InvestorProfileType.Balanced;
+
+        int bailouts   = p.statBailouts;
+        int takeovers  = p.statTakeoversWon;
+        int proposals  = p.statProposalsSent;
+        int eventLoss  = p.statEventLoss;
+        int bonus      = p.statBonusReceived;
+        int income     = p.statTotalIncome;
+        int spending   = p.statTotalSpending;
+
+        float roi = (spending > 0) ? (income / (float)spending) : 0f;
+
+        // ตัวอย่าง rule แบบง่าย ปรับได้ตามใจ
+        if (bailouts == 0 && proposals < 2 && takeovers == 0 && roi <= 1.0f)
+            return InvestorProfileType.Minimal;
+
+        if (bailouts == 0 && roi >= 1.0f && takeovers == 0)
+            return InvestorProfileType.Conservative;
+
+        if (bailouts <= 1 && roi >= 1.0f && proposals <= 3)
+            return InvestorProfileType.Balanced;
+
+        if (bailouts <= 3 && (proposals > 3 || takeovers > 0))
+            return InvestorProfileType.Aggressive;
+
+        if (bailouts >= 3 || eventLoss > bonus)
+            return InvestorProfileType.Adventurer;
+
+        if (roi >= 1.5f && (proposals > 3 || takeovers > 0))
+            return InvestorProfileType.StrategicAggro;
+
+        return InvestorProfileType.Balanced;
+    }
+
+    private void GetInvestorTexts(InvestorProfileType type, out string title, out string summary)
+    {
+        switch (type)
+        {
+            case InvestorProfileType.Minimal:
+                title = "นักลงทุนมินิมอล";
+                summary =
+                    "ลงทุนแบบเสี่ยงต่ำมาก ถือเงินสดเยอะ เน้นความปลอดภัยเป็นหลัก " +
+                    "ตัดสินใจช้าแต่ค่อนข้างมั่นคง เหมาะกับผู้ที่เริ่มต้นและยังไม่อยากเสี่ยงมาก";
+                break;
+
+            case InvestorProfileType.Conservative:
+                title = "นักลงทุนสายอนุรักษ์นิยม";
+                summary =
+                    "ให้ความสำคัญกับความมั่นคงมากกว่ากำไรระยะสั้น เลือกดีลและการลงทุนอย่างระมัดระวัง " +
+                    "มักเลี่ยงสถานการณ์เสี่ยงสูงและพยายามไม่ใช้ Bailout";
+                break;
+
+            case InvestorProfileType.Balanced:
+                title = "นักลงทุนสมดุล";
+                summary =
+                    "พยายามบาลานซ์ระหว่างความเสี่ยงและผลตอบแทน มีทั้งการลงทุนเชิงรุกและเชิงรับ " +
+                    "พร้อมปรับแผนตามสถานการณ์ แต่ไม่ได้สุดทางด้านไหนเป็นพิเศษ";
+                break;
+
+            case InvestorProfileType.Aggressive:
+                title = "นักลงทุนเชิงรุก";
+                summary =
+                    "กล้าตัดสินใจเสี่ยงเพื่อผลตอบแทนสูง ส่งข้อเสนอซื้อ–ขายบ่อย และพร้อมเดินเกมรุกใส่คู่แข่ง " +
+                    "เหมาะกับคนที่ชอบจังหวะเร็วและการแข่งขันสูง";
+                break;
+
+            case InvestorProfileType.Adventurer:
+                title = "นักลงทุนสายผจญภัย";
+                summary =
+                    "ยอมรับความผันผวนสูง บางครั้งใช้ Bailout หลายครั้งเพื่อเอาตัวรอด " +
+                    "พร้อมเสี่ยงถ้าเห็นโอกาส แต่ต้องระวังการกระจายความเสี่ยงในระยะยาว";
+                break;
+
+            case InvestorProfileType.StrategicAggro:
+                title = "นักกลยุทธ์เชิงรุก";
+                summary =
+                    "เสี่ยงสูงแต่มีแผน ใช้ข้อมูลและจังหวะตลาดวางเกมรุก ทั้งซื้อกิจการและต่อรองดีลให้คุ้มที่สุด " +
+                    "เหมาะกับผู้เล่นที่อ่านเกมขาดและกล้าตัดสินใจในเวลาสำคัญ";
+                break;
+
+            default:
+                title = "นักลงทุนสมดุล";
+                summary =
+                    "มีทั้งจังหวะเซฟและจังหวะเสี่ยง ปรับการตัดสินใจไปตามสถานการณ์ " +
+                    "เป็นสไตล์กลาง ๆ ที่เหมาะสำหรับการลองกลยุทธ์หลายแบบ";
+                break;
+        }
+    }
 
 }

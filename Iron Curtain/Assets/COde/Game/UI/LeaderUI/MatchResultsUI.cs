@@ -17,18 +17,6 @@ public class MatchResultsUI : MonoBehaviour
     [Header("Controls")]
     public Button readyButton;
 
-    [Header("Awards (single text)")]
-    public TMP_Text awardsText;
-
-    [Tooltip("Characters per second for award text typing.")]
-    [SerializeField] private float awardCharsPerSecond = 30f;
-
-    [Tooltip("Pause (seconds) after each line is fully shown before fading out.")]
-    [SerializeField] private float awardLinePause = 0.4f;
-
-    [Tooltip("Duration of fade-out between award lines (seconds).")]
-    [SerializeField] private float awardFadeDuration = 0.35f;
-
     [Header("Scenes")]
     [SerializeField] private string leaderboardSceneName = "Leaderboard";
 
@@ -37,11 +25,12 @@ public class MatchResultsUI : MonoBehaviour
         Instance = this;
         if (root != null) root.SetActive(false);
         if (readyButton != null) readyButton.interactable = false;
-        if (awardsText != null) awardsText.text = "";
     }
 
+    // มี investorTitles / investorSummaries + ชื่อผู้ได้รางวัล 9 แบบจาก TurnManager
     public void Show(
         string[] names, int[] startMoney, int[] bailouts, int[] finalPoints,
+        string[] investorTitles, string[] investorSummaries,
         string portfolioKingName, string incomeKingName, string spendingKingName,
         string taxVictimName, string unluckyName, string takeoverKingName,
         string proposalsSharkName, string proposalsAcceptedKingName,
@@ -61,6 +50,7 @@ public class MatchResultsUI : MonoBehaviour
         StopAllCoroutines();
         StartCoroutine(CoBuildAndAnimate(
             names, startMoney, bailouts, finalPoints,
+            investorTitles, investorSummaries,
             portfolioKingName, incomeKingName, spendingKingName,
             taxVictimName, unluckyName, takeoverKingName,
             proposalsSharkName, proposalsAcceptedKingName,
@@ -70,6 +60,7 @@ public class MatchResultsUI : MonoBehaviour
 
     private IEnumerator CoBuildAndAnimate(
         string[] names, int[] startMoney, int[] bailouts, int[] finalPoints,
+        string[] investorTitles, string[] investorSummaries,
         string portfolioKingName, string incomeKingName, string spendingKingName,
         string taxVictimName, string unluckyName, string takeoverKingName,
         string proposalsSharkName, string proposalsAcceptedKingName,
@@ -78,9 +69,11 @@ public class MatchResultsUI : MonoBehaviour
     {
         yield return null;
 
+        // เคลียร์ row เก่า
         for (int i = rowsParent.childCount - 1; i >= 0; i--)
             Destroy(rowsParent.GetChild(i).gameObject);
 
+        // สร้าง row ต่อผู้เล่น
         for (int i = 0; i < names.Length; i++)
         {
             var go = Instantiate(rowPrefab, rowsParent);
@@ -88,87 +81,84 @@ public class MatchResultsUI : MonoBehaviour
 
             var row = go.GetComponent<ResultsEntryUI>();
             if (row != null)
-                row.Bind(names[i], startMoney[i], bailouts[i], finalPoints[i]);
+            {
+                string title   = (investorTitles    != null && i < investorTitles.Length)
+                    ? investorTitles[i]
+                    : "";
+                string summary = (investorSummaries != null && i < investorSummaries.Length)
+                    ? investorSummaries[i]
+                    : "";
+
+                // ดูจาก "ชื่อผู้เล่น" ว่าตรงกับใครที่ได้รางวัลไหนบ้าง
+                string awards = BuildAwardsForPlayer(
+                    names[i],
+                    portfolioKingName, incomeKingName, spendingKingName,
+                    taxVictimName, unluckyName, takeoverKingName,
+                    proposalsSharkName, proposalsAcceptedKingName,
+                    diceGodName
+                );
+
+                // Bind แบบใหม่: + title / summary / awards
+                row.Bind(names[i], startMoney[i], bailouts[i], finalPoints[i],
+                         title, summary, awards);
+            }
 
             yield return null;
         }
 
-        // Build award lines into a list
-        var lines = new List<string>();
-        AddAwardLine(lines, "เจ้าพ่อพอร์ตหุ้น",       portfolioKingName);
-        AddAwardLine(lines, "ราชาเงินเข้า",            incomeKingName);
-        AddAwardLine(lines, "จอมสุรุ่ยสุร่าย",         spendingKingName);
-        AddAwardLine(lines, "เหยื่อภาษีแห่งชาติ",      taxVictimName);
-        AddAwardLine(lines, "ตัวซวยประจำเกม",          unluckyName);
-        AddAwardLine(lines, "นักยึดกิจการอันดับ 1",    takeoverKingName);
-        AddAwardLine(lines, "ฉลามการเงิน",             proposalsSharkName);
-        AddAwardLine(lines, "นักเจรจาโหด",             proposalsAcceptedKingName);
-        AddAwardLine(lines, "เทพลูกเต๋า",               diceGodName);
-
-        yield return StartCoroutine(CoTypeAwards(lines));
-
         if (readyButton != null) readyButton.interactable = true;
     }
 
-    private void AddAwardLine(List<string> list, string title, string winnerName)
+    private string BuildAwardsForPlayer(
+        string playerName,
+        string portfolioKingName, string incomeKingName, string spendingKingName,
+        string taxVictimName, string unluckyName, string takeoverKingName,
+        string proposalsSharkName, string proposalsAcceptedKingName,
+        string diceGodName
+    )
     {
-        if (string.IsNullOrWhiteSpace(winnerName) || winnerName == "—")
-            return;
+        var list = new List<string>();
 
-        list.Add($"{title}: {winnerName} (+25 แต้ม)");
-    }
+        // เทียบชื่อแบบตรง ๆ (ถ้ากังวลเรื่อง space/case จะไป Trim().Equals(...) แบบ ignore case ก็ได้)
+        if (!string.IsNullOrWhiteSpace(portfolioKingName) &&
+            playerName == portfolioKingName)
+            list.Add("เจ้าพ่อพอร์ตหุ้น (+25 แต้ม)");
 
-    private IEnumerator CoTypeAwards(List<string> lines)
-    {
-        if (awardsText == null) yield break;
+        if (!string.IsNullOrWhiteSpace(incomeKingName) &&
+            playerName == incomeKingName)
+            list.Add("ราชาเงินเข้า (+25 แต้ม)");
 
-        awardsText.text = "";
+        if (!string.IsNullOrWhiteSpace(spendingKingName) &&
+            playerName == spendingKingName)
+            list.Add("จอมสุรุ่ยสุร่าย (+25 แต้ม)");
 
-        if (lines == null || lines.Count == 0)
-            yield break;
+        if (!string.IsNullOrWhiteSpace(taxVictimName) &&
+            playerName == taxVictimName)
+            list.Add("เหยื่อภาษีแห่งชาติ (+25 แต้ม)");
 
-        float charDelay = (awardCharsPerSecond > 0f)
-            ? 1f / awardCharsPerSecond
-            : 0.03f;
+        if (!string.IsNullOrWhiteSpace(unluckyName) &&
+            playerName == unluckyName)
+            list.Add("ตัวซวยประจำเกม (+25 แต้ม)");
 
-        Color baseColor = awardsText.color;
+        if (!string.IsNullOrWhiteSpace(takeoverKingName) &&
+            playerName == takeoverKingName)
+            list.Add("นักยึดกิจการอันดับ 1 (+25 แต้ม)");
 
-        foreach (var line in lines)
-        {
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
+        if (!string.IsNullOrWhiteSpace(proposalsSharkName) &&
+            playerName == proposalsSharkName)
+            list.Add("ฉลามการเงิน (+25 แต้ม)");
 
-            Color c = baseColor;
-            c.a = 1f;
-            awardsText.color = c;
-            awardsText.text = "";
+        if (!string.IsNullOrWhiteSpace(proposalsAcceptedKingName) &&
+            playerName == proposalsAcceptedKingName)
+            list.Add("นักเจรจาโหด (+25 แต้ม)");
 
-            for (int i = 0; i <= line.Length; i++)
-            {
-                awardsText.text = line.Substring(0, i);
-                yield return new WaitForSeconds(charDelay);
-            }
+        if (!string.IsNullOrWhiteSpace(diceGodName) &&
+            playerName == diceGodName)
+            list.Add("เทพลูกเต๋า (+25 แต้ม)");
 
-            yield return new WaitForSeconds(awardLinePause);
-
-            float t = 0f;
-            float dur = Mathf.Max(0.01f, awardFadeDuration);
-
-            while (t < dur)
-            {
-                t += Time.deltaTime;
-                float k = Mathf.Clamp01(t / dur);
-                c.a = 1f - k;
-                awardsText.color = c;
-                yield return null;
-            }
-
-            c.a = 0f;
-            awardsText.color = c;
-        }
-
-        awardsText.text = "";
-        awardsText.color = baseColor; 
+        return (list.Count > 0)
+            ? string.Join("\n", list)
+            : "";
     }
 
     private bool _sentReady = false;
