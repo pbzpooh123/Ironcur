@@ -99,6 +99,7 @@ public float pulseSpeed = 2f;         // how fast it pulses
                 nameText.text = $"▶ {_baseName}";
                 nameText.color = Color.yellow;
                 nameText.fontStyle = FontStyles.Bold;
+                turnOrderText.text = $"ตาของคุณ";
             }
             else
             {
@@ -159,9 +160,9 @@ public float pulseSpeed = 2f;         // how fast it pulses
         if (profitText) profitText.text = $"เงิน:{money:0} M";
     }
 
-    public void SetTurnOrder(int orderIndex) // 1-based
+    public void SetTurnOrder(int orderIndex) 
     {
-        if (turnOrderText) turnOrderText.text = $"Turn #{orderIndex}";
+        if (turnOrderText) turnOrderText.text = $"";
     }
 
     public void UpdateBailoutMarks(int marks)

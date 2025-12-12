@@ -161,7 +161,7 @@ public class TurnManager : NetworkBehaviour
         currentPlayerIndex.Value = 0;
 
         for (int i = 0; i < turnOrder.Count; i++)
-            turnOrder[i].TargetSetTurnOrder(turnOrder[i].Owner, i);
+            turnOrder[i].turnOrderIndex.Value = i;
 
         StartCoroutine(DelayedFirstTurn());
     }
@@ -1121,23 +1121,22 @@ public class TurnManager : NetworkBehaviour
 
         float roi = (spending > 0) ? (income / (float)spending) : 0f;
 
-        // ตัวอย่าง rule แบบง่าย ปรับได้ตามใจ
-        if (bailouts == 0 && proposals < 2 && takeovers == 0 && roi <= 1.0f)
+        if (bailouts == 0 && proposals < 1 && takeovers == 0 && roi <= 1.0f)
             return InvestorProfileType.Minimal;
 
         if (bailouts == 0 && roi >= 1.0f && takeovers == 0)
             return InvestorProfileType.Conservative;
 
-        if (bailouts <= 1 && roi >= 1.0f && proposals <= 3)
+        if (bailouts <= 1 && roi >= 1.0f && proposals <= 2)
             return InvestorProfileType.Balanced;
 
-        if (bailouts <= 3 && (proposals > 3 || takeovers > 0))
+        if (bailouts <= 2 && (proposals > 3 || takeovers >= 1))
             return InvestorProfileType.Aggressive;
 
         if (bailouts >= 3 || eventLoss > bonus)
             return InvestorProfileType.Adventurer;
 
-        if (roi >= 1.5f && (proposals > 3 || takeovers > 0))
+        if (roi >= 1.5f && (proposals > 3 || takeovers > 2))
             return InvestorProfileType.StrategicAggro;
 
         return InvestorProfileType.Balanced;
@@ -1158,7 +1157,7 @@ public class TurnManager : NetworkBehaviour
                 title = "นักลงทุนสายอนุรักษ์นิยม";
                 summary =
                     "ให้ความสำคัญกับความมั่นคงมากกว่ากำไรระยะสั้น เลือกดีลและการลงทุนอย่างระมัดระวัง " +
-                    "มักเลี่ยงสถานการณ์เสี่ยงสูงและพยายามไม่ใช้ Bailout";
+                    "มักเลี่ยงสถานการณ์เสี่ยงสูงและพยายามไม่ให้ติดหนี้";
                 break;
 
             case InvestorProfileType.Balanced:

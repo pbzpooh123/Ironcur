@@ -27,6 +27,8 @@ public class PlayerPawn : NetworkBehaviour
     private SpriteRenderer _sr;
     public readonly SyncVar<int> colorIndex = new();
 
+    public readonly SyncVar<int> turnOrderIndex = new();
+
     private void Awake()
     {
         // Find a SpriteRenderer on this GO or children
@@ -81,13 +83,21 @@ public class PlayerPawn : NetworkBehaviour
         colorIndex.OnChange += OnColorChanged;
         money.OnChange += OnMoneyChanged;
         bailoutMarks.OnChange += OnBailoutMarksChanged;
+        turnOrderIndex.OnChange += OnTurnOrderChanged;
 
         if (IsOwner && TurnUI.Instance != null)
             TurnUI.Instance.BindPawn(this);
+
         StartCoroutine(AutoBindInfoPanel());
-        Debug.Log($"create name tag for pawn {this}");
+
          if (PawnNameTagManager.Instance != null)
             PawnNameTagManager.Instance.CreateForPawn(this);
+    }
+
+    private void OnTurnOrderChanged(int oldVal, int newVal, bool asServer)
+    {
+        if (infoPanel != null)
+            infoPanel.SetTurnOrder(newVal + 1);
     }
 
     private void OnMoneyChanged(int oldValue, int newValue, bool asServer)
@@ -128,6 +138,9 @@ public class PlayerPawn : NetworkBehaviour
 
                 infoPanel.UpdateBailoutMarks(bailoutMarks.Value);
                 if (Owner != null) infoPanel.SetOwnerCid(Owner.ClientId);
+
+                TryApplyTurnOrderToPanel();
+                infoPanel.SetTurnOrder(turnOrderIndex.Value + 1);
 
                 yield break;
             }
@@ -214,6 +227,7 @@ public class PlayerPawn : NetworkBehaviour
     {
         money.OnChange -= OnMoneyChanged;
         bailoutMarks.OnChange -= OnBailoutMarksChanged;
+        turnOrderIndex.OnChange -= OnTurnOrderChanged;
         if (PawnNameTagManager.Instance != null)
             PawnNameTagManager.Instance.RemoveForPawn(this);
         base.OnStopClient();
@@ -421,14 +435,11 @@ public class PlayerPawn : NetworkBehaviour
         {
             int nextTile = (currentTile + 1) % tileCount;
             Vector3 targetPos = GameManager.Instance.GetTilePosition(nextTile);
-
-            // TileHighlighter.Instance?.FlashPassAt(targetPos, 1f);
-
             transform.DOKill();
             Tween jumpTween = transform.DOJump(
                 targetPos,   
                 jumpPower,   // jump height
-                1,           // number of jumps
+                1,          
                 stepDuration // duration
             ).SetEase(Ease.OutQuad);
             yield return jumpTween.WaitForCompletion();
@@ -437,9 +448,6 @@ public class PlayerPawn : NetworkBehaviour
 
             yield return new WaitForSeconds(0.05f);
         }
-
-        // TileHighlighter.Instance?.FlashLandAt(GameManager.Instance.GetTilePosition(currentTile), 1f);
-
         HandleTileLogic();
     }
 
@@ -471,7 +479,7 @@ public class PlayerPawn : NetworkBehaviour
 
         if (data.tileType == TileType.Investment && data.owner != null && data.owner != this)
         {
-            // A) STEAL ON LANDING
+            // A) ขโมยเงินงถ้าเป็นไปได้
             if (data.enableStealOnLanding)
                 {
                     TurnManager.Instance.ServerBeginTileAction(this);
@@ -507,7 +515,6 @@ public class PlayerPawn : NetworkBehaviour
         {
             case TileType.Tax:
                 {
-                    // <<< CHANGED: BRACKET + WAIT FOR READY >>>
                     TurnManager.Instance.ServerBeginTileAction(this);
 
                     int percent = Mathf.Clamp(data.taxPercent, 0, 100);
@@ -591,24 +598,21 @@ public class PlayerPawn : NetworkBehaviour
     }
 
     /* ---------- Turn order visuals ---------- */
+    private int _cachedTurnOrder = -1; // 1-based ที่จะโชว์
 
     [TargetRpc]
     public void TargetSetTurnOrder(NetworkConnection conn, int turnIndex)
     {
-         StartCoroutine(WaitAndSetTurnOrder(turnIndex));
+        _cachedTurnOrder = turnIndex + 1;   // 1-based
+        TryApplyTurnOrderToPanel();
     }
 
-    private IEnumerator WaitAndSetTurnOrder(int turnIndex)
-    {
-        float t = 2f;
-        while (t > 0f && infoPanel == null)
-        {
-            t -= Time.unscaledDeltaTime;
-            yield return null;
-        }
-        if (infoPanel != null)
-            infoPanel.SetTurnOrder(turnIndex + 1);
-    }
+    private void TryApplyTurnOrderToPanel()
+{
+    if (infoPanel != null && _cachedTurnOrder > 0)
+        infoPanel.SetTurnOrder(_cachedTurnOrder);
+}
+
 
     [ObserversRpc(BufferLast = true)]
     public void RpcTeleportTo(Vector3 pos)
