@@ -467,8 +467,8 @@ public class EventManager : NetworkBehaviour
                     if (pay > 0) pawn.TrySpendMoney(pay);
 
                     foreach (var c in FishNet.InstanceFinder.ServerManager.Clients.Values)
-                        TargetShowSideEvent(c,"น้ำท่วม,แผ่นดินไหว หลายๆอย่างรวมกัน!!!!! ทำให้คุณต้องจ่ายค่าบำรุงรักษาบริษัท",
-                            $"{pawn.playerName.Value} จ่ายเงินบำรุงรักษาบริษัท <color=red>${pay}</color>M ({effect.payPerCompany}×{ownedCount} บริษัท).",
+                        TargetShowSideEvent(c,"เกิดภัยพิบัติทางธรรมชาติทำให้บริษัทในเครือของคุณได้รับความเสียหาย",
+                            $"คุณได้จ่ายเงินบำรุงรักษาบริษัท <color=red>${pay}</color>M ({effect.payPerCompany}×{ownedCount} บริษัท).",
                             false);
                 }
             }
